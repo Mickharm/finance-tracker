@@ -438,7 +438,8 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
   const targetAmount = (prevYearTotal + fixedDeposit) * (1 + targetROI / 100);
   const currentFirstrade = Number(yearData.firstrade) || 0;
   const currentIB = Number(yearData.ib) || 0;
-  const currentTotal = currentFirstrade + currentIB;
+  const currentWithdrawal = Number(yearData.withdrawal) || 0;
+  const currentTotal = currentFirstrade + currentIB + currentWithdrawal;
   const isAchieved = currentTotal >= targetAmount;
   const diff = currentTotal - targetAmount;
   const errorPercent = targetAmount > 0 ? (diff / targetAmount) * 100 : 0;
@@ -451,6 +452,7 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             {yearData.year}年
             {isAchieved ? <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold">達成</span> : <span className="text-xs bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full font-bold">進行中</span>}
+            {currentWithdrawal > 0 && <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">含提領</span>}
           </h3>
           <div className="text-xs text-slate-400 mt-1">固定存入: <span className="font-bold text-slate-600">${fixedDeposit.toLocaleString()}</span> (美金)</div>
         </div>
@@ -465,6 +467,7 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
       <div className="grid grid-cols-2 gap-4 mb-4 pl-3">
         <div><label className="text-[10px] text-slate-400 uppercase font-bold">Firstrade (美金)</label><input type="number" value={yearData.firstrade} onChange={(e) => onUpdate(yearData.id, 'firstrade', e.target.value)} className="w-full font-mono font-bold text-slate-700 border-b border-slate-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
         <div><label className="text-[10px] text-slate-400 uppercase font-bold">IB (美金)</label><input type="number" value={yearData.ib} onChange={(e) => onUpdate(yearData.id, 'ib', e.target.value)} className="w-full font-mono font-bold text-slate-700 border-b border-slate-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div className="col-span-2 relative"><label className="text-[10px] text-amber-400 uppercase font-bold">提領/調節 (美金)</label><input type="number" value={yearData.withdrawal} onChange={(e) => onUpdate(yearData.id, 'withdrawal', e.target.value)} className="w-full font-mono font-bold text-slate-700 border-b border-amber-100 focus:border-amber-400 outline-none py-1 bg-transparent" placeholder="0" /></div>
       </div>
       <div className="bg-slate-50/50 rounded-xl p-3 pl-4 flex justify-between items-center">
         <div><div className="text-[10px] text-slate-400 mb-0.5 font-bold uppercase">目標金額</div><div className="font-bold text-slate-500 text-sm font-mono">${Math.round(targetAmount).toLocaleString()}</div></div>
@@ -603,7 +606,7 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
                     <span>{row.isPaid ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <span className="w-3 h-3 rounded-full border border-slate-200 block"></span>}</span>
                     <span className={`font-mono ${row.isPaid ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>{row.date.getMonth() + 1}月</span>
                     <span className="text-center text-slate-400">#{row.id}</span>
-                    <span className={`text-right font-bold font-mono ${row.isPaid ? 'text-emerald-700' : 'text-slate-700'}`}>${row.amount.toLocaleString()}</span>
+                    <span className="text-right font-bold font-mono ${row.isPaid ? 'text-emerald-700' : 'text-slate-700'}">${row.amount.toLocaleString()}</span>
                     <span className="text-right text-slate-400">{row.rate}%</span>
                   </div>
                 ))}
@@ -660,6 +663,9 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
     </div>
   );
 };
+
+// --- 4. Sub-Views ---
+
 
 // --- 6. View Components (Top Layer) ---
 
@@ -909,6 +915,7 @@ const IncomeView = ({ incomes, salaryHistory, onAddSalary, onDeleteSalary, onDel
 };
 
 const PartnerView = ({ partnerTransactions, onDelete, onAdd }) => {
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const groupedTransactions = useMemo(() => { const groups = {}; partnerTransactions.forEach(tx => { const year = new Date(tx.date).getFullYear(); if (!groups[year]) groups[year] = []; groups[year].push(tx); }); return Object.entries(groups).sort((a, b) => b[0] - a[0]); }, [partnerTransactions]);
   const totalSavings = partnerTransactions.filter(t => t.type === 'saving').reduce((sum, t) => sum + Number(t.amount), 0);
   const totalExpenses = partnerTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
@@ -917,11 +924,11 @@ const PartnerView = ({ partnerTransactions, onDelete, onAdd }) => {
     <div className="space-y-6 pb-24 animate-in fade-in">
       <CleanSummaryCard title="佳欣儲蓄總覽" value={balance.toLocaleString()} subValue={`投入 $${totalSavings.toLocaleString()} - 支出 $${totalExpenses.toLocaleString()}`} icon={PiggyBank} trend={balance > 0 ? '正成長' : '負成長'} variant="emerald" />
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center px-1">
-          <h3 className="font-bold text-slate-700 flex items-center gap-2"><Wallet className="w-4 h-4" /> 資金變動紀錄</h3>
-          <GlassButton onClick={onAdd}><Plus className="w-3 h-3" /> 新增紀錄</GlassButton>
+        <div onClick={() => setIsHistoryOpen(!isHistoryOpen)} className="flex justify-between items-center px-1 cursor-pointer select-none hover:bg-slate-50/50 p-2 rounded-xl transition-colors">
+          <h3 className="font-bold text-slate-700 flex items-center gap-2"><Wallet className="w-4 h-4" /> 資金變動紀錄 {isHistoryOpen ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}</h3>
+          <GlassButton onClick={(e) => { e.stopPropagation(); onAdd(); }}><Plus className="w-3 h-3" /> 新增紀錄</GlassButton>
         </div>
-        {partnerTransactions.length === 0 ? (<div className={`${GLASS_CARD} flex flex-col items-center justify-center h-48 text-slate-300 border-dashed`}><PiggyBank className="w-12 h-12 mb-2 opacity-20" /><p className="text-sm">尚無儲蓄紀錄</p></div>) : (groupedTransactions.map(([year, txs]) => (<PartnerYearGroup key={year} year={year} transactions={txs} onDelete={onDelete} />)))}
+        {isHistoryOpen && (partnerTransactions.length === 0 ? (<div className={`${GLASS_CARD} flex flex-col items-center justify-center h-48 text-slate-300 border-dashed`}><PiggyBank className="w-12 h-12 mb-2 opacity-20" /><p className="text-sm">尚無儲蓄紀錄</p></div>) : (groupedTransactions.map(([year, txs]) => (<PartnerYearGroup key={year} year={year} transactions={txs} onDelete={onDelete} />))))}
       </div>
     </div>
   );
@@ -946,8 +953,8 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
 
 const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange, onAddExchangeClick }) => {
   const [activeTab, setActiveTab] = useState('goals');
-  const sortedGoals = [...goals].sort((a, b) => a.year - b.year);
-  const getTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0);
+  const sortedGoals = [...goals].sort((a, b) => b.year - a.year);
+  const getTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0) + (Number(g?.withdrawal) || 0);
 
   // 計算換匯總結
   const { totalUSD, totalTWD } = exchanges.reduce((acc, curr) => {
@@ -1082,7 +1089,7 @@ export default function App() {
     createSub('mortgage_expenses', setMortgageExpenses);
     createSub('mortgage_funding', setMortgageFunding);
     createSub('mortgage_analysis', setMortgageAnalysis, 'createdAt', 'asc');
-    createSub('stock_goals', setStockGoals, 'year', 'asc');
+    createSub('stock_goals', setStockGoals, 'year', 'desc');
     createSub('usd_exchanges', setUsdExchanges);
 
     const viewYear = selectedDate.getFullYear();
@@ -1224,9 +1231,10 @@ export default function App() {
   const deleteMortgageFunding = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', id)));
 
   const handleAddStockGoalYear = async () => {
-    const maxYear = stockGoals.reduce((max, g) => Math.max(max, g.year), 2021);
+    // Since sorted descending (newest first), max year is the first item's year
+    const maxYear = stockGoals.length > 0 ? stockGoals[0].year : 2021;
     const nextYear = maxYear + 1;
-    await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals'), { year: nextYear, roi: 0, firstrade: 0, ib: 0, createdAt: serverTimestamp() });
+    await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals'), { year: nextYear, roi: 0, firstrade: 0, ib: 0, withdrawal: 0, createdAt: serverTimestamp() });
   };
   const handleUpdateStockGoal = async (id, field, value) => { await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id), { [field]: Number(value) }, { merge: true }); };
 
