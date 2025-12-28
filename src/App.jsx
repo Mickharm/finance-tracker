@@ -452,7 +452,13 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
         <div>
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             {yearData.year}年
-            {isAchieved ? <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold">達成</span> : <span className="text-xs bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full font-bold">進行中</span>}
+            {isAchieved ? (
+              <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold">達成</span>
+            ) : (yearData.year < new Date().getFullYear()) ? (
+              <span className="text-xs bg-rose-50 text-rose-500 px-2 py-0.5 rounded-full font-bold">未達成</span>
+            ) : (
+              <span className="text-xs bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full font-bold">進行中</span>
+            )}
             {currentWithdrawal > 0 && <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">含提領</span>}
           </h3>
           <div className="text-xs text-slate-400 mt-1">固定存入: <span className="font-bold text-slate-600">${fixedDeposit.toLocaleString()}</span> (美金)</div>
@@ -474,7 +480,7 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
         <div><div className="text-[10px] text-slate-400 mb-0.5 font-bold uppercase">目標金額</div><div className="font-bold text-slate-500 text-sm font-mono">${Math.round(targetAmount).toLocaleString()}</div></div>
         <div className="text-right"><div className="text-[10px] text-slate-400 mb-0.5 font-bold uppercase">實際總資產</div><div className={`font-bold text-lg font-mono ${isAchieved ? 'text-emerald-600' : 'text-slate-700'}`}>${Math.round(currentTotal).toLocaleString()}</div><div className={`text-[10px] font-medium ${isAchieved ? 'text-emerald-500' : 'text-slate-400'}`}>誤差: {diff > 0 ? '+' : ''}{Math.round(diff).toLocaleString()} ({errorPercent.toFixed(2)}%)</div></div>
       </div>
-    </div>
+    </div >
   );
 };
 
@@ -689,7 +695,10 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
             <div key={inc.id} onClick={() => onAddIncome(owner, inc)} className="flex justify-between items-center p-3 bg-slate-50/50 rounded-xl group border border-transparent hover:border-slate-200 transition-all cursor-pointer">
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-slate-700">{inc.category}</span>
-                <span className="text-[10px] text-slate-400">{inc.date}</span>
+                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                  {inc.date}
+                  {inc.note && <span className="text-slate-500">• {inc.note}</span>}
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-mono font-bold text-emerald-600">+${Number(inc.amount).toLocaleString()}</span>
@@ -1928,7 +1937,8 @@ export default function App() {
             <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
             <div className="space-y-1.5"><label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-slate-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
             <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
-            <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '確認入帳' : '確認入帳'}</GlassButton>
+            <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
+            <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認入帳'}</GlassButton>
           </form>
         </ModalWrapper>
       )}
