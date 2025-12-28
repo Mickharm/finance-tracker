@@ -20,10 +20,10 @@ jobs:
 
     steps:
       - name: Checkout 程式碼
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 設定 Node.js 環境
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18 # 使用穩定版 Node.js
           cache: 'npm'     # 啟用 npm 快取以加速構建
@@ -37,7 +37,7 @@ jobs:
         # 並產生 dist/ 資料夾
 
       - name: 上傳編譯產物
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: dist # 指定要上傳的資料夾是 dist
 
@@ -52,4 +52,4 @@ jobs:
     steps:
       - name: 部署到 GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4
