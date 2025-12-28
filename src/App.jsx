@@ -447,7 +447,7 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
 
   return (
     <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden`}>
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${isAchieved ? 'bg-emerald-400' : 'bg-slate-300'}`}></div>
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${isAchieved ? 'bg-emerald-400' : (yearData.year < new Date().getFullYear() ? 'bg-rose-500' : 'bg-slate-300')}`}></div>
       <div className="flex justify-between items-start mb-4 pl-3">
         <div>
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -667,7 +667,7 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
   );
 };
 
-const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddSalary, onDeleteSalary, onEditSalary, variant = 'slate' }) => {
+const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddSalary, onDeleteSalary, onEditSalary, onAddIncome, onDeleteIncome, variant = 'slate' }) => {
   const theme = COLOR_VARIANTS[variant] || COLOR_VARIANTS.slate;
   return (
     <div className={`flex flex-col gap-4 w-full`}>
