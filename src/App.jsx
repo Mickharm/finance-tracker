@@ -1878,39 +1878,7 @@ export default function App() {
 
       {currentView === 'home' && (<button onClick={() => setIsAddTxModalOpen(true)} className="absolute bottom-8 right-6 w-14 h-14 bg-slate-800 rounded-full shadow-2xl shadow-slate-400/50 flex items-center justify-center text-white hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>)}
 
-      {isMenuOpen && (
-        <div className="absolute inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />
-          <div className="relative w-3/4 max-w-xs bg-white/90 backdrop-blur-xl h-full shadow-2xl flex flex-col p-6 animate-in slide-in-from-left duration-300 border-r border-white/20">
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-slate-800">記帳助手</h2>
-              <p className="text-xs text-slate-400 font-mono tracking-wider">財務管理</p>
-            </div>
-            <nav className="flex-1 overflow-y-auto space-y-6">
-              {MENU_SECTIONS.map((section, idx) => (
-                <div key={idx}>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-2">{section.title}</h3>
-                  <div className="space-y-1">
-                    {section.items.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => { setCurrentView(item.id); setIsMenuOpen(false); }}
-                        className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${currentView === item.id
-                          ? 'bg-slate-100 text-slate-900 font-bold shadow-sm'
-                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                          }`}
-                      >
-                        <item.icon className={`w-5 h-5 ${currentView === item.id ? 'text-slate-800' : 'text-slate-400'}`} />
-                        <span className="text-sm">{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </nav>
-          </div>
-        </div>
-      )}
+
 
       {/* --- Modals --- */}
       {isAddTxModalOpen && (
