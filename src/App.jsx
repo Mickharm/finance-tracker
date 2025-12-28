@@ -204,6 +204,38 @@ const GlassButton = ({ onClick, children, className = "", disabled = false, vari
   );
 };
 
+// 密碼鎖定視圖
+const LockedView = ({ title, onUnlock, error }) => {
+  const [pin, setPin] = useState('');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onUnlock(pin);
+  };
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] animate-in fade-in zoom-in-95 duration-300">
+      <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 w-full max-w-xs text-center">
+        <div className="mb-6 bg-slate-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
+          <Lock className="w-8 h-8" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-800 mb-2">{title}</h3>
+        <p className="text-xs text-slate-400 mb-6 font-bold">此頁面受密碼保護</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="password"
+            value={pin}
+            onChange={e => setPin(e.target.value)}
+            placeholder="請輸入密碼"
+            className="w-full text-center text-lg tracking-[0.5em] font-bold bg-slate-100 border-none rounded-xl py-3 px-4 focus:ring-2 focus:ring-slate-400 focus:outline-none transition-all placeholder:tracking-normal placeholder:font-normal placeholder:text-slate-400"
+            autoFocus
+          />
+          {error && <p className="text-xs text-rose-500 font-bold shake">{error}</p>}
+          <button type="submit" className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition-all active:scale-95 shadow-lg shadow-slate-200">解鎖</button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme = 'slate', showDetails = true }) => {
   const remaining = total - current;
   const percentage = total > 0 ? Math.max(0, (remaining / total) * 100) : 0;
@@ -362,7 +394,7 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
         {!isAddGroupOpen ? (
           <button onClick={() => setIsAddGroupOpen(true)} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-sm hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> 新增追蹤清單</button>
         ) : (
-          <div className={`${GLASS_CARD} p-3 flex gap-2 animate-in slide-in-from-top-2 duration-200`}><input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addGroup()} placeholder="輸入群組名稱" className={`${GLASS_INPUT} py-2 px-4 text-sm flex-1`} autoFocus /><button onClick={addGroup} disabled={isSubmitting} className="bg-indigo-600 text-white px-4 rounded-xl font-bold shadow-md hover:bg-indigo-700"><Check className="w-4 h-4" /></button><button onClick={() => setIsAddGroupOpen(false)} className="bg-slate-100 text-slate-500 px-3 rounded-xl hover:bg-slate-200"><X className="w-4 h-4" /></button></div>
+          <div className={`${GLASS_CARD} p-3 flex gap-2 animate-in slide-in-from-top-2 duration-200`}><input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addGroup()} placeholder="輸入群組名稱" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} autoFocus /><button onClick={addGroup} disabled={isSubmitting} className="bg-indigo-600 text-white px-4 rounded-xl font-bold shadow-md hover:bg-indigo-700"><Check className="w-4 h-4" /></button><button onClick={() => setIsAddGroupOpen(false)} className="bg-slate-100 text-slate-500 px-3 rounded-xl hover:bg-slate-200"><X className="w-4 h-4" /></button></div>
         )}
       </div>
       <div>{groups.map(g => (<WatchlistGroup key={g.id} group={g} totalSystemBudget={totalSystemBudget} prices={prices} onAddStock={addStock} onUpdateStock={updateStock} onDeleteStock={deleteStock} onDeleteGroup={() => deleteGroup(g.id)} />))}</div>
@@ -502,10 +534,9 @@ const ExchangeItem = ({ item, onDelete }) => (
 );
 
 // 統一的列表元件
-// 統一的列表元件
-const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type, totalLabel, totalValue, itemRenderer, variant = 'slate', isCollapsible = false }) => {
+const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type, totalLabel, totalValue, itemRenderer, variant = 'slate', isCollapsible = false, defaultExpanded = true }) => {
   const theme = COLOR_VARIANTS[variant] || COLOR_VARIANTS.slate;
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
     <div className={`${GLASS_CARD} overflow-hidden p-0 mb-6 ${theme.glow}`}>
@@ -584,23 +615,25 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
     return groups;
   }, [schedule]);
 
-  const [expandedYear, setExpandedYear] = useState(new Date().getFullYear());
+
+
+  const [expandedYear, setExpandedYear] = useState(null);
   const currentStatus = schedule.find(r => !r.isPaid) || schedule[schedule.length - 1];
   const theme = COLOR_VARIANTS.cyan;
 
   return (
     <div className={`${GLASS_CARD} p-5 mb-6 ${theme.glow}`}>
-      <div onClick={() => setExpandedYear(expandedYear === 'overview' ? null : 'overview')} className="flex justify-between items-center mb-4 cursor-pointer">
+      <div onClick={() => setExpandedYear(expandedYear ? null : 'overview')} className="flex justify-between items-center mb-4 cursor-pointer">
         <h3 className="font-bold text-slate-700 flex items-center gap-2">
           <div className="p-2 rounded-lg bg-cyan-100 text-cyan-600">
             <Clock className="w-4 h-4" />
           </div>
           房貸還款計劃 (40年)
         </h3>
-        {expandedYear === 'overview' ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        {expandedYear ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
       </div>
 
-      {expandedYear === 'overview' && (
+      {expandedYear && (
         <div className="grid grid-cols-2 gap-3 mb-4 animate-in slide-in-from-top-2 duration-200">
           <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
             <div className="text-xs text-slate-400 mb-1">下期 ({currentStatus?.id}期)</div>
@@ -627,7 +660,7 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
         </div>
       )}
 
-      {expandedYear === 'overview' && (
+      {expandedYear && (
         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 scrollbar-hide animate-in slide-in-from-top-4 duration-300">
           {Object.entries(yearlyGroups).map(([year, rows]) => (
             <div key={year} className="border border-slate-100 rounded-xl overflow-hidden">
@@ -659,7 +692,7 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
   );
 };
 
-const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddSalary, onDeleteSalary, onDeleteIncome, onAddIncome, onEditSalary, variant = 'slate' }) => {
+const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddSalary, onDeleteSalary, onEditSalary, variant = 'slate' }) => {
   const theme = COLOR_VARIANTS[variant] || COLOR_VARIANTS.slate;
   return (
     <div className={`flex flex-col gap-4 w-full`}>
@@ -677,7 +710,6 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider relative z-10">年度累計收入</div>
       </div>
       <SalaryHistoryCard history={history} owner={owner} onAdd={onAddSalary} onDelete={onDeleteSalary} onEdit={onEditSalary} />
-      <SalaryHistoryCard history={history} owner={owner} onAdd={onAddSalary} onDelete={onDeleteSalary} />
       <div className={`${GLASS_CARD} p-5`}>
         <div className="flex justify-between items-center mb-4">
           <h4 className="text-sm font-bold text-slate-700">收入明細 (點擊編輯)</h4>
@@ -790,6 +822,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         totalValue={totalDownPaymentExp}
         variant="amber"
         isCollapsible={true}
+        defaultExpanded={false}
         itemRenderer={(item) => (
           <div className="flex justify-between items-start">
             <div>
@@ -816,6 +849,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         totalValue={totalAnalysis}
         variant="emerald"
         isCollapsible={true}
+        defaultExpanded={false}
         itemRenderer={(item) => (
           <div className="flex justify-between items-center py-1">
             <span className="text-sm text-slate-600 font-medium">{item.name}</span>
@@ -831,10 +865,11 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         onAdd={() => setIsAddMortgageFundingModalOpen(true)}
         onEdit={(item) => onEditFunding(item)}
         icon={Coins}
-        totalLabel="可用資金總計"
+        totalLabel="提領資金:"
         totalValue={totalFunding}
         variant="indigo"
         isCollapsible={true}
+        defaultExpanded={false}
         itemRenderer={(item) => {
           const hasShares = Number(item.shares) > 0;
           const rate = Number(item.rate) || 1;
@@ -845,7 +880,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
           const currentPrice = prices[item.symbol?.trim().toUpperCase()];
           let diff = null;
           if (currentPrice && hasShares) {
-            // Estimate current value (TWD) based on user rate. 
+            // Estimate current value (TWD) based on user rate.
             // If rate=1 (TWD), price is TWD. If rate=30 (USD->TWD), price is USD*rate.
             // Finnhub returns price in the currency of the exchange (usually USD for US stocks).
             const currentTotal = currentPrice * shares * rate;
@@ -888,6 +923,8 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         totalLabel="支出總計"
         totalValue={totalApplianceExp}
         variant="blue"
+        isCollapsible={true}
+        defaultExpanded={false}
         itemRenderer={(item) => (
           <div className="flex justify-between items-start">
             <div>
@@ -1246,7 +1283,7 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
 
   const delItem = (gi, ii) => {
     const g = [...localGroups];
-    g[gi].items = g[gi].items.filter((_, idx) => idx !== ii);
+    g[gi].items = g[gi].items.filter((_, i) => i !== ii);
     setLocalGroups(g);
     if (editingSelection && editingSelection.gIdx === gi && editingSelection.iIdx === ii) {
       setEditingSelection(null);
@@ -1322,6 +1359,20 @@ export default function App() {
 
   const [currentView, setCurrentView] = useState('home');
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Privacy Logic
+  const [unlockedViews, setUnlockedViews] = useState(new Set());
+  const [lockError, setLockError] = useState('');
+
+  const handleUnlock = (viewName, password, correctPassword) => {
+    if (password === correctPassword) {
+      setUnlockedViews(prev => new Set(prev).add(viewName));
+      setLockError('');
+    } else {
+      setLockError('密碼錯誤');
+      setTimeout(() => setLockError(''), 2000);
+    }
+  };
 
   // 1. Scroll to Top on View Change
   useEffect(() => {
@@ -1691,7 +1742,11 @@ export default function App() {
             }}
           />
         )}
-        {currentView === 'principal' && <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />}
+        {currentView === 'principal' && (
+          !unlockedViews.has('principal') ?
+            <LockedView title="資產淨值" onUnlock={(pwd) => handleUnlock('principal', pwd, '1129')} error={lockError} /> :
+            <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
+        )}
         {currentView === 'visualization' && <VisualizationView transactions={transactions} />}
         {currentView === 'income' && (
           <IncomeView
@@ -1718,24 +1773,26 @@ export default function App() {
           />
         )}
         {currentView === 'partner' && (
-          <PartnerView
-            partnerTransactions={partnerTransactions}
-            onDelete={deletePartnerTx}
-            onAdd={(item = null) => {
-              if (item && item.id) {
+          !unlockedViews.has('partner') ?
+            <LockedView title="佳欣儲蓄" onUnlock={(pwd) => handleUnlock('partner', pwd, '0624')} error={lockError} /> :
+            <PartnerView
+              partnerTransactions={partnerTransactions}
+              onDelete={deletePartnerTx}
+              onAdd={(item = null) => {
+                if (item && item.id) {
+                  setNewPartnerTx({ ...item, amount: item.amount });
+                  setEditingId(item.id);
+                } else {
+                  setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
+                }
+                setIsAddPartnerTxModalOpen(true);
+              }}
+              onEdit={(item) => {
                 setNewPartnerTx({ ...item, amount: item.amount });
                 setEditingId(item.id);
-              } else {
-                setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
-              }
-              setIsAddPartnerTxModalOpen(true);
-            }}
-            onEdit={(item) => {
-              setNewPartnerTx({ ...item, amount: item.amount });
-              setEditingId(item.id);
-              setIsAddPartnerTxModalOpen(true);
-            }}
-          />
+                setIsAddPartnerTxModalOpen(true);
+              }}
+            />
         )}
         {currentView === 'calendar' && (
           <CalendarView
