@@ -18,7 +18,8 @@ import {
   doc,
   setDoc,
   serverTimestamp,
-  updateDoc
+  updateDoc,
+  getDoc
 } from 'firebase/firestore';
 import {
   Menu, ChevronLeft, ChevronRight, Plus, X, Calendar, DollarSign,
@@ -1083,14 +1084,31 @@ export default function App() {
     createSub('stock_goals', setStockGoals, 'year', 'asc');
     createSub('usd_exchanges', setUsdExchanges);
 
-    const settingsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config_v2');
-    unsubs.push(onSnapshot(settingsRef, (docSnap) => {
-      if (docSnap.exists()) setSettings(docSnap.data());
-      else setDoc(settingsRef, DEFAULT_SETTINGS);
+    const viewYear = selectedDate.getFullYear();
+    const settingsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', `config_${viewYear}`);
+
+    unsubs.push(onSnapshot(settingsRef, async (docSnap) => {
+      if (docSnap.exists()) {
+        setSettings(docSnap.data());
+      } else {
+        // Migration: If config for this year doesn't exist, try to copy from config_v2 (legacy global)
+        // or just use defaults.
+        try {
+          const globalRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config_v2');
+          const globalSnap = await getDoc(globalRef);
+          const initialData = globalSnap.exists() ? globalSnap.data() : DEFAULT_SETTINGS;
+
+          // Initialise the new year's config
+          await setDoc(settingsRef, initialData);
+        } catch (e) {
+          console.error("Migration failed:", e);
+          setSettings(DEFAULT_SETTINGS);
+        }
+      }
     }));
 
     return () => unsubs.forEach(u => u());
-  }, [user]);
+  }, [user, selectedDate]);
 
   // Form Defaults Logic
   useEffect(() => {
@@ -1218,7 +1236,10 @@ export default function App() {
     const newSettings = { ...settings };
     if (type === 'monthly') newSettings.monthlyGroups = newGroups;
     else newSettings.annualGroups = newGroups;
-    await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config_v2'), newSettings);
+
+    // Write to the currently selected year's config
+    const viewYear = selectedDate.getFullYear();
+    await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', `config_${viewYear}`), newSettings);
   };
 
   const handleDateNavigate = (direction) => { const newDate = new Date(selectedDate); if (currentView === 'income') newDate.setFullYear(selectedDate.getFullYear() + direction); else newDate.setMonth(selectedDate.getMonth() + direction); setSelectedDate(newDate); };
@@ -1262,8 +1283,15 @@ export default function App() {
         {currentView === 'calendar' && <CalendarView transactions={transactions} selectedDate={selectedDate} setSelectedDate={setSelectedDate} deleteTransaction={deleteTransaction} />}
         {currentView === 'settings' && (
           <div className="pb-24">
-            <GroupSettingsEditor title="月度預算配置" groups={settings.monthlyGroups} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
-            <GroupSettingsEditor title="年度預算配置" groups={settings.annualGroups} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg text-amber-600"><SettingsIcon className="w-5 h-5" /></div>
+              <div>
+                <h3 className="font-bold text-amber-800 text-sm">正在編輯 {selectedDate.getFullYear()} 年度預算</h3>
+                <p className="text-xs text-amber-600 mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
+              </div>
+            </div>
+            <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度預算配置`} groups={settings.monthlyGroups} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
+            <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度預算配置`} groups={settings.annualGroups} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
           </div>
         )}
       </main>
