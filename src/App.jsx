@@ -954,7 +954,8 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
 const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange, onAddExchangeClick }) => {
   const [activeTab, setActiveTab] = useState('goals');
   const sortedGoals = [...goals].sort((a, b) => b.year - a.year);
-  const getTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0) + (Number(g?.withdrawal) || 0);
+  const getEffectiveTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0) + (Number(g?.withdrawal) || 0);
+  const getActualTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0);
 
   // 計算換匯總結
   const { totalUSD, totalTWD } = exchanges.reduce((acc, curr) => {
@@ -973,7 +974,7 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange
       {activeTab === 'goals' ? (
         <div className="space-y-4 animate-in slide-in-from-left-4 duration-300">
           <div className="flex justify-end mb-2"><GlassButton onClick={onAddYear}><Plus className="w-3 h-3" /> 新增年份</GlassButton></div>
-          {sortedGoals.length === 0 ? <div className="text-center text-slate-400 py-10">尚無資料 (從2022開始)</div> : sortedGoals.map((goal, index) => { const prevGoal = sortedGoals[index + 1]; const prevTotal = prevGoal ? getTotal(prevGoal) : 0; return <StockGoalCard key={goal.id} yearData={goal} prevYearTotal={prevTotal} onUpdate={onUpdate} />; })}
+          {sortedGoals.length === 0 ? <div className="text-center text-slate-400 py-10">尚無資料 (從2022開始)</div> : sortedGoals.map((goal, index) => { const prevGoal = sortedGoals[index + 1]; const prevTotal = prevGoal ? getActualTotal(prevGoal) : 0; return <StockGoalCard key={goal.id} yearData={goal} prevYearTotal={prevTotal} onUpdate={onUpdate} />; })}
         </div>
       ) : (
         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
