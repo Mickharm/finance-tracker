@@ -1728,7 +1728,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex animate-in slide-in-from-left duration-300">
           <div className="w-64 bg-white/90 backdrop-blur-xl h-full shadow-2xl p-6 relative">
             <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full text-slate-400 hover:bg-slate-200"><X className="w-4 h-4" /></button>
-            <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-slate-800 flex items-center gap-2"><div className="bg-indigo-600 text-white p-1.5 rounded-lg"><PieChart className="w-5 h-5" /></div> 財務管家</h1><p className="text-xs text-slate-400 mt-1 pl-1">v3.0.0 (Personal)</p></div>
+            <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-slate-800 flex items-center gap-2"><div className="bg-indigo-600 text-white p-1.5 rounded-lg"><PieChart className="w-5 h-5" /></div> 記帳助手</h1><p className="text-xs text-slate-400 mt-1 pl-1">v1.0.0(Mick))</p></div>
             <div className="space-y-6">
               {MENU_SECTIONS.map(section => (
                 <div key={section.title}>
