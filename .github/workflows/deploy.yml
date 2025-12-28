@@ -1,0 +1,55 @@
+# 顯示在 GitHub Actions 分頁的名稱
+name: Deploy to GitHub Pages
+
+# 觸發條件：當 main 分支有 push 事件時執行
+on:
+  push:
+    branches: [main]
+
+# 權限設定：允許 Action 讀取程式碼並寫入 GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 定義兩個並行或依序執行的工作：Build (建置) 與 Deploy (部署)
+jobs:
+  # 第一階段：建置環境與編譯
+  build:
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 虛擬機
+
+    steps:
+      - name: Checkout 程式碼
+        uses: actions/checkout@v3
+
+      - name: 設定 Node.js 環境
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18 # 使用穩定版 Node.js
+          cache: 'npm'     # 啟用 npm 快取以加速構建
+
+      - name: 安裝相依套件 (Clean Install)
+        run: npm ci
+
+      - name: 執行編譯 (Build)
+        run: npm run build
+        # 這一步會讀取你的 vite.config.js 中的 base 設定
+        # 並產生 dist/ 資料夾
+
+      - name: 上傳編譯產物
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: dist # 指定要上傳的資料夾是 dist
+
+  # 第二階段：部署到 GitHub Pages
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build # 必須等 build 階段成功後才執行
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
