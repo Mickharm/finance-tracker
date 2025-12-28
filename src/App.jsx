@@ -376,7 +376,7 @@ const SalaryHistoryCard = ({ history, owner, onAdd, onDelete }) => {
 };
 
 const PartnerYearGroup = ({ year, transactions, onDelete }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const yearStats = useMemo(() => {
     const savings = transactions.filter(t => t.type === 'saving').reduce((sum, t) => sum + Number(t.amount), 0);
     const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
@@ -915,7 +915,7 @@ const IncomeView = ({ incomes, salaryHistory, onAddSalary, onDeleteSalary, onDel
 };
 
 const PartnerView = ({ partnerTransactions, onDelete, onAdd }) => {
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const groupedTransactions = useMemo(() => { const groups = {}; partnerTransactions.forEach(tx => { const year = new Date(tx.date).getFullYear(); if (!groups[year]) groups[year] = []; groups[year].push(tx); }); return Object.entries(groups).sort((a, b) => b[0] - a[0]); }, [partnerTransactions]);
   const totalSavings = partnerTransactions.filter(t => t.type === 'saving').reduce((sum, t) => sum + Number(t.amount), 0);
   const totalExpenses = partnerTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
