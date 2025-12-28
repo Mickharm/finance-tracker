@@ -205,45 +205,6 @@ const GlassButton = ({ onClick, children, className = "", disabled = false, vari
   );
 };
 
-// 密碼驗證模態框
-const PasswordModal = ({ isOpen, onClose, onUnlock, title, error }) => {
-  const [pin, setPin] = useState('');
-  useEffect(() => { if (isOpen) setPin(''); }, [isOpen]); // Reset pin on open
-
-  if (!isOpen) return null;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onUnlock(pin);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
-      <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 w-full max-w-xs text-center relative z-10 animate-in zoom-in-95 duration-200">
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-        <div className="mb-6 bg-slate-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
-          <Lock className="w-8 h-8" />
-        </div>
-        <h3 className="text-lg font-bold text-slate-800 mb-2">{title}</h3>
-        <p className="text-xs text-slate-400 mb-6 font-bold">請輸入密碼以解鎖</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="password"
-            value={pin}
-            onChange={e => setPin(e.target.value)}
-            placeholder="密碼"
-            className="w-full text-center text-lg tracking-[0.5em] font-bold bg-slate-100 border-none rounded-xl py-3 px-4 focus:ring-2 focus:ring-slate-400 focus:outline-none transition-all placeholder:tracking-normal placeholder:font-normal placeholder:text-slate-400"
-            autoFocus
-          />
-          {error && <p className="text-xs text-rose-500 font-bold shake">{error}</p>}
-          <button type="submit" className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition-all active:scale-95 shadow-lg shadow-slate-200">解鎖</button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme = 'slate', showDetails = true }) => {
   const remaining = total - current;
   const percentage = total > 0 ? Math.max(0, (remaining / total) * 100) : 0;
@@ -1370,35 +1331,10 @@ export default function App() {
   const [currentView, setCurrentView] = useState('home');
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Privacy Logic
-  const [unlockedViews, setUnlockedViews] = useState(new Set());
-  const [lockError, setLockError] = useState('');
-  const [pendingView, setPendingView] = useState(null);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-
-  const handleUnlock = (password) => {
-    const correctPassword = pendingView === 'principal' ? '1129' : (pendingView === 'partner' ? '0624' : '');
-    if (password === correctPassword) {
-      setUnlockedViews(prev => new Set(prev).add(pendingView));
-      setCurrentView(pendingView);
-      setPendingView(null);
-      setIsPasswordModalOpen(false);
-      setLockError('');
-    } else {
-      setLockError('密碼錯誤');
-      setTimeout(() => setLockError(''), 2000);
-    }
-  };
-
+  /* Privacy Logic Removed */
   const handleViewChange = (viewId) => {
-    if ((viewId === 'principal' || viewId === 'partner') && !unlockedViews.has(viewId)) {
-      setPendingView(viewId);
-      setIsPasswordModalOpen(true);
-      setIsMenuOpen(false); // Close menu if open
-    } else {
-      setCurrentView(viewId);
-      setIsMenuOpen(false); // Close menu if open
-    }
+    setCurrentView(viewId);
+    setIsMenuOpen(false);
   };
 
   // 1. Scroll to Top on View Change
@@ -1718,13 +1654,7 @@ export default function App() {
 
       <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
 
-      <PasswordModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => { setIsPasswordModalOpen(false); setPendingView(null); }}
-        onUnlock={handleUnlock}
-        title={pendingView === 'principal' ? '資產淨值' : '佳欣儲蓄'}
-        error={lockError}
-      />
+
 
       {/* Sidebar Menu */}
       {isMenuOpen && (
