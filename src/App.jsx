@@ -30,6 +30,7 @@ import {
   Coins, Receipt, CheckCircle2, Check, ArrowRightLeft, PenTool, Hash, FileText,
   TrendingUp, TrendingDown, RefreshCw, Layers, Search, Lock
 } from 'lucide-react';
+import icon from './assets/icon.png';
 
 // --- 1. Infrastructure & Configuration ---
 const firebaseConfig = {
@@ -1347,7 +1348,9 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [editingId, setEditingId] = useState(null); // Track ID of item being edited
+  const mainRef = useRef(null);
 
   // Modals
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
@@ -1400,7 +1403,7 @@ export default function App() {
 
   // 1. Scroll to Top on View Change
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (mainRef.current) mainRef.current.scrollTo(0, 0);
   }, [currentView]);
 
   // 2. Auto-Refresh on Visibility Change (Data Freshness) - 15 mins timeout
@@ -1728,7 +1731,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex animate-in slide-in-from-left duration-300">
           <div className="w-64 bg-white/90 backdrop-blur-xl h-full shadow-2xl p-6 relative">
             <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full text-slate-400 hover:bg-slate-200"><X className="w-4 h-4" /></button>
-            <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-slate-800 flex items-center gap-2"><img src="/icon.png" className="w-8 h-8 rounded-lg shadow-md" alt="Logo" /> 記帳助手</h1><p className="text-xs text-slate-400 mt-1 pl-1">v1.0.0(Mick)</p></div>
+            <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-slate-800 flex items-center gap-2"><img src={icon} className="w-8 h-8 rounded-lg shadow-md" alt="Logo" /> 記帳助手</h1><p className="text-xs text-slate-400 mt-1 pl-1">v1.0.0(Mick)</p></div>
             <div className="space-y-6">
               {MENU_SECTIONS.map(section => (
                 <div key={section.title}>
@@ -1765,7 +1768,7 @@ export default function App() {
         <div className="w-8"></div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10">
+      <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10">
         {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} />}
         {/* 新增: Investment Watchlist */}
         {currentView === 'watchlist' && <WatchlistView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
