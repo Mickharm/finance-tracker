@@ -218,7 +218,7 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
     <div className="w-full">
       <div className="flex justify-between items-end mb-2">
         <span className={`text-xs font-bold uppercase tracking-wider ${theme.text} opacity-80 flex items-center gap-2`}>{label} {isOverBudget && <span className="bg-rose-50 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">超支</span>}</span>
-        {showDetails && (<span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-700'}`}><span className="text-[10px] text-slate-400 font-sans mr-1 font-medium">剩餘</span> ${Math.abs(remaining).toLocaleString()}</span>)}
+        {showDetails && (<span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-700'} flex flex-wrap justify-end`}><span className="text-[10px] text-slate-400 font-sans mr-1 font-medium whitespace-nowrap">剩餘</span> <span className={`${remaining > 1000000 ? 'text-sm' : ''}`}>${Math.abs(remaining).toLocaleString()}</span></span>)}
       </div>
       <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}><div className={`h-full transition-all duration-1000 ease-out ${statusColor}`} style={{ width: `${percentage}%` }} /></div>
       {showDetails && variant === 'main' && (<div className="flex justify-between mt-1.5 text-[10px] text-slate-400 font-medium"><span>{Math.round(usedPercentage)}% 已用</span><span>總額: ${total.toLocaleString()}</span></div>)}
@@ -397,7 +397,7 @@ const PartnerYearGroup = ({ year, transactions, onDelete }) => {
             <div className={`p-2 rounded-xl ${tx.type === 'saving' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{tx.type === 'saving' ? <ArrowUpCircle className="w-4 h-4" /> : <ArrowDownCircle className="w-4 h-4" />}</div>
             <div className="flex flex-col"><span className="font-bold text-slate-700 text-xs">{tx.type === 'saving' ? '存入' : '支出'}</span><span className="text-[10px] text-slate-400 flex items-center gap-1">{tx.date} {tx.note && `• ${tx.note}`}</span></div>
           </div>
-          <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${tx.type === 'saving' ? 'text-emerald-600' : 'text-rose-500'}`}>{tx.type === 'saving' ? '+' : '-'}${Number(tx.amount).toLocaleString()}</span><button onClick={() => onDelete(tx.id)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div>
+          <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${tx.type === 'saving' ? 'text-emerald-600' : 'text-rose-500'}`}>{tx.type === 'saving' ? '+' : '-'}${Number(tx.amount).toLocaleString()}</span><button onClick={() => onDelete(tx.id)} className="text-slate-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div>
         </div>
       ))}</div>)}
     </div>
@@ -496,7 +496,7 @@ const ExchangeItem = ({ item, onDelete }) => (
       <div className="text-right">
         <div className="text-xs font-mono text-slate-500">NT$ {Math.round(item.usdAmount * item.rate).toLocaleString()}</div>
       </div>
-      <button onClick={() => onDelete(item.id)} className="text-slate-300 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
+      <button onClick={() => onDelete(item.id)} className="text-slate-300 hover:text-rose-400 transition-all"><X className="w-4 h-4" /></button>
     </div>
   </div>
 );
@@ -521,7 +521,7 @@ const StandardList = ({ title, items, onDelete, onAdd, icon: Icon, type, totalLa
         {items.length === 0 ? <p className="text-center text-xs text-slate-300 py-4">無紀錄</p> : items.map((item) => (
           <div key={item.id} className="border-b border-slate-100 last:border-0 pb-3 last:pb-0 group relative pr-8">
             {itemRenderer(item)}
-            <button onClick={() => onDelete(item.id)} className="absolute top-0 right-0 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-all">
+            <button onClick={() => onDelete(item.id)} className="absolute top-0 right-0 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -651,7 +651,7 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-mono font-bold text-emerald-600">+${Number(inc.amount).toLocaleString()}</span>
-                <button onClick={() => onDeleteIncome(inc.id)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-400 p-1">
+                <button onClick={() => onDeleteIncome(inc.id)} className="text-slate-300 hover:text-rose-400 p-1">
                   <X className="w-3 h-3" />
                 </button>
               </div>
@@ -889,7 +889,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
         <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
       </div>
-      {selectedDay && (<div className="mt-6 bg-white/80 rounded-2xl p-5 shadow-lg border border-slate-100 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-md"><div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2"><div><h3 className="text-lg font-bold text-slate-800">{viewDate.getMonth() + 1}月{selectedDay}日</h3><p className="text-xs text-slate-400">當日消費明細</p></div><span className="text-xl font-bold text-slate-600">${selectedTrans.reduce((sum, t) => sum + Number(t.amount), 0).toLocaleString()}</span></div><div className="space-y-3">{selectedTrans.length === 0 ? (<p className="text-center text-slate-400 py-4 text-sm">當日無消費紀錄</p>) : (selectedTrans.map(t => (<div key={t.id} className="flex justify-between items-center group"><div className="flex flex-col"><div className="flex items-center gap-2"><span className="text-sm font-bold text-slate-700">{t.category}</span><span className={`text-[10px] px-1.5 rounded ${t.payer === 'partner' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>{t.payer === 'partner' ? '佳欣' : '士程'}</span></div>{t.note && <span className="text-xs text-slate-400">{t.note}</span>}</div><div className="flex items-center gap-3"><span className={`font-mono font-medium ${t.type === 'annual' ? 'text-stone-500' : 'text-slate-500'}`}>-${Number(t.amount).toLocaleString()}</span><button onClick={() => deleteTransaction(t.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button></div></div>)))}</div></div>)}
+      {selectedDay && (<div className="mt-6 bg-white/80 rounded-2xl p-5 shadow-lg border border-slate-100 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-md"><div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2"><div><h3 className="text-lg font-bold text-slate-800">{viewDate.getMonth() + 1}月{selectedDay}日</h3><p className="text-xs text-slate-400">當日消費明細</p></div><span className="text-xl font-bold text-slate-600">${selectedTrans.reduce((sum, t) => sum + Number(t.amount), 0).toLocaleString()}</span></div><div className="space-y-3">{selectedTrans.length === 0 ? (<p className="text-center text-slate-400 py-4 text-sm">當日無消費紀錄</p>) : (selectedTrans.map(t => (<div key={t.id} className="flex justify-between items-center group"><div className="flex flex-col"><div className="flex items-center gap-2"><span className="text-sm font-bold text-slate-700">{t.category}</span><span className={`text-[10px] px-1.5 rounded ${t.payer === 'partner' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>{t.payer === 'partner' ? '佳欣' : '士程'}</span></div>{t.note && <span className="text-xs text-slate-400">{t.note}</span>}</div><div className="flex items-center gap-3"><span className={`font-mono font-medium ${t.type === 'annual' ? 'text-stone-500' : 'text-slate-500'}`}>-${Number(t.amount).toLocaleString()}</span><button onClick={() => deleteTransaction(t.id)} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button></div></div>)))}</div></div>)}
     </div>
   );
 };
@@ -938,15 +938,151 @@ const VisualizationView = ({ transactions }) => {
   const [baseYear, setBaseYear] = useState(new Date().getFullYear());
   const [compareYear, setCompareYear] = useState(new Date().getFullYear() - 1);
   const [isCompareMode, setIsCompareMode] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(null); // Drill-down state
+
   const generateYearOptions = () => { const currentY = new Date().getFullYear(); const startY = 2020; const years = []; for (let y = currentY + 1; y >= startY; y--) { years.push(y); } return years; };
   const availableYears = useMemo(() => generateYearOptions(), []);
+
   const getMonthlyData = (year) => { const months = Array(12).fill(0); transactions.forEach(t => { const d = new Date(t.date); if (d.getFullYear() === year) { months[d.getMonth()] += Number(t.amount); } }); return months; };
   const baseData = useMemo(() => getMonthlyData(baseYear), [transactions, baseYear]);
   const compareData = useMemo(() => getMonthlyData(compareYear), [transactions, compareYear]);
   const maxVal = Math.max(...baseData, ...compareData, 1);
-  const breakdownData = useMemo(() => { if (isCompareMode) return []; const stats = {}; let total = 0; transactions.forEach(t => { const d = new Date(t.date); if (d.getFullYear() === baseYear) { const amount = Number(t.amount); stats[t.category] = (stats[t.category] || 0) + amount; total += amount; } }); return Object.entries(stats).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value, percent: total > 0 ? (value / total) * 100 : 0 })); }, [transactions, baseYear, isCompareMode]);
+
+  // Filter breakdown data based on selected month or full year
+  const breakdownData = useMemo(() => {
+    if (isCompareMode) return [];
+    const stats = {};
+    let total = 0;
+    transactions.forEach(t => {
+      const d = new Date(t.date);
+      if (d.getFullYear() === baseYear) {
+        if (selectedMonth !== null && d.getMonth() !== selectedMonth) return; // Filter by month if selected
+        const amount = Number(t.amount);
+        stats[t.category] = (stats[t.category] || 0) + amount;
+        total += amount;
+      }
+    });
+    return Object.entries(stats).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value, percent: total > 0 ? (value / total) * 100 : 0 }));
+  }, [transactions, baseYear, isCompareMode, selectedMonth]);
+
   const monthlyDiffs = useMemo(() => { if (!isCompareMode) return []; return baseData.map((val, idx) => ({ month: idx + 1, base: val, compare: compareData[idx], diff: val - compareData[idx] })); }, [baseData, compareData, isCompareMode]);
-  return (<div className="space-y-6 pb-24 animate-in fade-in"><Card><div className="flex items-center justify-between mb-6"><h2 className="text-lg font-bold text-slate-800">{isCompareMode ? '年度支出比較' : '年度支出分析'}</h2><button onClick={() => setIsCompareMode(!isCompareMode)} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isCompareMode ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'}`}>{isCompareMode ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />} 比較模式</button></div><div className="flex gap-4 mb-6"><div className="flex-1"><label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">{isCompareMode ? '主年份' : '選擇年份'}</label><select value={baseYear} onChange={(e) => setBaseYear(Number(e.target.value))} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-700`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select></div>{isCompareMode && (<div className="flex-1 animate-in slide-in-from-right-2 duration-200"><label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">對比年份</label><select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-500`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select></div>)}</div><div className="h-64 flex items-end justify-between gap-1 mt-4 relative"><div className="absolute inset-0 flex flex-col justify-between pointer-events-none"><div className="border-t border-dashed border-slate-100 w-full h-px"></div><div className="border-t border-dashed border-slate-100 w-full h-px"></div><div className="border-t border-dashed border-slate-100 w-full h-px"></div><div className="border-t border-slate-200 w-full h-px"></div></div>{baseData.map((val, idx) => (<div key={idx} className="flex-1 flex flex-col justify-end items-center h-full z-10 group relative"><div className="flex gap-0.5 items-end w-full justify-center h-full px-0.5">{isCompareMode && (<div className="w-1.5 bg-slate-200 rounded-t-sm transition-all duration-500" style={{ height: `${(compareData[idx] / maxVal) * 100}%` }}></div>)}<div className={`rounded-t-sm transition-all duration-500 ${isCompareMode ? 'w-2 bg-slate-800' : 'w-4 bg-slate-800'}`} style={{ height: `${(val / maxVal) * 100}%` }}></div></div><span className="text-[9px] text-slate-400 mt-2 font-medium">{idx + 1}月</span></div>))}</div></Card>{isCompareMode ? (<Card><h3 className="text-sm font-bold text-slate-700 mb-4">每月差異分析 ({baseYear} vs {compareYear})</h3><div className="space-y-3">{monthlyDiffs.map((item) => (<div key={item.month} className="flex justify-between items-center text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0"><span className="text-slate-500 w-8">{item.month}月</span><div className="flex-1 px-4 text-xs text-gray-400 text-center">${item.base.toLocaleString()} vs ${item.compare.toLocaleString()}</div><span className={`font-mono font-bold ${item.diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{item.diff > 0 ? '+' : ''}{item.diff.toLocaleString()}</span></div>))}</div></Card>) : (<Card><h3 className="text-sm font-bold text-slate-700 mb-4">{baseYear} 年度支出組成</h3><div className="space-y-4">{breakdownData.length > 0 ? breakdownData.map((item) => (<div key={item.name}><div className="flex justify-between items-end mb-1 text-sm"><span className="text-slate-600 font-medium">{item.name}</span><span className="font-bold text-slate-800">${item.value.toLocaleString()} <span className="text-xs text-slate-400 font-normal">({item.percent.toFixed(1)}%)</span></span></div><div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-slate-700 rounded-full" style={{ width: `${item.percent}%` }}></div></div></div>)) : (<div className="text-center text-slate-400 py-6 text-sm">該年度尚無支出資料</div>)}</div></Card>)}</div>);
+
+  // Get detailed transactions for selected month
+  const detailedTransactions = useMemo(() => {
+    if (selectedMonth === null) return [];
+    return transactions.filter(t => {
+      const d = new Date(t.date);
+      return d.getFullYear() === baseYear && d.getMonth() === selectedMonth;
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [transactions, baseYear, selectedMonth]);
+
+  return (
+    <div className="space-y-6 pb-24 animate-in fade-in">
+      <Card>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold text-slate-800">{isCompareMode ? '年度支出比較' : '年度支出分析'}</h2>
+          <button onClick={() => { setIsCompareMode(!isCompareMode); setSelectedMonth(null); }} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isCompareMode ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'}`}>
+            {isCompareMode ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />} 比較模式
+          </button>
+        </div>
+
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1">
+            <label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">{isCompareMode ? '主年份' : '選擇年份'}</label>
+            <select value={baseYear} onChange={(e) => { setBaseYear(Number(e.target.value)); setSelectedMonth(null); }} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-700`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select>
+          </div>
+          {isCompareMode && (<div className="flex-1 animate-in slide-in-from-right-2 duration-200"><label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">對比年份</label><select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-500`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select></div>)}
+        </div>
+
+        <div className="h-64 flex items-end justify-between gap-1 mt-4 relative">
+          {/* Background Grid */}
+          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+            <div className="border-t border-dashed border-slate-100 w-full h-px"></div>
+            <div className="border-t border-dashed border-slate-100 w-full h-px"></div>
+            <div className="border-t border-dashed border-slate-100 w-full h-px"></div>
+            <div className="border-t border-slate-200 w-full h-px"></div>
+          </div>
+
+          {baseData.map((val, idx) => (
+            <div
+              key={idx}
+              onClick={() => !isCompareMode && setSelectedMonth(selectedMonth === idx ? null : idx)}
+              className={`flex-1 flex flex-col justify-end items-center h-full z-10 group relative ${!isCompareMode ? 'cursor-pointer hover:opacity-80' : ''}`}
+            >
+              {/* Permanent Value Label */}
+              {!isCompareMode && val > 0 && (
+                <div className="mb-1 text-[10px] font-bold text-slate-500 w-full text-center truncate px-0.5 transform -translate-y-full absolute top-0">{Math.round(val / 1000)}k</div>
+              )}
+
+              <div className="flex gap-0.5 items-end w-full justify-center h-full px-0.5 relative">
+                {isCompareMode && (<div className="w-1.5 bg-slate-200 rounded-t-sm transition-all duration-500" style={{ height: `${(compareData[idx] / maxVal) * 100}%` }}></div>)}
+                <div className={`rounded-t-sm transition-all duration-500 ${isCompareMode ? 'w-2 bg-slate-800' : 'w-4'} ${selectedMonth === idx ? 'bg-emerald-500 shadow-lg shadow-emerald-200' : 'bg-slate-800'}`} style={{ height: `${(val / maxVal) * 100}%` }}></div>
+              </div>
+              <span className={`text-[9px] mt-2 font-bold ${selectedMonth === idx ? 'text-emerald-600' : 'text-slate-400'}`}>{idx + 1}月</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {isCompareMode ? (
+        <Card>
+          <h3 className="text-sm font-bold text-slate-700 mb-4">每月差異分析 ({baseYear} vs {compareYear})</h3>
+          <div className="space-y-3">
+            {monthlyDiffs.map((item) => (
+              <div key={item.month} className="flex justify-between items-center text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0">
+                <span className="text-slate-500 w-8">{item.month}月</span>
+                <div className="flex-1 px-4 text-xs text-gray-400 text-center">${item.base.toLocaleString()} vs ${item.compare.toLocaleString()}</div>
+                <span className={`font-mono font-bold ${item.diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{item.diff > 0 ? '+' : ''}{item.diff.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                {selectedMonth !== null ? `${baseYear}年 ${selectedMonth + 1}月 支出組成` : `${baseYear} 年度支出組成`}
+                {selectedMonth !== null && <button onClick={(e) => { e.stopPropagation(); setSelectedMonth(null); }} className="text-[10px] bg-slate-100 px-2 py-1 rounded-full text-slate-500 hover:bg-slate-200">顯示全年</button>}
+              </h3>
+            </div>
+            <div className="space-y-4">
+              {breakdownData.length > 0 ? breakdownData.map((item) => (
+                <div key={item.name}>
+                  <div className="flex justify-between items-end mb-1 text-sm">
+                    <span className="text-slate-600 font-medium">{item.name}</span>
+                    <span className="font-bold text-slate-800">${item.value.toLocaleString()} <span className="text-xs text-slate-400 font-normal">({item.percent.toFixed(1)}%)</span></span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div className="h-full bg-slate-700 rounded-full" style={{ width: `${item.percent}%` }}></div>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-center text-slate-400 py-6 text-sm">該時段尚無支出資料</div>
+              )}
+            </div>
+          </Card>
+
+          {selectedMonth !== null && (
+            <div className="animate-in slide-in-from-bottom-4 duration-500">
+              <h3 className="text-sm font-bold text-slate-500 mb-3 px-2">詳細明細</h3>
+              <div className="space-y-3">
+                {detailedTransactions.map(t => (
+                  <div key={t.id} className={`${GLASS_CARD} p-4 flex justify-between items-center`}>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-slate-700">{t.category}</span>
+                      <span className="text-xs text-slate-400">{formatDetailedDate(t.date)} {t.note && `• ${t.note}`}</span>
+                    </div>
+                    <span className="font-mono font-bold text-slate-800">${Number(t.amount).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 };
 
 const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) => { const [config, setConfig] = useState(DEFAULT_PRINCIPAL_CONFIG); const [history, setHistory] = useState([]); const [loading, setLoading] = useState(true); const [snapshotDate, setSnapshotDate] = useState(getTodayString()); useEffect(() => { if (!user) return; const configRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'); onSnapshot(configRef, (s) => s.exists() ? setConfig(s.data()) : setDoc(configRef, DEFAULT_PRINCIPAL_CONFIG)); const historyRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'); const q = query(historyRef, orderBy('date', 'desc')); onSnapshot(q, (s) => { setHistory(s.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); }); }, [user]); const updateItem = (section, group, idx, field, val) => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group][idx][field] = field === 'amount' ? Number(val) : val; setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const addItem = (section, group) => { const newConfig = JSON.parse(JSON.stringify(config)); if (!newConfig[section][group]) newConfig[section][group] = []; newConfig[section][group].push({ name: '', amount: 0 }); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const deleteItem = (section, group, idx) => { requestConfirmation({ message: '確定移除此項目？', onConfirm: () => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group] = newConfig[section][group].filter((_, i) => i !== idx); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); } }); }; const handleAddSnapshot = () => { requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => { const ta = (config.assets.bank || []).reduce((s, i) => s + Number(i.amount), 0) + (config.assets.invest || []).reduce((s, i) => s + Number(i.amount), 0); const tl = (config.liabilities.encumbrance || []).reduce((s, i) => s + Number(i.amount), 0); await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), { date: new Date(snapshotDate).toISOString(), netPrincipal: ta - tl, details: config, createdAt: serverTimestamp() }); } }); }; const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history', id))); return (<div className="pb-24 space-y-6 animate-in fade-in"><PrincipalTrendChart history={history} /><div className="flex flex-col gap-4"><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">存款組成 (Assets)</h3><AssetGroup title="銀行帳戶" items={config.assets.bank} section="assets" groupKey="bank" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /><AssetGroup title="投資項目" items={config.assets.invest} section="assets" groupKey="invest" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">負債組成 (Liabilities)</h3><AssetGroup title="房價圈存" items={config.liabilities.encumbrance} section="liabilities" groupKey="encumbrance" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div></div><div className={`${GLASS_CARD} p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end`}><InputField label="結算日期" type="date" value={snapshotDate} onChange={(e) => setSnapshotDate(e.target.value)} className="w-full sm:flex-1" /><GlassButton onClick={handleAddSnapshot} className="w-full sm:flex-1 py-4 rounded-xl sm:h-[58px]"><Save className="w-5 h-5" /> 結算本期金額</GlassButton></div><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> 歷次結算紀錄</h3><div className="space-y-3">{history.map(rec => (<div key={rec.id} className="bg-white/60 p-4 rounded-xl border border-slate-100 flex justify-between items-center backdrop-blur-sm"><div><div className="font-bold text-slate-800">${rec.netPrincipal.toLocaleString()}</div><div className="text-[10px] text-slate-400">{new Date(rec.date).toLocaleDateString()}</div></div><button onClick={() => handleDeleteHistory(rec.id)}><X className="w-4 h-4 text-slate-300 hover:text-rose-400" /></button></div>))}</div></div></div>); };
@@ -1029,6 +1165,11 @@ export default function App() {
 
   const [currentView, setCurrentView] = useState('home');
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // 1. Scroll to Top on View Change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView]);
 
   // Data State
   const [transactions, setTransactions] = useState([]);
