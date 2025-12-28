@@ -28,7 +28,7 @@ import {
   Wallet, ArrowUpCircle, ArrowDownCircle, BarChart2, Save, Landmark,
   Building2, Clock, ToggleLeft, ToggleRight, ClipboardList, Calculator,
   Coins, Receipt, CheckCircle2, Check, ArrowRightLeft, PenTool, Hash, FileText,
-  TrendingUp, TrendingDown, RefreshCw, Layers, Search
+  TrendingUp, TrendingDown, RefreshCw, Layers, Search, Lock
 } from 'lucide-react';
 
 // --- 1. Infrastructure & Configuration ---
@@ -204,27 +204,34 @@ const GlassButton = ({ onClick, children, className = "", disabled = false, vari
   );
 };
 
-// 密碼鎖定視圖
-const LockedView = ({ title, onUnlock, error }) => {
+// 密碼驗證模態框
+const PasswordModal = ({ isOpen, onClose, onUnlock, title, error }) => {
   const [pin, setPin] = useState('');
+  useEffect(() => { if (isOpen) setPin(''); }, [isOpen]); // Reset pin on open
+
+  if (!isOpen) return null;
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onUnlock(pin);
   };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] animate-in fade-in zoom-in-95 duration-300">
-      <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 w-full max-w-xs text-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
+      <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 w-full max-w-xs text-center relative z-10 animate-in zoom-in-95 duration-200">
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
         <div className="mb-6 bg-slate-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
           <Lock className="w-8 h-8" />
         </div>
         <h3 className="text-lg font-bold text-slate-800 mb-2">{title}</h3>
-        <p className="text-xs text-slate-400 mb-6 font-bold">此頁面受密碼保護</p>
+        <p className="text-xs text-slate-400 mb-6 font-bold">請輸入密碼以解鎖</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="password"
             value={pin}
             onChange={e => setPin(e.target.value)}
-            placeholder="請輸入密碼"
+            placeholder="密碼"
             className="w-full text-center text-lg tracking-[0.5em] font-bold bg-slate-100 border-none rounded-xl py-3 px-4 focus:ring-2 focus:ring-slate-400 focus:outline-none transition-all placeholder:tracking-normal placeholder:font-normal placeholder:text-slate-400"
             autoFocus
           />
@@ -712,7 +719,7 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
       <SalaryHistoryCard history={history} owner={owner} onAdd={onAddSalary} onDelete={onDeleteSalary} onEdit={onEditSalary} />
       <div className={`${GLASS_CARD} p-5`}>
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-sm font-bold text-slate-700">收入明細 (點擊編輯)</h4>
+          <h4 className="text-sm font-bold text-slate-700">收入明細 </h4>
           <GlassButton onClick={() => onAddIncome(owner)} className="px-2 py-1 text-xs" variant="ghost">新增</GlassButton>
         </div>
         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-hide">
@@ -818,7 +825,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         onEdit={(item) => onEditExp(item)}
         type="down_payment"
         icon={ClipboardList}
-        totalLabel="雜支總計"
+        totalLabel="總計"
         totalValue={totalDownPaymentExp}
         variant="amber"
         isCollapsible={true}
@@ -865,7 +872,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         onAdd={() => setIsAddMortgageFundingModalOpen(true)}
         onEdit={(item) => onEditFunding(item)}
         icon={Coins}
-        totalLabel="提領資金:"
+        totalLabel="提領資金"
         totalValue={totalFunding}
         variant="indigo"
         isCollapsible={true}
@@ -975,7 +982,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
         <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
       </div>
-      {selectedDay && (<div className="mt-6 bg-white/80 rounded-2xl p-5 shadow-lg border border-slate-100 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-md"><div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2"><div><h3 className="text-lg font-bold text-slate-800">{viewDate.getMonth() + 1}月{selectedDay}日</h3><p className="text-xs text-slate-400">當日消費明細 (點擊編輯)</p></div><span className="text-xl font-bold text-slate-600">${selectedTrans.reduce((sum, t) => sum + Number(t.amount), 0).toLocaleString()}</span></div><div className="space-y-3">{selectedTrans.length === 0 ? (<p className="text-center text-slate-400 py-4 text-sm">當日無消費紀錄</p>) : (selectedTrans.map(t => (<div key={t.id} onClick={() => onEdit && onEdit(t)} className="flex justify-between items-center group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"><div className="flex flex-col"><div className="flex items-center gap-2"><span className="text-sm font-bold text-slate-700">{t.category}</span><span className={`text-[10px] px-1.5 rounded ${t.payer === 'partner' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>{t.payer === 'partner' ? '佳欣' : '士程'}</span></div>{t.note && <span className="text-xs text-slate-400">{t.note}</span>}</div><div className="flex items-center gap-3"><span className={`font-mono font-medium ${t.type === 'annual' ? 'text-stone-500' : 'text-slate-500'}`}>-${Number(t.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button></div></div>)))}</div></div>)}
+      {selectedDay && (<div className="mt-6 bg-white/80 rounded-2xl p-5 shadow-lg border border-slate-100 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-md"><div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2"><div><h3 className="text-lg font-bold text-slate-800">{viewDate.getMonth() + 1}月{selectedDay}日</h3><p className="text-xs text-slate-400">當日消費明細</p></div><span className="text-xl font-bold text-slate-600">${selectedTrans.reduce((sum, t) => sum + Number(t.amount), 0).toLocaleString()}</span></div><div className="space-y-3">{selectedTrans.length === 0 ? (<p className="text-center text-slate-400 py-4 text-sm">當日無消費紀錄</p>) : (selectedTrans.map(t => (<div key={t.id} onClick={() => onEdit && onEdit(t)} className="flex justify-between items-center group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"><div className="flex flex-col"><div className="flex items-center gap-2"><span className="text-sm font-bold text-slate-700">{t.category}</span><span className={`text-[10px] px-1.5 rounded ${t.payer === 'partner' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>{t.payer === 'partner' ? '佳欣' : '士程'}</span></div>{t.note && <span className="text-xs text-slate-400">{t.note}</span>}</div><div className="flex items-center gap-3"><span className={`font-mono font-medium ${t.type === 'annual' ? 'text-stone-500' : 'text-slate-500'}`}>-${Number(t.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button></div></div>)))}</div></div>)}
     </div>
   );
 };
@@ -1167,7 +1174,7 @@ const VisualizationView = ({ transactions }) => {
 
           {(selectedMonth !== null || selectedCategory !== null) && (
             <div className="animate-in slide-in-from-bottom-4 duration-500">
-              <h3 className="text-sm font-bold text-slate-500 mb-3 px-2">詳細明細 (點擊編輯)</h3>
+              <h3 className="text-sm font-bold text-slate-500 mb-3 px-2">詳細明細 </h3>
               <div className="space-y-3">
                 {detailedTransactions.map(t => (
                   <div key={t.id} onClick={() => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} className={`${GLASS_CARD} p-4 flex justify-between items-center cursor-pointer hover:bg-white/60 transition-colors`}>
@@ -1363,14 +1370,31 @@ export default function App() {
   // Privacy Logic
   const [unlockedViews, setUnlockedViews] = useState(new Set());
   const [lockError, setLockError] = useState('');
+  const [pendingView, setPendingView] = useState(null);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  const handleUnlock = (viewName, password, correctPassword) => {
+  const handleUnlock = (password) => {
+    const correctPassword = pendingView === 'principal' ? '1129' : (pendingView === 'partner' ? '0624' : '');
     if (password === correctPassword) {
-      setUnlockedViews(prev => new Set(prev).add(viewName));
+      setUnlockedViews(prev => new Set(prev).add(pendingView));
+      setCurrentView(pendingView);
+      setPendingView(null);
+      setIsPasswordModalOpen(false);
       setLockError('');
     } else {
       setLockError('密碼錯誤');
       setTimeout(() => setLockError(''), 2000);
+    }
+  };
+
+  const handleViewChange = (viewId) => {
+    if ((viewId === 'principal' || viewId === 'partner') && !unlockedViews.has(viewId)) {
+      setPendingView(viewId);
+      setIsPasswordModalOpen(true);
+      setIsMenuOpen(false); // Close menu if open
+    } else {
+      setCurrentView(viewId);
+      setIsMenuOpen(false); // Close menu if open
     }
   };
 
@@ -1691,6 +1715,40 @@ export default function App() {
 
       <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
 
+      <PasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => { setIsPasswordModalOpen(false); setPendingView(null); }}
+        onUnlock={handleUnlock}
+        title={pendingView === 'principal' ? '資產淨值' : '佳欣儲蓄'}
+        error={lockError}
+      />
+
+      {/* Sidebar Menu */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50 flex animate-in slide-in-from-left duration-300">
+          <div className="w-64 bg-white/90 backdrop-blur-xl h-full shadow-2xl p-6 relative">
+            <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full text-slate-400 hover:bg-slate-200"><X className="w-4 h-4" /></button>
+            <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-slate-800 flex items-center gap-2"><div className="bg-indigo-600 text-white p-1.5 rounded-lg"><PieChart className="w-5 h-5" /></div> 財務管家</h1><p className="text-xs text-slate-400 mt-1 pl-1">v3.0.0 (Personal)</p></div>
+            <div className="space-y-6">
+              {MENU_SECTIONS.map(section => (
+                <div key={section.title}>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">{section.title}</h3>
+                  <div className="space-y-1">
+                    {section.items.map(item => (
+                      <button key={item.id} onClick={() => handleViewChange(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all ${currentView === item.id ? 'bg-slate-800 text-white shadow-lg shadow-slate-300/50' : 'text-slate-500 hover:bg-slate-100'}`}>
+                        <item.icon className={`w-4 h-4 ${currentView === item.id ? 'text-indigo-300' : ''}`} />
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 bg-slate-900/20 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
+        </div>
+      )}
+
       <header className="bg-white/60 backdrop-blur-md px-4 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20">
         <button onClick={() => setIsMenuOpen(true)} className="p-2 -ml-2 rounded-xl hover:bg-white/50 text-slate-600 transition-colors"><Menu className="w-6 h-6" /></button>
         <div className="flex-1 flex justify-center">
@@ -1743,9 +1801,7 @@ export default function App() {
           />
         )}
         {currentView === 'principal' && (
-          !unlockedViews.has('principal') ?
-            <LockedView title="資產淨值" onUnlock={(pwd) => handleUnlock('principal', pwd, '1129')} error={lockError} /> :
-            <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
+          <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
         )}
         {currentView === 'visualization' && <VisualizationView transactions={transactions} />}
         {currentView === 'income' && (
@@ -1773,26 +1829,24 @@ export default function App() {
           />
         )}
         {currentView === 'partner' && (
-          !unlockedViews.has('partner') ?
-            <LockedView title="佳欣儲蓄" onUnlock={(pwd) => handleUnlock('partner', pwd, '0624')} error={lockError} /> :
-            <PartnerView
-              partnerTransactions={partnerTransactions}
-              onDelete={deletePartnerTx}
-              onAdd={(item = null) => {
-                if (item && item.id) {
-                  setNewPartnerTx({ ...item, amount: item.amount });
-                  setEditingId(item.id);
-                } else {
-                  setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
-                }
-                setIsAddPartnerTxModalOpen(true);
-              }}
-              onEdit={(item) => {
+          <PartnerView
+            partnerTransactions={partnerTransactions}
+            onDelete={deletePartnerTx}
+            onAdd={(item = null) => {
+              if (item && item.id) {
                 setNewPartnerTx({ ...item, amount: item.amount });
                 setEditingId(item.id);
-                setIsAddPartnerTxModalOpen(true);
-              }}
-            />
+              } else {
+                setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
+              }
+              setIsAddPartnerTxModalOpen(true);
+            }}
+            onEdit={(item) => {
+              setNewPartnerTx({ ...item, amount: item.amount });
+              setEditingId(item.id);
+              setIsAddPartnerTxModalOpen(true);
+            }}
+          />
         )}
         {currentView === 'calendar' && (
           <CalendarView
