@@ -25,7 +25,7 @@ jobs:
       - name: 設定 Node.js 環境
         uses: actions/setup-node@v4
         with:
-          node-version: 18 # 使用穩定版 Node.js
+          node-version: 22 # 使用最新 LTS Node.js 以符合 Vite 需求
           cache: 'npm'     # 啟用 npm 快取以加速構建
 
       - name: 安裝相依套件 (Clean Install)
