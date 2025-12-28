@@ -375,7 +375,7 @@ const SalaryHistoryCard = ({ history, owner, onAdd, onDelete }) => {
   return (<div className={`${GLASS_CARD} p-5`}><div className="flex justify-between items-center cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}><div className="flex items-center gap-3"><div className="p-2 bg-slate-100 rounded-xl text-slate-500"><Briefcase className="w-4 h-4" /></div><span className="font-bold text-slate-700 text-sm">薪資成長紀錄</span></div><GlassButton onClick={(e) => { e.stopPropagation(); onAdd(owner); }} variant="ghost" className="px-2 py-1 text-xs">+ 調薪</GlassButton></div>{isExpanded && (<div className="mt-4 space-y-3 pt-3 border-t border-slate-100/50">{history.length === 0 ? (<p className="text-xs text-slate-300 text-center py-2">尚無調薪紀錄</p>) : (history.map((rec, idx) => { const prevRec = history[idx + 1]; let percentChange = null; if (prevRec && prevRec.amount > 0) percentChange = ((rec.amount - prevRec.amount) / prevRec.amount) * 100; return (<div key={rec.id} className="flex justify-between items-center text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0"><div className="flex flex-col"><span className="font-mono font-bold text-slate-700">${Number(rec.amount).toLocaleString()}</span><span className="text-[10px] text-slate-400">{rec.date}</span></div><div className="flex items-center gap-2">{percentChange !== null && (<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${percentChange >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{percentChange >= 0 ? '+' : ''}{percentChange.toFixed(1)}%</span>)}<button onClick={() => onDelete(rec.id)} className="text-slate-300 hover:text-rose-400 p-1"><X className="w-3 h-3" /></button></div></div>); }))}</div>)}{!isExpanded && history.length > 0 && <div className="mt-2 text-xs text-slate-400 pl-11">目前: <span className="font-mono text-slate-600 font-bold">${Number(history[0].amount).toLocaleString()}</span></div>}</div>);
 };
 
-const PartnerYearGroup = ({ year, transactions, onDelete }) => {
+const PartnerYearGroup = ({ year, transactions, onDelete, onEdit }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const yearStats = useMemo(() => {
     const savings = transactions.filter(t => t.type === 'saving').reduce((sum, t) => sum + Number(t.amount), 0);
@@ -392,12 +392,12 @@ const PartnerYearGroup = ({ year, transactions, onDelete }) => {
         <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${yearStats.net >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>{yearStats.net > 0 ? '+' : ''}${yearStats.net.toLocaleString()}</span></div>
       </div>
       {isExpanded && (<div className="p-2 space-y-2">{transactions.map(tx => (
-        <div key={tx.id} className="flex justify-between items-center p-3 bg-white/50 rounded-xl border border-slate-100 hover:border-slate-200 transition-all group">
+        <div key={tx.id} onClick={() => onEdit(tx)} className="flex justify-between items-center p-3 bg-white/50 rounded-xl border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
           <div className="flex gap-3 items-center">
             <div className={`p-2 rounded-xl ${tx.type === 'saving' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{tx.type === 'saving' ? <ArrowUpCircle className="w-4 h-4" /> : <ArrowDownCircle className="w-4 h-4" />}</div>
             <div className="flex flex-col"><span className="font-bold text-slate-700 text-xs">{tx.type === 'saving' ? '存入' : '支出'}</span><span className="text-[10px] text-slate-400 flex items-center gap-1">{tx.date} {tx.note && `• ${tx.note}`}</span></div>
           </div>
-          <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${tx.type === 'saving' ? 'text-emerald-600' : 'text-rose-500'}`}>{tx.type === 'saving' ? '+' : '-'}${Number(tx.amount).toLocaleString()}</span><button onClick={() => onDelete(tx.id)} className="text-slate-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div>
+          <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${tx.type === 'saving' ? 'text-emerald-600' : 'text-rose-500'}`}>{tx.type === 'saving' ? '+' : '-'}${Number(tx.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); onDelete(tx.id); }} className="text-slate-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div>
         </div>
       ))}</div>)}
     </div>
@@ -502,7 +502,8 @@ const ExchangeItem = ({ item, onDelete }) => (
 );
 
 // 統一的列表元件
-const StandardList = ({ title, items, onDelete, onAdd, icon: Icon, type, totalLabel, totalValue, itemRenderer, variant = 'slate' }) => {
+// 統一的列表元件
+const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type, totalLabel, totalValue, itemRenderer, variant = 'slate' }) => {
   const theme = COLOR_VARIANTS[variant] || COLOR_VARIANTS.slate;
   return (
     <div className={`${GLASS_CARD} p-5 mb-6 ${theme.glow}`}>
@@ -519,9 +520,9 @@ const StandardList = ({ title, items, onDelete, onAdd, icon: Icon, type, totalLa
       </div>
       <div className="space-y-3">
         {items.length === 0 ? <p className="text-center text-xs text-slate-300 py-4">無紀錄</p> : items.map((item) => (
-          <div key={item.id} className="border-b border-slate-100 last:border-0 pb-3 last:pb-0 group relative pr-8">
+          <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-slate-100 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-slate-50/50 rounded-lg p-2 transition-colors' : ''}`}>
             {itemRenderer(item)}
-            <button onClick={() => onDelete(item.id)} className="absolute top-0 right-0 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all">
+            <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-2 right-2 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -637,21 +638,22 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider relative z-10">年度累計收入</div>
       </div>
       <SalaryHistoryCard history={history} owner={owner} onAdd={onAddSalary} onDelete={onDeleteSalary} />
+      <SalaryHistoryCard history={history} owner={owner} onAdd={onAddSalary} onDelete={onDeleteSalary} />
       <div className={`${GLASS_CARD} p-5`}>
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-sm font-bold text-slate-700">收入明細</h4>
+          <h4 className="text-sm font-bold text-slate-700">收入明細 (點擊編輯)</h4>
           <GlassButton onClick={() => onAddIncome(owner)} className="px-2 py-1 text-xs" variant="ghost">新增</GlassButton>
         </div>
         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-hide">
           {incomes.map(inc => (
-            <div key={inc.id} className="flex justify-between items-center p-3 bg-slate-50/50 rounded-xl group border border-transparent hover:border-slate-200 transition-all">
+            <div key={inc.id} onClick={() => onAddIncome(owner, inc)} className="flex justify-between items-center p-3 bg-slate-50/50 rounded-xl group border border-transparent hover:border-slate-200 transition-all cursor-pointer">
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-slate-700">{inc.category}</span>
                 <span className="text-[10px] text-slate-400">{inc.date}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-mono font-bold text-emerald-600">+${Number(inc.amount).toLocaleString()}</span>
-                <button onClick={() => onDeleteIncome(inc.id)} className="text-slate-300 hover:text-rose-400 p-1">
+                <button onClick={(e) => { e.stopPropagation(); onDeleteIncome(inc.id); }} className="text-slate-300 hover:text-rose-400 p-1">
                   <X className="w-3 h-3" />
                 </button>
               </div>
@@ -694,7 +696,7 @@ const HomeView = ({ monthlyStats, annualStats }) => (
   </div>
 );
 
-const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, deleteMortgageExp, deleteMortgageAnalysis, deleteMortgageFunding, setMortgageExpType, setIsAddMortgageExpModalOpen, setIsAddMortgageAnalysisModalOpen, setIsAddMortgageFundingModalOpen }) => {
+const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, deleteMortgageExp, deleteMortgageAnalysis, deleteMortgageFunding, setMortgageExpType, setIsAddMortgageExpModalOpen, setIsAddMortgageAnalysisModalOpen, setIsAddMortgageFundingModalOpen, onEditExp, onEditAnalysis, onEditFunding }) => {
   const downPaymentExp = mortgageExpenses.filter(e => e.type === 'down_payment');
   const applianceExp = mortgageExpenses.filter(e => e.type === 'misc_appliances');
   const totalDownPaymentExp = downPaymentExp.reduce((sum, i) => sum + Number(i.amount), 0);
@@ -742,6 +744,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         items={downPaymentExp}
         onDelete={deleteMortgageExp}
         onAdd={(type) => { setMortgageExpType(type); setIsAddMortgageExpModalOpen(true); }}
+        onEdit={(item) => onEditExp(item)}
         type="down_payment"
         icon={ClipboardList}
         totalLabel="雜支總計"
@@ -765,6 +768,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         items={mortgageAnalysis}
         onDelete={deleteMortgageAnalysis}
         onAdd={() => setIsAddMortgageAnalysisModalOpen(true)}
+        onEdit={(item) => onEditAnalysis(item)}
         icon={Calculator}
         totalLabel="試算總成本"
         totalValue={totalAnalysis}
@@ -782,6 +786,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         items={mortgageFunding}
         onDelete={deleteMortgageFunding}
         onAdd={() => setIsAddMortgageFundingModalOpen(true)}
+        onEdit={(item) => onEditFunding(item)}
         icon={Coins}
         totalLabel="可用資金總計"
         totalValue={totalFunding}
@@ -889,7 +894,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
         <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
       </div>
-      {selectedDay && (<div className="mt-6 bg-white/80 rounded-2xl p-5 shadow-lg border border-slate-100 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-md"><div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2"><div><h3 className="text-lg font-bold text-slate-800">{viewDate.getMonth() + 1}月{selectedDay}日</h3><p className="text-xs text-slate-400">當日消費明細</p></div><span className="text-xl font-bold text-slate-600">${selectedTrans.reduce((sum, t) => sum + Number(t.amount), 0).toLocaleString()}</span></div><div className="space-y-3">{selectedTrans.length === 0 ? (<p className="text-center text-slate-400 py-4 text-sm">當日無消費紀錄</p>) : (selectedTrans.map(t => (<div key={t.id} className="flex justify-between items-center group"><div className="flex flex-col"><div className="flex items-center gap-2"><span className="text-sm font-bold text-slate-700">{t.category}</span><span className={`text-[10px] px-1.5 rounded ${t.payer === 'partner' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>{t.payer === 'partner' ? '佳欣' : '士程'}</span></div>{t.note && <span className="text-xs text-slate-400">{t.note}</span>}</div><div className="flex items-center gap-3"><span className={`font-mono font-medium ${t.type === 'annual' ? 'text-stone-500' : 'text-slate-500'}`}>-${Number(t.amount).toLocaleString()}</span><button onClick={() => deleteTransaction(t.id)} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button></div></div>)))}</div></div>)}
+      {selectedDay && (<div className="mt-6 bg-white/80 rounded-2xl p-5 shadow-lg border border-slate-100 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-md"><div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2"><div><h3 className="text-lg font-bold text-slate-800">{viewDate.getMonth() + 1}月{selectedDay}日</h3><p className="text-xs text-slate-400">當日消費明細 (點擊編輯)</p></div><span className="text-xl font-bold text-slate-600">${selectedTrans.reduce((sum, t) => sum + Number(t.amount), 0).toLocaleString()}</span></div><div className="space-y-3">{selectedTrans.length === 0 ? (<p className="text-center text-slate-400 py-4 text-sm">當日無消費紀錄</p>) : (selectedTrans.map(t => (<div key={t.id} onClick={() => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} className="flex justify-between items-center group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"><div className="flex flex-col"><div className="flex items-center gap-2"><span className="text-sm font-bold text-slate-700">{t.category}</span><span className={`text-[10px] px-1.5 rounded ${t.payer === 'partner' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>{t.payer === 'partner' ? '佳欣' : '士程'}</span></div>{t.note && <span className="text-xs text-slate-400">{t.note}</span>}</div><div className="flex items-center gap-3"><span className={`font-mono font-medium ${t.type === 'annual' ? 'text-stone-500' : 'text-slate-500'}`}>-${Number(t.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button></div></div>)))}</div></div>)}
     </div>
   );
 };
@@ -914,7 +919,7 @@ const IncomeView = ({ incomes, salaryHistory, onAddSalary, onDeleteSalary, onDel
   );
 };
 
-const PartnerView = ({ partnerTransactions, onDelete, onAdd }) => {
+const PartnerView = ({ partnerTransactions, onDelete, onAdd, onEdit }) => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const groupedTransactions = useMemo(() => { const groups = {}; partnerTransactions.forEach(tx => { const year = new Date(tx.date).getFullYear(); if (!groups[year]) groups[year] = []; groups[year].push(tx); }); return Object.entries(groups).sort((a, b) => b[0] - a[0]); }, [partnerTransactions]);
   const totalSavings = partnerTransactions.filter(t => t.type === 'saving').reduce((sum, t) => sum + Number(t.amount), 0);
@@ -926,9 +931,9 @@ const PartnerView = ({ partnerTransactions, onDelete, onAdd }) => {
       <div className="flex flex-col gap-4">
         <div onClick={() => setIsHistoryOpen(!isHistoryOpen)} className="flex justify-between items-center px-1 cursor-pointer select-none hover:bg-slate-50/50 p-2 rounded-xl transition-colors">
           <h3 className="font-bold text-slate-700 flex items-center gap-2"><Wallet className="w-4 h-4" /> 資金變動紀錄 {isHistoryOpen ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}</h3>
-          <GlassButton onClick={(e) => { e.stopPropagation(); onAdd(); }}><Plus className="w-3 h-3" /> 新增紀錄</GlassButton>
+          <GlassButton onClick={(e) => { e.stopPropagation(); onAdd({}); }}><Plus className="w-3 h-3" /> 新增紀錄</GlassButton>
         </div>
-        {isHistoryOpen && (partnerTransactions.length === 0 ? (<div className={`${GLASS_CARD} flex flex-col items-center justify-center h-48 text-slate-300 border-dashed`}><PiggyBank className="w-12 h-12 mb-2 opacity-20" /><p className="text-sm">尚無儲蓄紀錄</p></div>) : (groupedTransactions.map(([year, txs]) => (<PartnerYearGroup key={year} year={year} transactions={txs} onDelete={onDelete} />))))}
+        {isHistoryOpen && (partnerTransactions.length === 0 ? (<div className={`${GLASS_CARD} flex flex-col items-center justify-center h-48 text-slate-300 border-dashed`}><PiggyBank className="w-12 h-12 mb-2 opacity-20" /><p className="text-sm">尚無儲蓄紀錄</p></div>) : (groupedTransactions.map(([year, txs]) => (<PartnerYearGroup key={year} year={year} transactions={txs} onDelete={onDelete} onEdit={onEdit} />))))}
       </div>
     </div>
   );
@@ -1068,12 +1073,12 @@ const VisualizationView = ({ transactions }) => {
               <h3 className="text-sm font-bold text-slate-500 mb-3 px-2">詳細明細</h3>
               <div className="space-y-3">
                 {detailedTransactions.map(t => (
-                  <div key={t.id} className={`${GLASS_CARD} p-4 flex justify-between items-center`}>
+                  <div key={t.id} onClick={() => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} className={`${GLASS_CARD} p-4 flex justify-between items-center cursor-pointer hover:bg-white/60 transition-colors`}>
                     <div className="flex flex-col">
                       <span className="text-sm font-bold text-slate-700">{t.category}</span>
                       <span className="text-xs text-slate-400">{formatDetailedDate(t.date)} {t.note && `• ${t.note}`}</span>
                     </div>
-                    <span className="font-mono font-bold text-slate-800">${Number(t.amount).toLocaleString()}</span>
+                    <div className="flex items-center gap-3"><span className="font-mono font-bold text-slate-800">${Number(t.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }} className="text-slate-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div>
                   </div>
                 ))}
               </div>
@@ -1147,6 +1152,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null); // Track ID of item being edited
 
   // Modals
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
@@ -1170,6 +1176,25 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentView]);
+
+  // 2. Auto-Refresh on Visibility Change (Data Freshness) - 15 mins timeout
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const lastSeen = localStorage.getItem('lastSeen');
+        const now = Date.now();
+        // If hidden for > 15 minutes (900,000 ms), force reload
+        if (lastSeen && (now - Number(lastSeen) > 900000)) {
+          window.location.reload();
+        }
+        localStorage.setItem('lastSeen', now);
+      } else {
+        localStorage.setItem('lastSeen', Date.now());
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // Data State
   const [transactions, setTransactions] = useState([]);
@@ -1327,9 +1352,16 @@ export default function App() {
   const handleAddTransaction = (e) => {
     e.preventDefault();
     withSubmission(async () => {
-      await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...newTrans, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
+      if (editingId) {
+        // Update existing transaction
+        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...newTrans, amount: Number(newTrans.amount) });
+      } else {
+        // Add new transaction
+        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...newTrans, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
+      }
       setNewTrans(prev => ({ ...prev, amount: '', note: '' }));
       setIsAddTxModalOpen(false);
+      setEditingId(null);
     });
   };
   const deleteTransaction = (id) => requestDelete("確定刪除此筆支出紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', id)));
@@ -1337,9 +1369,14 @@ export default function App() {
   const handleAddIncome = (e) => {
     e.preventDefault();
     withSubmission(async () => {
-      await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes'), { ...newIncome, amount: Number(newIncome.amount), createdAt: serverTimestamp() });
+      if (editingId) {
+        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', editingId), { ...newIncome, amount: Number(newIncome.amount) });
+      } else {
+        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes'), { ...newIncome, amount: Number(newIncome.amount), createdAt: serverTimestamp() });
+      }
       setNewIncome(prev => ({ ...prev, amount: '', note: '' }));
       setIsAddIncomeModalOpen(false);
+      setEditingId(null);
     });
   };
   const handleDeleteIncome = (id) => requestDelete("確定刪除此筆收入紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', id)));
@@ -1347,29 +1384,64 @@ export default function App() {
   const handleAddSalaryRecord = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history'), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount), createdAt: serverTimestamp() }); setNewSalaryRecord(prev => ({ ...prev, amount: '', note: '' })); setIsAddSalaryModalOpen(false); }); };
   const handleDeleteSalaryRecord = (id) => requestDelete("確定刪除此調薪紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', id)));
 
-  const handleAddPartnerTx = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings'), { ...newPartnerTx, amount: Number(newPartnerTx.amount), createdAt: serverTimestamp() }); setNewPartnerTx(prev => ({ ...prev, amount: '', note: '' })); setIsAddPartnerTxModalOpen(false); }); };
+  const handleAddPartnerTx = (e) => {
+    e.preventDefault();
+    withSubmission(async () => {
+      if (editingId) {
+        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', editingId), { ...newPartnerTx, amount: Number(newPartnerTx.amount) });
+      } else {
+        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings'), { ...newPartnerTx, amount: Number(newPartnerTx.amount), createdAt: serverTimestamp() });
+      }
+      setNewPartnerTx(prev => ({ ...prev, amount: '', note: '' }));
+      setIsAddPartnerTxModalOpen(false);
+      setEditingId(null);
+    });
+  };
   const deletePartnerTx = (id) => requestDelete("確定刪除此筆儲蓄/支出紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', id)));
 
   const handleAddMortgageExp = (e) => {
     e.preventDefault();
     withSubmission(async () => {
-      // 修正4: 強制使用當前的 mortgageExpType 變數，而不是 state 中的舊值
-      await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses'), {
-        ...newMortgageExp,
-        amount: Number(newMortgageExp.amount),
-        type: mortgageExpType, // Force correct type
-        createdAt: serverTimestamp()
-      });
+      if (editingId) {
+        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses', editingId), { ...newMortgageExp, amount: Number(newMortgageExp.amount), type: mortgageExpType });
+      } else {
+        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses'), { ...newMortgageExp, amount: Number(newMortgageExp.amount), type: mortgageExpType, createdAt: serverTimestamp() });
+      }
       setNewMortgageExp({ name: '', amount: '', date: getTodayString(), note: '', brand: '', type: mortgageExpType });
       setIsAddMortgageExpModalOpen(false);
+      setEditingId(null);
     });
   };
   const deleteMortgageExp = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses', id)));
 
-  const handleAddMortgageAnalysis = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis'), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount), createdAt: serverTimestamp() }); setNewMortgageAnalysis({ name: '', amount: '' }); setIsAddMortgageAnalysisModalOpen(false); }); };
+  const handleAddMortgageAnalysis = (e) => {
+    e.preventDefault();
+    withSubmission(async () => {
+      if (editingId) {
+        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis', editingId), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount) });
+      } else {
+        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis'), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount), createdAt: serverTimestamp() });
+      }
+      setNewMortgageAnalysis({ name: '', amount: '' });
+      setIsAddMortgageAnalysisModalOpen(false);
+      setEditingId(null);
+    });
+  };
   const deleteMortgageAnalysis = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis', id)));
 
-  const handleAddMortgageFunding = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding'), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount), createdAt: serverTimestamp() }); setNewMortgageFunding({ source: '', amount: '', shares: '', rate: '', date: getTodayString(), note: '' }); setIsAddMortgageFundingModalOpen(false); }); };
+  const handleAddMortgageFunding = (e) => {
+    e.preventDefault();
+    withSubmission(async () => {
+      if (editingId) {
+        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', editingId), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount) });
+      } else {
+        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding'), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount), createdAt: serverTimestamp() });
+      }
+      setNewMortgageFunding({ source: '', amount: '', shares: '', rate: '', date: getTodayString(), note: '' });
+      setIsAddMortgageFundingModalOpen(false);
+      setEditingId(null);
+    });
+  };
   const deleteMortgageFunding = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', id)));
 
   const handleAddStockGoalYear = async () => {
@@ -1426,11 +1498,77 @@ export default function App() {
         {/* 新增: Investment Watchlist */}
         {currentView === 'watchlist' && <WatchlistView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
         {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} />}
-        {currentView === 'mortgage' && <MortgageView mortgageExpenses={mortgageExpenses} mortgageAnalysis={mortgageAnalysis} mortgageFunding={mortgageFunding} deleteMortgageExp={deleteMortgageExp} deleteMortgageAnalysis={deleteMortgageAnalysis} deleteMortgageFunding={deleteMortgageFunding} setMortgageExpType={setMortgageExpType} setIsAddMortgageExpModalOpen={setIsAddMortgageExpModalOpen} setIsAddMortgageAnalysisModalOpen={setIsAddMortgageAnalysisModalOpen} setIsAddMortgageFundingModalOpen={setIsAddMortgageFundingModalOpen} />}
+        {currentView === 'mortgage' && (
+          <MortgageView
+            mortgageExpenses={mortgageExpenses}
+            mortgageAnalysis={mortgageAnalysis}
+            mortgageFunding={mortgageFunding}
+            deleteMortgageExp={deleteMortgageExp}
+            deleteMortgageAnalysis={deleteMortgageAnalysis}
+            deleteMortgageFunding={deleteMortgageFunding}
+            setMortgageExpType={setMortgageExpType}
+            setIsAddMortgageExpModalOpen={setIsAddMortgageExpModalOpen}
+            setIsAddMortgageAnalysisModalOpen={setIsAddMortgageAnalysisModalOpen}
+            setIsAddMortgageFundingModalOpen={setIsAddMortgageFundingModalOpen}
+            onEditExp={(item) => {
+              setNewMortgageExp({ ...item, amount: item.amount });
+              setMortgageExpType(item.type);
+              setEditingId(item.id);
+              setIsAddMortgageExpModalOpen(true);
+            }}
+            onEditAnalysis={(item) => {
+              setNewMortgageAnalysis({ ...item, amount: item.amount });
+              setEditingId(item.id);
+              setIsAddMortgageAnalysisModalOpen(true);
+            }}
+            onEditFunding={(item) => {
+              setNewMortgageFunding({ ...item, amount: item.amount });
+              setEditingId(item.id);
+              setIsAddMortgageFundingModalOpen(true);
+            }}
+          />
+        )}
         {currentView === 'principal' && <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />}
         {currentView === 'visualization' && <VisualizationView transactions={transactions} />}
-        {currentView === 'income' && <IncomeView incomes={incomes} salaryHistory={salaryHistory} onAddSalary={(own) => { setNewSalaryRecord(prev => ({ ...prev, owner: own })); setIsAddSalaryModalOpen(true); }} onDeleteSalary={handleDeleteSalaryRecord} onDeleteIncome={handleDeleteIncome} onAddIncome={(own) => { setNewIncome(prev => ({ ...prev, owner: own })); setIsAddIncomeModalOpen(true); }} selectedDate={selectedDate} />}
-        {currentView === 'partner' && <PartnerView partnerTransactions={partnerTransactions} onDelete={deletePartnerTx} onAdd={() => setIsAddPartnerTxModalOpen(true)} />}
+        {currentView === 'income' && (
+          <IncomeView
+            incomes={incomes}
+            salaryHistory={salaryHistory}
+            onAddSalary={(own) => { setNewSalaryRecord(prev => ({ ...prev, owner: own })); setIsAddSalaryModalOpen(true); }}
+            onDeleteSalary={handleDeleteSalaryRecord}
+            onDeleteIncome={handleDeleteIncome}
+            onAddIncome={(own, item = null) => {
+              if (item) {
+                setNewIncome({ ...item, amount: item.amount });
+                setEditingId(item.id);
+              } else {
+                setNewIncome(prev => ({ ...prev, owner: own, amount: '', category: '薪水', note: '', date: selectedDate ? toLocalISOString(selectedDate) : getTodayString() }));
+              }
+              setIsAddIncomeModalOpen(true);
+            }}
+            selectedDate={selectedDate}
+          />
+        )}
+        {currentView === 'partner' && (
+          <PartnerView
+            partnerTransactions={partnerTransactions}
+            onDelete={deletePartnerTx}
+            onAdd={(item = null) => {
+              if (item && item.id) {
+                setNewPartnerTx({ ...item, amount: item.amount });
+                setEditingId(item.id);
+              } else {
+                setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
+              }
+              setIsAddPartnerTxModalOpen(true);
+            }}
+            onEdit={(item) => {
+              setNewPartnerTx({ ...item, amount: item.amount });
+              setEditingId(item.id);
+              setIsAddPartnerTxModalOpen(true);
+            }}
+          />
+        )}
         {currentView === 'calendar' && <CalendarView transactions={transactions} selectedDate={selectedDate} setSelectedDate={setSelectedDate} deleteTransaction={deleteTransaction} />}
         {currentView === 'settings' && (
           <div className="pb-24">
@@ -1485,7 +1623,7 @@ export default function App() {
 
       {/* --- Modals --- */}
       {isAddTxModalOpen && (
-        <ModalWrapper title="新增支出" onClose={() => setIsAddTxModalOpen(false)}>
+        <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
           {/* 檢查是否有設定預算群組，若無則提示 */}
           {(settings.monthlyGroups.length === 0 && settings.annualGroups.length === 0) ? (
             <div className="text-center py-10">
@@ -1593,7 +1731,7 @@ export default function App() {
       )}
 
       {isAddIncomeModalOpen && (
-        <ModalWrapper title="新增收入" onClose={() => setIsAddIncomeModalOpen(false)}>
+        <ModalWrapper title={editingId ? "編輯收入" : "新增收入"} onClose={() => { setIsAddIncomeModalOpen(false); setEditingId(null); setNewIncome({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' }); }}>
           <form onSubmit={handleAddIncome} className="space-y-6">
             <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
             <div className="space-y-1.5"><label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-slate-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
@@ -1604,7 +1742,7 @@ export default function App() {
       )}
 
       {isAddPartnerTxModalOpen && (
-        <ModalWrapper title="佳欣儲蓄" onClose={() => setIsAddPartnerTxModalOpen(false)}>
+        <ModalWrapper title={editingId ? "編輯資金紀錄" : "新增資金紀錄"} onClose={() => { setIsAddPartnerTxModalOpen(false); setEditingId(null); setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' }); }}>
           <form onSubmit={handleAddPartnerTx} className="space-y-6">
             <div className="flex gap-2">
               <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'saving' })} variant={newPartnerTx.type === 'saving' ? 'success' : 'ghost'} className="flex-1">存入資金</GlassButton>
