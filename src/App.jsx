@@ -46,6 +46,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = 'finance-tracker-production';
 const FINNHUB_API_KEY = 'd58c17hr01qptoarifpgd58c17hr01qptoarifq0';
+const LEDGER_ID = 'Mick'; // Hardcoded Shared Ledger ID
 
 // --- 2. Constants & Data Structures ---
 const GLASS_CARD = "bg-white/70 backdrop-blur-xl border border-white/50 shadow-lg shadow-slate-200/50 rounded-3xl";
@@ -321,7 +322,7 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
 
   useEffect(() => {
     if (!user) return;
-    const ref = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'watchlist_config');
+    const ref = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'watchlist_config');
     const unsub = onSnapshot(ref, (s) => {
       if (s.exists()) {
         const data = s.data().groups || [];
@@ -333,7 +334,7 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
   }, [user, fetchAllPrices]);
 
   const totalSystemBudget = useMemo(() => groups.reduce((acc, group) => acc + group.items.reduce((gAcc, item) => gAcc + (Number(item.budget) || 0), 0), 0), [groups]);
-  const saveGroups = async (newGroups) => await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'watchlist_config'), { groups: newGroups });
+  const saveGroups = async (newGroups) => await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'watchlist_config'), { groups: newGroups });
 
   const addGroup = async () => {
     if (!newGroupName.trim() || isSubmitting) return;
@@ -941,7 +942,7 @@ const VisualizationView = ({ transactions }) => {
   return (<div className="space-y-6 pb-24 animate-in fade-in"><Card><div className="flex items-center justify-between mb-6"><h2 className="text-lg font-bold text-slate-800">{isCompareMode ? '年度支出比較' : '年度支出分析'}</h2><button onClick={() => setIsCompareMode(!isCompareMode)} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isCompareMode ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'}`}>{isCompareMode ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />} 比較模式</button></div><div className="flex gap-4 mb-6"><div className="flex-1"><label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">{isCompareMode ? '主年份' : '選擇年份'}</label><select value={baseYear} onChange={(e) => setBaseYear(Number(e.target.value))} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-700`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select></div>{isCompareMode && (<div className="flex-1 animate-in slide-in-from-right-2 duration-200"><label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">對比年份</label><select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-500`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select></div>)}</div><div className="h-64 flex items-end justify-between gap-1 mt-4 relative"><div className="absolute inset-0 flex flex-col justify-between pointer-events-none"><div className="border-t border-dashed border-slate-100 w-full h-px"></div><div className="border-t border-dashed border-slate-100 w-full h-px"></div><div className="border-t border-dashed border-slate-100 w-full h-px"></div><div className="border-t border-slate-200 w-full h-px"></div></div>{baseData.map((val, idx) => (<div key={idx} className="flex-1 flex flex-col justify-end items-center h-full z-10 group relative"><div className="flex gap-0.5 items-end w-full justify-center h-full px-0.5">{isCompareMode && (<div className="w-1.5 bg-slate-200 rounded-t-sm transition-all duration-500" style={{ height: `${(compareData[idx] / maxVal) * 100}%` }}></div>)}<div className={`rounded-t-sm transition-all duration-500 ${isCompareMode ? 'w-2 bg-slate-800' : 'w-4 bg-slate-800'}`} style={{ height: `${(val / maxVal) * 100}%` }}></div></div><span className="text-[9px] text-slate-400 mt-2 font-medium">{idx + 1}月</span></div>))}</div></Card>{isCompareMode ? (<Card><h3 className="text-sm font-bold text-slate-700 mb-4">每月差異分析 ({baseYear} vs {compareYear})</h3><div className="space-y-3">{monthlyDiffs.map((item) => (<div key={item.month} className="flex justify-between items-center text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0"><span className="text-slate-500 w-8">{item.month}月</span><div className="flex-1 px-4 text-xs text-gray-400 text-center">${item.base.toLocaleString()} vs ${item.compare.toLocaleString()}</div><span className={`font-mono font-bold ${item.diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{item.diff > 0 ? '+' : ''}{item.diff.toLocaleString()}</span></div>))}</div></Card>) : (<Card><h3 className="text-sm font-bold text-slate-700 mb-4">{baseYear} 年度支出組成</h3><div className="space-y-4">{breakdownData.length > 0 ? breakdownData.map((item) => (<div key={item.name}><div className="flex justify-between items-end mb-1 text-sm"><span className="text-slate-600 font-medium">{item.name}</span><span className="font-bold text-slate-800">${item.value.toLocaleString()} <span className="text-xs text-slate-400 font-normal">({item.percent.toFixed(1)}%)</span></span></div><div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-slate-700 rounded-full" style={{ width: `${item.percent}%` }}></div></div></div>)) : (<div className="text-center text-slate-400 py-6 text-sm">該年度尚無支出資料</div>)}</div></Card>)}</div>);
 };
 
-const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) => { const [config, setConfig] = useState(DEFAULT_PRINCIPAL_CONFIG); const [history, setHistory] = useState([]); const [loading, setLoading] = useState(true); const [snapshotDate, setSnapshotDate] = useState(getTodayString()); useEffect(() => { if (!user) return; const configRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'principal_config'); onSnapshot(configRef, (s) => s.exists() ? setConfig(s.data()) : setDoc(configRef, DEFAULT_PRINCIPAL_CONFIG)); const historyRef = collection(db, 'artifacts', appId, 'users', user.uid, 'principal_history'); const q = query(historyRef, orderBy('date', 'desc')); onSnapshot(q, (s) => { setHistory(s.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); }); }, [user]); const updateItem = (section, group, idx, field, val) => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group][idx][field] = field === 'amount' ? Number(val) : val; setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'principal_config'), newConfig); }; const addItem = (section, group) => { const newConfig = JSON.parse(JSON.stringify(config)); if (!newConfig[section][group]) newConfig[section][group] = []; newConfig[section][group].push({ name: '', amount: 0 }); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'principal_config'), newConfig); }; const deleteItem = (section, group, idx) => { requestConfirmation({ message: '確定移除此項目？', onConfirm: () => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group] = newConfig[section][group].filter((_, i) => i !== idx); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'principal_config'), newConfig); } }); }; const handleAddSnapshot = () => { requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => { const ta = (config.assets.bank || []).reduce((s, i) => s + Number(i.amount), 0) + (config.assets.invest || []).reduce((s, i) => s + Number(i.amount), 0); const tl = (config.liabilities.encumbrance || []).reduce((s, i) => s + Number(i.amount), 0); await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'principal_history'), { date: new Date(snapshotDate).toISOString(), netPrincipal: ta - tl, details: config, createdAt: serverTimestamp() }); } }); }; const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'principal_history', id))); return (<div className="pb-24 space-y-6 animate-in fade-in"><PrincipalTrendChart history={history} /><div className="flex flex-col gap-4"><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">存款組成 (Assets)</h3><AssetGroup title="銀行帳戶" items={config.assets.bank} section="assets" groupKey="bank" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /><AssetGroup title="投資項目" items={config.assets.invest} section="assets" groupKey="invest" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">負債組成 (Liabilities)</h3><AssetGroup title="房價圈存" items={config.liabilities.encumbrance} section="liabilities" groupKey="encumbrance" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div></div><div className={`${GLASS_CARD} p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end`}><InputField label="結算日期" type="date" value={snapshotDate} onChange={(e) => setSnapshotDate(e.target.value)} className="w-full sm:flex-1" /><GlassButton onClick={handleAddSnapshot} className="w-full sm:flex-1 py-4 rounded-xl sm:h-[58px]"><Save className="w-5 h-5" /> 結算本期金額</GlassButton></div><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> 歷次結算紀錄</h3><div className="space-y-3">{history.map(rec => (<div key={rec.id} className="bg-white/60 p-4 rounded-xl border border-slate-100 flex justify-between items-center backdrop-blur-sm"><div><div className="font-bold text-slate-800">${rec.netPrincipal.toLocaleString()}</div><div className="text-[10px] text-slate-400">{new Date(rec.date).toLocaleDateString()}</div></div><button onClick={() => handleDeleteHistory(rec.id)}><X className="w-4 h-4 text-slate-300 hover:text-rose-400" /></button></div>))}</div></div></div>); };
+const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) => { const [config, setConfig] = useState(DEFAULT_PRINCIPAL_CONFIG); const [history, setHistory] = useState([]); const [loading, setLoading] = useState(true); const [snapshotDate, setSnapshotDate] = useState(getTodayString()); useEffect(() => { if (!user) return; const configRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'); onSnapshot(configRef, (s) => s.exists() ? setConfig(s.data()) : setDoc(configRef, DEFAULT_PRINCIPAL_CONFIG)); const historyRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'); const q = query(historyRef, orderBy('date', 'desc')); onSnapshot(q, (s) => { setHistory(s.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); }); }, [user]); const updateItem = (section, group, idx, field, val) => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group][idx][field] = field === 'amount' ? Number(val) : val; setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const addItem = (section, group) => { const newConfig = JSON.parse(JSON.stringify(config)); if (!newConfig[section][group]) newConfig[section][group] = []; newConfig[section][group].push({ name: '', amount: 0 }); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const deleteItem = (section, group, idx) => { requestConfirmation({ message: '確定移除此項目？', onConfirm: () => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group] = newConfig[section][group].filter((_, i) => i !== idx); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); } }); }; const handleAddSnapshot = () => { requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => { const ta = (config.assets.bank || []).reduce((s, i) => s + Number(i.amount), 0) + (config.assets.invest || []).reduce((s, i) => s + Number(i.amount), 0); const tl = (config.liabilities.encumbrance || []).reduce((s, i) => s + Number(i.amount), 0); await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), { date: new Date(snapshotDate).toISOString(), netPrincipal: ta - tl, details: config, createdAt: serverTimestamp() }); } }); }; const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history', id))); return (<div className="pb-24 space-y-6 animate-in fade-in"><PrincipalTrendChart history={history} /><div className="flex flex-col gap-4"><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">存款組成 (Assets)</h3><AssetGroup title="銀行帳戶" items={config.assets.bank} section="assets" groupKey="bank" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /><AssetGroup title="投資項目" items={config.assets.invest} section="assets" groupKey="invest" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">負債組成 (Liabilities)</h3><AssetGroup title="房價圈存" items={config.liabilities.encumbrance} section="liabilities" groupKey="encumbrance" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div></div><div className={`${GLASS_CARD} p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end`}><InputField label="結算日期" type="date" value={snapshotDate} onChange={(e) => setSnapshotDate(e.target.value)} className="w-full sm:flex-1" /><GlassButton onClick={handleAddSnapshot} className="w-full sm:flex-1 py-4 rounded-xl sm:h-[58px]"><Save className="w-5 h-5" /> 結算本期金額</GlassButton></div><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> 歷次結算紀錄</h3><div className="space-y-3">{history.map(rec => (<div key={rec.id} className="bg-white/60 p-4 rounded-xl border border-slate-100 flex justify-between items-center backdrop-blur-sm"><div><div className="font-bold text-slate-800">${rec.netPrincipal.toLocaleString()}</div><div className="text-[10px] text-slate-400">{new Date(rec.date).toLocaleDateString()}</div></div><button onClick={() => handleDeleteHistory(rec.id)}><X className="w-4 h-4 text-slate-300 hover:text-rose-400" /></button></div>))}</div></div></div>); };
 
 const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange, onAddExchangeClick }) => {
   const [activeTab, setActiveTab] = useState('goals');
@@ -1070,7 +1071,7 @@ export default function App() {
     // Listeners
     const unsubs = [];
     const createSub = (col, setter, order = 'date', dir = 'desc') => {
-      const q = query(collection(db, 'artifacts', appId, 'users', user.uid, col), orderBy(order, dir));
+      const q = query(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col), orderBy(order, dir));
       unsubs.push(onSnapshot(q, (s) => setter(s.docs.map(d => ({ id: d.id, ...d.data() })))));
     };
 
@@ -1085,7 +1086,7 @@ export default function App() {
     createSub('usd_exchanges', setUsdExchanges);
 
     const viewYear = selectedDate.getFullYear();
-    const settingsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', `config_${viewYear}`);
+    const settingsRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${viewYear}`);
 
     unsubs.push(onSnapshot(settingsRef, async (docSnap) => {
       if (docSnap.exists()) {
@@ -1094,7 +1095,7 @@ export default function App() {
         // Migration: If config for this year doesn't exist, try to copy from config_v2 (legacy global)
         // or just use defaults.
         try {
-          const globalRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config_v2');
+          const globalRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2');
           const globalSnap = await getDoc(globalRef);
           const initialData = globalSnap.exists() ? globalSnap.data() : DEFAULT_SETTINGS;
 
@@ -1177,34 +1178,34 @@ export default function App() {
   const handleAddTransaction = (e) => {
     e.preventDefault();
     withSubmission(async () => {
-      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'transactions'), { ...newTrans, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
+      await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...newTrans, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
       setNewTrans(prev => ({ ...prev, amount: '', note: '' }));
       setIsAddTxModalOpen(false);
     });
   };
-  const deleteTransaction = (id) => requestDelete("確定刪除此筆支出紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', id)));
+  const deleteTransaction = (id) => requestDelete("確定刪除此筆支出紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', id)));
 
   const handleAddIncome = (e) => {
     e.preventDefault();
     withSubmission(async () => {
-      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'incomes'), { ...newIncome, amount: Number(newIncome.amount), createdAt: serverTimestamp() });
+      await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes'), { ...newIncome, amount: Number(newIncome.amount), createdAt: serverTimestamp() });
       setNewIncome(prev => ({ ...prev, amount: '', note: '' }));
       setIsAddIncomeModalOpen(false);
     });
   };
-  const handleDeleteIncome = (id) => requestDelete("確定刪除此筆收入紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'incomes', id)));
+  const handleDeleteIncome = (id) => requestDelete("確定刪除此筆收入紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', id)));
 
-  const handleAddSalaryRecord = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'salary_history'), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount), createdAt: serverTimestamp() }); setNewSalaryRecord(prev => ({ ...prev, amount: '', note: '' })); setIsAddSalaryModalOpen(false); }); };
-  const handleDeleteSalaryRecord = (id) => requestDelete("確定刪除此調薪紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'salary_history', id)));
+  const handleAddSalaryRecord = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history'), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount), createdAt: serverTimestamp() }); setNewSalaryRecord(prev => ({ ...prev, amount: '', note: '' })); setIsAddSalaryModalOpen(false); }); };
+  const handleDeleteSalaryRecord = (id) => requestDelete("確定刪除此調薪紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', id)));
 
-  const handleAddPartnerTx = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'partner_savings'), { ...newPartnerTx, amount: Number(newPartnerTx.amount), createdAt: serverTimestamp() }); setNewPartnerTx(prev => ({ ...prev, amount: '', note: '' })); setIsAddPartnerTxModalOpen(false); }); };
-  const deletePartnerTx = (id) => requestDelete("確定刪除此筆儲蓄/支出紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'partner_savings', id)));
+  const handleAddPartnerTx = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings'), { ...newPartnerTx, amount: Number(newPartnerTx.amount), createdAt: serverTimestamp() }); setNewPartnerTx(prev => ({ ...prev, amount: '', note: '' })); setIsAddPartnerTxModalOpen(false); }); };
+  const deletePartnerTx = (id) => requestDelete("確定刪除此筆儲蓄/支出紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', id)));
 
   const handleAddMortgageExp = (e) => {
     e.preventDefault();
     withSubmission(async () => {
       // 修正4: 強制使用當前的 mortgageExpType 變數，而不是 state 中的舊值
-      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'mortgage_expenses'), {
+      await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses'), {
         ...newMortgageExp,
         amount: Number(newMortgageExp.amount),
         type: mortgageExpType, // Force correct type
@@ -1214,23 +1215,23 @@ export default function App() {
       setIsAddMortgageExpModalOpen(false);
     });
   };
-  const deleteMortgageExp = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'mortgage_expenses', id)));
+  const deleteMortgageExp = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses', id)));
 
-  const handleAddMortgageAnalysis = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'mortgage_analysis'), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount), createdAt: serverTimestamp() }); setNewMortgageAnalysis({ name: '', amount: '' }); setIsAddMortgageAnalysisModalOpen(false); }); };
-  const deleteMortgageAnalysis = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'mortgage_analysis', id)));
+  const handleAddMortgageAnalysis = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis'), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount), createdAt: serverTimestamp() }); setNewMortgageAnalysis({ name: '', amount: '' }); setIsAddMortgageAnalysisModalOpen(false); }); };
+  const deleteMortgageAnalysis = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis', id)));
 
-  const handleAddMortgageFunding = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'mortgage_funding'), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount), createdAt: serverTimestamp() }); setNewMortgageFunding({ source: '', amount: '', shares: '', rate: '', date: getTodayString(), note: '' }); setIsAddMortgageFundingModalOpen(false); }); };
-  const deleteMortgageFunding = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'mortgage_funding', id)));
+  const handleAddMortgageFunding = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding'), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount), createdAt: serverTimestamp() }); setNewMortgageFunding({ source: '', amount: '', shares: '', rate: '', date: getTodayString(), note: '' }); setIsAddMortgageFundingModalOpen(false); }); };
+  const deleteMortgageFunding = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', id)));
 
   const handleAddStockGoalYear = async () => {
     const maxYear = stockGoals.reduce((max, g) => Math.max(max, g.year), 2021);
     const nextYear = maxYear + 1;
-    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'stock_goals'), { year: nextYear, roi: 0, firstrade: 0, ib: 0, createdAt: serverTimestamp() });
+    await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals'), { year: nextYear, roi: 0, firstrade: 0, ib: 0, createdAt: serverTimestamp() });
   };
-  const handleUpdateStockGoal = async (id, field, value) => { await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock_goals', id), { [field]: Number(value) }, { merge: true }); };
+  const handleUpdateStockGoal = async (id, field, value) => { await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id), { [field]: Number(value) }, { merge: true }); };
 
-  const handleAddExchange = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'usd_exchanges'), { ...newExchange, createdAt: serverTimestamp() }); setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT' }); setIsAddExchangeModalOpen(false); }); };
-  const handleDeleteExchange = (id) => requestDelete('刪除此換匯紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'usd_exchanges', id)));
+  const handleAddExchange = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges'), { ...newExchange, createdAt: serverTimestamp() }); setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT' }); setIsAddExchangeModalOpen(false); }); };
+  const handleDeleteExchange = (id) => requestDelete('刪除此換匯紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges', id)));
 
   const updateSettings = async (newGroups, type) => {
     const newSettings = { ...settings };
@@ -1239,7 +1240,7 @@ export default function App() {
 
     // Write to the currently selected year's config
     const viewYear = selectedDate.getFullYear();
-    await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', `config_${viewYear}`), newSettings);
+    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${viewYear}`), newSettings);
   };
 
   const handleDateNavigate = (direction) => { const newDate = new Date(selectedDate); if (currentView === 'income') newDate.setFullYear(selectedDate.getFullYear() + direction); else newDate.setMonth(selectedDate.getMonth() + direction); setSelectedDate(newDate); };
@@ -1402,7 +1403,7 @@ export default function App() {
 
       {/* Other Modals... (Same structure) */}
       {isAddMortgageExpModalOpen && (
-        <ModalWrapper title={mortgageExpType === 'down_payment' ? '新增頭期雜支' : '新增雜質紀錄'} onClose={() => setIsAddMortgageExpModalOpen(false)}>
+        <ModalWrapper title={mortgageExpType === 'down_payment' ? '新增頭期雜支' : '新增雜支紀錄'} onClose={() => setIsAddMortgageExpModalOpen(false)}>
           <form onSubmit={handleAddMortgageExp} className="space-y-4">
             <InputField label="項目名稱" value={newMortgageExp.name} onChange={e => setNewMortgageExp({ ...newMortgageExp, name: e.target.value })} autoFocus required />
             <InputField label="金額" type="number" value={newMortgageExp.amount} onChange={e => setNewMortgageExp({ ...newMortgageExp, amount: e.target.value })} required />
