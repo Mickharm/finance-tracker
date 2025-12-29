@@ -204,7 +204,7 @@ const CalculatorInput = ({ value, onChange, label }) => {
   const handleButton = (btn) => {
     let newVal = displayValue;
 
-    if (btn === 'C') {
+    if (btn === 'AC') {
       newVal = '0';
       setExpression('');
       onChange('0');
@@ -216,9 +216,7 @@ const CalculatorInput = ({ value, onChange, label }) => {
         newVal = result.toString();
         setExpression('');
         onChange(newVal);
-      } catch (e) {
-        newVal = '0';
-      }
+      } catch (e) { newVal = '0'; }
     } else if (btn === '⌫') {
       newVal = String(displayValue).slice(0, -1) || '0';
       if (!isNaN(Number(newVal)) && !expression) onChange(newVal);
@@ -230,12 +228,14 @@ const CalculatorInput = ({ value, onChange, label }) => {
       }
       setExpression(newVal);
     } else {
-      if (String(displayValue) === '0' && !expression) {
+      // Numbers, ., 00
+      if (String(displayValue) === '0' && !expression && btn !== '.') {
         newVal = btn;
       } else {
         newVal = String(displayValue) + btn;
       }
-      if (!isNaN(Number(newVal)) && !['+', '-', '*', '/'].some(op => newVal.includes(op))) {
+      // Basic validation to prevent invalid formats like 1..0 or operators in weird places
+      if (!['+', '-', '*', '/'].some(op => newVal.includes(op)) || expression) {
         onChange(newVal);
       }
     }
@@ -243,10 +243,11 @@ const CalculatorInput = ({ value, onChange, label }) => {
   };
 
   const buttons = [
-    ['7', '8', '9', '/'],
-    ['4', '5', '6', '*'],
-    ['1', '2', '3', '-'],
-    ['C', '0', '=', '+'],
+    ['AC', '÷', '×', '⌫'],
+    ['7', '8', '9', '-'],
+    ['4', '5', '6', '+'],
+    ['1', '2', '3', '='],
+    ['0', '00', '.']
   ];
 
   const formatDisplay = (val) => {
@@ -269,27 +270,23 @@ const CalculatorInput = ({ value, onChange, label }) => {
           {expression && <div className="text-xs text-slate-400 font-mono h-4 opacity-0">.</div>}
         </div>
         <div className="grid grid-cols-4 gap-2">
-          {buttons.flat().map((btn) => (
+          {buttons.flat().map((btn, idx) => (
             <button
-              key={btn}
+              key={`${btn}-${idx}`}
               type="button"
-              onClick={() => handleButton(btn)}
-              className={`py-4 rounded-xl font-bold text-lg transition-all active:scale-95 ${btn === '=' ? 'bg-slate-800 text-white col-span-1' :
-                btn === 'C' ? 'bg-rose-100 text-rose-600' :
-                  ['+', '-', '*', '/'].includes(btn) ? 'bg-slate-200 text-slate-700' :
-                    'bg-white text-slate-700 border border-slate-100'
+              onClick={() => handleButton(btn === '÷' ? '/' : btn === '×' ? '*' : btn)}
+              className={`py-3.5 rounded-xl font-bold text-lg transition-all active:scale-95 shadow-sm
+                ${btn === 'AC' ? 'bg-rose-100 text-rose-600' :
+                  btn === '⌫' ? 'bg-amber-100 text-amber-600' :
+                    ['÷', '×', '-', '+', '='].includes(btn) ? 'bg-slate-200 text-slate-700' :
+                      btn === '0' ? 'col-span-2 bg-white text-slate-800 border border-slate-200' :
+                        'bg-white text-slate-800 border border-slate-200'
                 }`}
+              style={btn === '0' ? { gridColumn: 'span 2' } : {}}
             >
-              {btn === '*' ? '×' : btn === '/' ? '÷' : btn}
+              {btn}
             </button>
           ))}
-          <button
-            type="button"
-            onClick={() => handleButton('⌫')}
-            className="py-4 rounded-xl font-bold text-lg bg-amber-100 text-amber-600 transition-all active:scale-95"
-          >
-            ⌫
-          </button>
         </div>
       </div>
     </div>
@@ -1378,7 +1375,7 @@ const VisualizationView = ({ transactions }) => {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-mono font-bold text-slate-800">${Number(t.amount).toLocaleString()}</span>
-                      <button onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }} className="text-slate-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button>
+                      {/* Delete removed in Analysis View */}
                     </div>
                   </div>
                 ))}
