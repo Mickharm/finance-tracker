@@ -359,13 +359,27 @@ const CleanSummaryCard = ({ title, value, subValue, icon: Icon, trend, variant =
 const GroupCard = ({ group, colorTheme = 'slate' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const theme = COLOR_VARIANTS[colorTheme] || COLOR_VARIANTS.slate;
+  const isOverBudget = group.used > group.budget;
+  const remaining = group.budget - group.used;
   return (
     <div className={`${GLASS_CARD} p-5 hover:border-slate-300 transition-all duration-300`}>
       <div className="flex flex-col cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-        <div className="flex justify-between items-center mb-3"><div className="flex items-center gap-3"><div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div><h3 className="text-sm font-bold text-slate-700 tracking-tight">{group.name}</h3></div><div className="text-right flex flex-col items-end"><span className="text-sm font-mono font-bold text-slate-800">${group.used.toLocaleString()}</span></div></div>
-        <BudgetProgressBar current={group.used} total={group.budget} label="" variant="group" colorTheme={colorTheme} showDetails={false} showOverBudgetLabel={!isExpanded} />
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-3">
+            <div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
+            <h3 className="text-sm font-bold text-slate-700 tracking-tight">{group.name}</h3>
+            {isOverBudget && <span className="bg-rose-100 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">超支</span>}
+          </div>
+          <div className="text-right">
+            <span className={`text-sm font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-800'}`}>${group.used.toLocaleString()}</span>
+            <span className="text-[10px] text-slate-400 ml-1">/ ${group.budget.toLocaleString()}</span>
+          </div>
+        </div>
+        <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}>
+          <div className={`h-full transition-all duration-500 ${isOverBudget ? 'bg-rose-400' : theme.bar}`} style={{ width: `${Math.min((group.used / group.budget) * 100, 100)}%` }} />
+        </div>
       </div>
-      {isExpanded && (<div className="mt-5 pl-2 space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-slate-100/50 pt-3">{group.items.map((item, idx) => (<div key={idx}><div className="flex justify-between text-xs mb-1.5 font-medium text-slate-500"><span>{item.name}</span><span className="text-slate-400 font-mono">${item.used.toLocaleString()} <span className="text-slate-300">/</span> ${item.budget.toLocaleString()}</span></div><BudgetProgressBar current={item.used} total={item.budget} label="" variant="item" colorTheme={colorTheme} showDetails={false} showOverBudgetLabel={false} /></div>))}</div>)}
+      {isExpanded && (<div className="mt-5 pl-2 space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-slate-100/50 pt-3">{group.items.map((item, idx) => (<div key={idx}><div className="flex justify-between text-xs mb-1.5 font-medium text-slate-500"><span>{item.name}</span><span className="text-slate-400 font-mono">${item.used.toLocaleString()} <span className="text-slate-300">/</span> ${item.budget.toLocaleString()}</span></div><div className={`w-full bg-slate-100/50 rounded-full h-1 overflow-hidden`}><div className={`h-full transition-all duration-500 ${item.used > item.budget ? 'bg-rose-400' : theme.bar}`} style={{ width: `${Math.min((item.used / item.budget) * 100, 100)}%` }} /></div></div>))}</div>)}
     </div>
   );
 };
@@ -876,6 +890,26 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
           <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-600"><Target className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-slate-800 leading-tight">年度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
         </div>
+        {/* Redesigned Annual Summary - Compact inline stats */}
+        <div className={`${GLASS_CARD} p-4 mb-4 flex items-center justify-between`}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center">
+              <Target className="w-5 h-5 text-stone-600" />
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase">本年總支出</div>
+              <div className="text-lg font-bold font-mono text-slate-800">${annualStats.totalUsed.toLocaleString()}</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className={`text-[10px] font-bold uppercase ${annualStats.totalUsed > annualStats.totalBudget ? 'text-rose-400' : 'text-emerald-400'}`}>
+              {annualStats.totalUsed > annualStats.totalBudget ? '超支' : '剩餘'}
+            </div>
+            <div className={`text-lg font-bold font-mono ${annualStats.totalUsed > annualStats.totalBudget ? 'text-rose-500' : 'text-emerald-600'}`}>
+              {annualStats.totalUsed > annualStats.totalBudget ? '-' : ''}${Math.abs(annualStats.totalBudget - annualStats.totalUsed).toLocaleString()}
+            </div>
+          </div>
+        </div>
         <div className="space-y-3">{annualStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="stone" />))}</div>
       </section>
     </div>
@@ -1101,6 +1135,57 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
         <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
       </div>
+      {/* Redesigned Daily Detail Panel */}
+      {selectedDay && (
+        <div className="mt-4 animate-in fade-in duration-200">
+          <div className={`${GLASS_CARD} p-4`}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-sm">
+                  {selectedDay}
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-700">{viewDate.getMonth() + 1}月{selectedDay}日</div>
+                  <div className="text-[10px] text-slate-400">{selectedTrans.length} 筆消費</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold font-mono text-slate-800">${selectedTrans.reduce((s, t) => s + Number(t.amount), 0).toLocaleString()}</div>
+              </div>
+            </div>
+            {selectedTrans.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-sm">當日無消費紀錄</div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {selectedTrans.map(t => (
+                  <div key={t.id} className="flex items-center justify-between p-2 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 transition-colors group">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-slate-400'}`}></span>
+                      <span className="text-sm font-medium text-slate-700 truncate">{t.category}</span>
+                      {t.note && <span className="text-[10px] text-slate-400 truncate hidden sm:inline">({t.note})</span>}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-sm font-mono font-medium text-slate-600">-${Number(t.amount).toLocaleString()}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(t); }}
+                        className="p-1 text-slate-300 hover:text-blue-500 transition-colors"
+                      >
+                        <PenTool className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }}
+                        className="p-1 text-slate-300 hover:text-rose-500 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* Add expense FAB */}
       {onAddExpense && <button onClick={onAddExpense} className="absolute bottom-8 right-6 w-14 h-14 bg-slate-800 rounded-full shadow-2xl shadow-slate-400/50 flex items-center justify-center text-white hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>}
     </div>
