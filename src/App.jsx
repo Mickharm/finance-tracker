@@ -844,14 +844,14 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
             <div className="text-xl sm:text-2xl font-bold text-slate-800 font-mono break-all line-clamp-1">${totalAnnualBudget.toLocaleString()}</div>
           </div>
         </div>
-        <div className="flex flex-row gap-4">
-          <div className="bg-slate-50/50 rounded-xl p-3 flex-1 min-w-0">
+        <div className="flex flex-row gap-4 w-full">
+          <div className="bg-slate-50/50 rounded-xl p-3 flex-1 overflow-hidden">
             <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">已花費</div>
-            <div className="text-base sm:text-lg font-bold text-slate-700 font-mono break-all line-clamp-1">${totalAnnualUsed.toLocaleString()}</div>
+            <div className="text-base sm:text-lg font-bold text-slate-700 font-mono truncate">${totalAnnualUsed.toLocaleString()}</div>
           </div>
-          <div className={`rounded-xl p-3 flex-1 min-w-0 ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
+          <div className={`rounded-xl p-3 flex-1 overflow-hidden ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
             <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-rose-400' : 'text-emerald-400'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
-            <div className={`text-base sm:text-lg font-bold font-mono break-all line-clamp-1 ${isOverBudget ? 'text-rose-600' : 'text-emerald-600'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
+            <div className={`text-base sm:text-lg font-bold font-mono truncate ${isOverBudget ? 'text-rose-600' : 'text-emerald-600'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -1564,7 +1564,8 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    // Listeners
+    // Data Listeners - Only depend on user, NOT selectedDate
+    // This prevents listener recreation on month change which causes stale data issues
     const unsubs = [];
     const createSub = (col, setter, order = 'date', dir = 'desc') => {
       const q = query(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col), orderBy(order, dir));
@@ -1581,10 +1582,17 @@ export default function App() {
     createSub('stock_goals', setStockGoals, 'year', 'desc');
     createSub('usd_exchanges', setUsdExchanges);
 
+    return () => unsubs.forEach(u => u());
+  }, [user]); // Only user dependency - data listeners are stable
+
+  // Settings listener - depends on year, separate from data listeners
+  useEffect(() => {
+    if (!user) return;
+
     const viewYear = selectedDate.getFullYear();
     const settingsRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${viewYear}`);
 
-    unsubs.push(onSnapshot(settingsRef, async (docSnap) => {
+    const unsubSettings = onSnapshot(settingsRef, async (docSnap) => {
       if (docSnap.exists()) {
         setSettings(docSnap.data());
       } else {
@@ -1602,9 +1610,9 @@ export default function App() {
           setSettings(DEFAULT_SETTINGS);
         }
       }
-    }));
+    });
 
-    return () => unsubs.forEach(u => u());
+    return () => unsubSettings();
   }, [user, selectedDate]);
 
   // Form Defaults Logic
