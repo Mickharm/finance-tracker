@@ -1767,12 +1767,14 @@ export default function App() {
   // --- Handlers ---
   const handleAddTransaction = (e) => {
     e.preventDefault();
+    console.log('[DEBUG] handleAddTransaction - editingId:', editingId, 'newTrans:', newTrans);
     withSubmission(async () => {
       if (editingId) {
-        // Update existing transaction
+        console.log('[DEBUG] Updating existing transaction:', editingId);
         // Update existing transaction (use setDoc merge to prevent 'No document to update' error if doc is ghost/missing)
         await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...newTrans, amount: Number(newTrans.amount) }, { merge: true });
       } else {
+        console.log('[DEBUG] Creating new transaction');
         // Add new transaction
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...newTrans, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
       }
@@ -2040,8 +2042,14 @@ export default function App() {
             setSelectedDate={setSelectedDate}
             deleteTransaction={deleteTransaction}
             onEdit={(item) => {
+              console.log('[DEBUG] CalendarView onEdit triggered - item:', item);
+              if (!item.id) {
+                alert('錯誤：此交易沒有有效ID，無法編輯。請重新整理頁面後再試。');
+                return;
+              }
               setNewTrans({ ...item, amount: item.amount });
               setEditingId(item.id);
+              console.log('[DEBUG] Set editingId to:', item.id);
               setIsAddTxModalOpen(true);
             }}
             onAddExpense={() => setIsAddTxModalOpen(true)}
