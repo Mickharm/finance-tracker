@@ -195,36 +195,52 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, requir
 
 // Calculator Input Component
 const CalculatorInput = ({ value, onChange, label }) => {
-  const [displayValue, setDisplayValue] = useState(value || '0');
+  const [displayValue, setDisplayValue] = useState(String(value !== undefined && value !== null ? value : '0'));
   const [expression, setExpression] = useState('');
 
+  useEffect(() => {
+    setDisplayValue(String(value !== undefined && value !== null ? value : '0'));
+  }, [value]);
+
   const handleButton = (btn) => {
+    let newVal = displayValue;
+
     if (btn === 'C') {
-      setDisplayValue('0');
+      newVal = '0';
       setExpression('');
-      onChange('');
+      onChange('0');
     } else if (btn === '=') {
       try {
+        const cleanExpression = displayValue.replace(/[+\-*/]$/, '');
         // eslint-disable-next-line no-eval
-        const result = Math.round(eval(displayValue.replace(/,/g, '')) || 0);
-        setDisplayValue(result.toString());
+        const result = Math.round(eval(cleanExpression.replace(/,/g, '')) || 0);
+        newVal = result.toString();
         setExpression('');
-        onChange(result.toString());
-      } catch {
-        setDisplayValue('錯誤');
+        onChange(newVal);
+      } catch (e) {
+        newVal = '0';
       }
     } else if (btn === '⌫') {
-      const newVal = displayValue.slice(0, -1) || '0';
-      setDisplayValue(newVal);
-      if (!isNaN(Number(newVal))) onChange(newVal);
+      newVal = String(displayValue).slice(0, -1) || '0';
+      if (!isNaN(Number(newVal)) && !expression) onChange(newVal);
     } else if (['+', '-', '*', '/'].includes(btn)) {
-      setExpression(displayValue + btn);
-      setDisplayValue(displayValue + btn);
+      if (['+', '-', '*', '/'].includes(String(displayValue).slice(-1))) {
+        newVal = String(displayValue).slice(0, -1) + btn;
+      } else {
+        newVal = String(displayValue) + btn;
+      }
+      setExpression(newVal);
     } else {
-      const newVal = displayValue === '0' ? btn : displayValue + btn;
-      setDisplayValue(newVal);
-      if (!isNaN(Number(newVal))) onChange(newVal);
+      if (String(displayValue) === '0' && !expression) {
+        newVal = btn;
+      } else {
+        newVal = String(displayValue) + btn;
+      }
+      if (!isNaN(Number(newVal)) && !['+', '-', '*', '/'].some(op => newVal.includes(op))) {
+        onChange(newVal);
+      }
     }
+    setDisplayValue(newVal);
   };
 
   const buttons = [
@@ -234,15 +250,24 @@ const CalculatorInput = ({ value, onChange, label }) => {
     ['C', '0', '=', '+'],
   ];
 
+  const formatDisplay = (val) => {
+    try {
+      return String(val).split(/([+\-*/])/).map(part => {
+        if (['+', '-', '*', '/'].includes(part)) return ` ${part} `;
+        return !isNaN(Number(part)) && part !== '' ? Number(part).toLocaleString() : part;
+      }).join('');
+    } catch { return val; }
+  };
+
   return (
     <div className="space-y-3">
       {label && <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">{label}</label>}
       <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100">
-        <div className="text-right mb-4">
-          <div className="text-3xl font-bold text-slate-800 font-mono tracking-tight">
-            ${Number(displayValue.replace(/[^0-9.-]/g, '') || 0).toLocaleString()}
+        <div className="text-right mb-4 overflow-x-auto scrollbar-hide">
+          <div className="text-3xl font-bold text-slate-800 font-mono tracking-tight whitespace-nowrap">
+            {formatDisplay(displayValue)}
           </div>
-          {expression && <div className="text-xs text-slate-400 font-mono">{expression}</div>}
+          {expression && <div className="text-xs text-slate-400 font-mono h-4 opacity-0">.</div>}
         </div>
         <div className="grid grid-cols-4 gap-2">
           {buttons.flat().map((btn) => (
@@ -256,7 +281,7 @@ const CalculatorInput = ({ value, onChange, label }) => {
                     'bg-white text-slate-700 border border-slate-100'
                 }`}
             >
-              {btn}
+              {btn === '*' ? '×' : btn === '/' ? '÷' : btn}
             </button>
           ))}
           <button
@@ -284,7 +309,7 @@ const GlassButton = ({ onClick, children, className = "", disabled = false, vari
   );
 };
 
-const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme = 'slate', showDetails = true }) => {
+const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme = 'slate', showDetails = true, showOverBudgetLabel = true }) => {
   const remaining = total - current;
   const percentage = total > 0 ? Math.max(0, (remaining / total) * 100) : 0;
   const usedPercentage = total > 0 ? (current / total) * 100 : 0;
@@ -297,8 +322,8 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
   return (
     <div className="w-full">
       <div className="flex justify-between items-end mb-2">
-        <span className={`text-xs font-bold uppercase tracking-wider ${theme.text} opacity-80 flex items-center gap-2`}>{label} {isOverBudget && <span className="bg-rose-50 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">超支</span>}</span>
-        {showDetails && (<span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-700'} flex flex-wrap justify-end`}><span className="text-[10px] text-slate-400 font-sans mr-1 font-medium whitespace-nowrap">{isOverBudget ? '超支' : '剩餘'}</span> <span className={`${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span></span>)}
+        <span className={`text-xs font-bold uppercase tracking-wider ${theme.text} opacity-80 flex items-center gap-2`}>{label} {isOverBudget && showOverBudgetLabel && <span className="bg-rose-50 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">超支</span>}</span>
+        {showDetails && (<span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-700'} flex flex-wrap justify-end`}><span className="text-[10px] text-slate-400 font-sans mr-1 font-medium whitespace-nowrap">{isOverBudget && showOverBudgetLabel ? '超支' : '剩餘'}</span> <span className={`${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span></span>)}
       </div>
       <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}><div className={`h-full transition-all duration-1000 ease-out ${statusColor}`} style={{ width: `${isOverBudget ? 100 : percentage}%` }} /></div>
       {showDetails && variant === 'main' && (<div className="flex justify-between mt-1.5 text-[10px] text-slate-400 font-medium"><span>{Math.round(usedPercentage)}% 已用</span><span>總額: ${total.toLocaleString()}</span></div>)}
@@ -333,9 +358,9 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
     <div className={`${GLASS_CARD} p-5 hover:border-slate-300 transition-all duration-300`}>
       <div className="flex flex-col cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex justify-between items-center mb-3"><div className="flex items-center gap-3"><div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div><h3 className="text-sm font-bold text-slate-700 tracking-tight">{group.name}</h3></div><div className="text-right flex flex-col items-end"><span className="text-sm font-mono font-bold text-slate-800">${group.used.toLocaleString()}</span></div></div>
-        <BudgetProgressBar current={group.used} total={group.budget} label="" variant="group" colorTheme={colorTheme} showDetails={false} />
+        <BudgetProgressBar current={group.used} total={group.budget} label="" variant="group" colorTheme={colorTheme} showDetails={false} showOverBudgetLabel={!isExpanded} />
       </div>
-      {isExpanded && (<div className="mt-5 pl-2 space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-slate-100/50 pt-3">{group.items.map((item, idx) => (<div key={idx}><div className="flex justify-between text-xs mb-1.5 font-medium text-slate-500"><span>{item.name}</span><span className="text-slate-400 font-mono">${item.used.toLocaleString()} <span className="text-slate-300">/</span> ${item.budget.toLocaleString()}</span></div><BudgetProgressBar current={item.used} total={item.budget} label="" variant="item" colorTheme={colorTheme} showDetails={false} /></div>))}</div>)}
+      {isExpanded && (<div className="mt-5 pl-2 space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-slate-100/50 pt-3">{group.items.map((item, idx) => (<div key={idx}><div className="flex justify-between text-xs mb-1.5 font-medium text-slate-500"><span>{item.name}</span><span className="text-slate-400 font-mono">${item.used.toLocaleString()} <span className="text-slate-300">/</span> ${item.budget.toLocaleString()}</span></div><BudgetProgressBar current={item.used} total={item.budget} label="" variant="item" colorTheme={colorTheme} showDetails={false} showOverBudgetLabel={false} /></div>))}</div>)}
     </div>
   );
 };
@@ -624,7 +649,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
             {items.length === 0 ? <p className="text-center text-xs text-slate-300 py-4">無紀錄</p> : items.map((item) => (
               <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-slate-100 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-slate-50/50 rounded-lg p-2 transition-colors' : ''}`}>
                 {itemRenderer(item)}
-                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-2 right-2 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
+                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-1/2 -translate-y-1/2 right-2 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -799,9 +824,10 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
 
 // --- 6. View Components (Top Layer) ---
 
-const HomeView = ({ monthlyStats, annualStats }) => {
-  const totalAnnualBudget = monthlyStats.totalBudget * 12 + annualStats.totalBudget;
-  const totalAnnualUsed = monthlyStats.totalUsed + annualStats.totalUsed;
+const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
+  // Use passed yearly stats for the summary card if available, otherwise fallback (for safety)
+  const totalAnnualBudget = yearlyTotalStats ? yearlyTotalStats.totalBudget : (monthlyStats.totalBudget * 12 + annualStats.totalBudget);
+  const totalAnnualUsed = yearlyTotalStats ? yearlyTotalStats.totalUsed : (monthlyStats.totalUsed + annualStats.totalUsed);
   const totalRemaining = totalAnnualBudget - totalAnnualUsed;
   const isOverBudget = totalRemaining < 0;
 
@@ -813,19 +839,19 @@ const HomeView = ({ monthlyStats, annualStats }) => {
           <div className={`p-2 rounded-xl ${isOverBudget ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
             <Target className="w-5 h-5" />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">年度總預算</h2>
-            <div className="text-2xl font-bold text-slate-800 font-mono">${totalAnnualBudget.toLocaleString()}</div>
+            <div className="text-xl sm:text-2xl font-bold text-slate-800 font-mono break-words">${totalAnnualBudget.toLocaleString()}</div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-slate-50/50 rounded-xl p-3">
+          <div className="bg-slate-50/50 rounded-xl p-3 min-w-0">
             <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">已花費</div>
-            <div className="text-lg font-bold text-slate-700 font-mono">${totalAnnualUsed.toLocaleString()}</div>
+            <div className="text-base sm:text-lg font-bold text-slate-700 font-mono break-words">${totalAnnualUsed.toLocaleString()}</div>
           </div>
-          <div className={`rounded-xl p-3 ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
+          <div className={`rounded-xl p-3 min-w-0 ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
             <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-rose-400' : 'text-emerald-400'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
-            <div className={`text-lg font-bold font-mono ${isOverBudget ? 'text-rose-600' : 'text-emerald-600'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
+            <div className={`text-base sm:text-lg font-bold font-mono break-words ${isOverBudget ? 'text-rose-600' : 'text-emerald-600'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -1632,6 +1658,23 @@ export default function App() {
   const monthlyStats = useMemo(() => calculateStats('monthly'), [transactions, settings, selectedDate]);
   const annualStats = useMemo(() => calculateStats('annual'), [transactions, settings, selectedDate]);
 
+  // Calculate annual total used including ALL monthly spending for the year + Annual spending
+  const yearlyTotalStats = useMemo(() => {
+    const year = selectedDate.getFullYear();
+    // Filter all transactions for current year, regardless of type, but exclude salary/partner checks if any
+    const yearlyTrans = transactions.filter(t => new Date(t.date).getFullYear() === year);
+
+    // Sum all spending
+    const totalUsed = yearlyTrans.reduce((sum, t) => sum + Number(t.amount), 0);
+
+    // Calculate total budget = (Sum of all monthly group budgets * 12) + Sum of all annual group budgets
+    const monthlyTotalBudget = settings.monthlyGroups.reduce((acc, g) => acc + g.items.reduce((s, i) => s + Number(i.budget), 0), 0);
+    const annualTotalBudget = settings.annualGroups.reduce((acc, g) => acc + g.items.reduce((s, i) => s + Number(i.budget), 0), 0);
+    const totalBudget = (monthlyTotalBudget * 12) + annualTotalBudget;
+
+    return { totalBudget, totalUsed };
+  }, [transactions, settings, selectedDate]);
+
   // --- Action Wrapper ---
   const withSubmission = async (action) => {
     if (isSubmitting) return;
@@ -1830,7 +1873,7 @@ export default function App() {
       </header>
 
       <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10">
-        {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} />}
+        {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} yearlyTotalStats={yearlyTotalStats} />}
         {/* 新增: Investment Watchlist */}
         {currentView === 'watchlist' && <WatchlistView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
         {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} />}
