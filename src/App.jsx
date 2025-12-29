@@ -1139,17 +1139,19 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
             {selectedTrans.length === 0 ? (
               <div className="text-center py-6 text-slate-400 text-sm">當日無消費紀錄</div>
             ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div className="space-y-2">
                 {selectedTrans.map(t => (
                   <div
                     key={t.id}
                     onClick={() => onEdit && onEdit(t)}
                     className="flex items-center justify-between p-2 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 transition-colors cursor-pointer group"
                   >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-slate-400'}`}></span>
-                      <span className="text-sm font-medium text-slate-700 truncate">{t.category}</span>
-                      {t.note && <span className="text-[10px] text-slate-400 truncate hidden sm:inline">({t.note})</span>}
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-slate-400'}`}></span>
+                        <span className="text-sm font-medium text-slate-700">{t.category}</span>
+                      </div>
+                      {t.note && <span className="text-[10px] text-slate-400 ml-4 truncate">{t.note}</span>}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="text-sm font-mono font-medium text-slate-600">-${Number(t.amount).toLocaleString()}</span>
