@@ -891,12 +891,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
         </div>
         {/* Annual Summary - Same design as monthly */}
         <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
-          <BudgetProgressBar
-            current={annualStats.totalUsed || annualStats.groups.reduce((s, g) => s + (g.used || 0), 0)}
-            total={annualStats.totalBudget || annualStats.groups.reduce((s, g) => s + (g.budget || 0), 0)}
-            label="本年總剩餘"
-            colorTheme="stone"
-          />
+          <BudgetProgressBar current={annualStats.totalUsed} total={annualStats.totalBudget} label="本年總剩餘" colorTheme="stone" />
         </div>
         <div className="space-y-3">{annualStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="stone" />))}</div>
       </section>
@@ -1767,8 +1762,8 @@ export default function App() {
 
     return { totalBudget: grandTotalBudget, totalUsed: grandTotalUsed, groups: groupsData };
   };
-  const monthlyStats = useMemo(() => calculateStats('monthly'), [transactions, settings, selectedDate]);
-  const annualStats = useMemo(() => calculateStats('annual'), [transactions, settings, selectedDate]);
+  const monthlyStats = calculateStats('monthly');
+  const annualStats = calculateStats('annual');
 
   // Calculate annual total used including ALL monthly spending for the year + Annual spending
   const yearlyTotalStats = useMemo(() => {
