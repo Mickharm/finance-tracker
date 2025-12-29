@@ -1153,7 +1153,6 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                       {t.note && <span className="text-[10px] text-slate-400 ml-4 truncate">{t.note}</span>}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-[8px] text-slate-300 font-mono">{t.id.slice(-4)}</span>
                       <span className="text-sm font-mono font-medium text-slate-600">-${Number(t.amount).toLocaleString()}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }}
@@ -1663,9 +1662,7 @@ export default function App() {
             uniqueData.push(item);
           }
         });
-        if (rawData.length !== uniqueData.length) {
-          console.warn(`[Auto-Fix] Removed ${rawData.length - uniqueData.length} duplicate records from ${col}`);
-        }
+        // Silent deduplication - log removed
         setter(uniqueData);
       }, (error) => console.error(`Error fetching ${col}:`, error)));
     };
@@ -1756,9 +1753,13 @@ export default function App() {
         groupBudget += itemBudget; groupUsed += itemUsed;
         return { name: item.name, budget: itemBudget, used: itemUsed };
       });
-      grandTotalBudget += groupBudget; grandTotalUsed += groupUsed;
       return { name: group.name, budget: groupBudget, used: groupUsed, items: itemsData };
     });
+
+    // Calculate totals strictly from the processed groups to ensure consistency
+    grandTotalBudget = groupsData.reduce((sum, g) => sum + g.budget, 0);
+    grandTotalUsed = groupsData.reduce((sum, g) => sum + g.used, 0);
+
     return { totalBudget: grandTotalBudget, totalUsed: grandTotalUsed, groups: groupsData };
   };
   const monthlyStats = useMemo(() => calculateStats('monthly'), [transactions, settings, selectedDate]);
