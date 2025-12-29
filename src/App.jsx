@@ -1153,6 +1153,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                       {t.note && <span className="text-[10px] text-slate-400 ml-4 truncate">{t.note}</span>}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[8px] text-slate-300 font-mono">{t.id.slice(-4)}</span>
                       <span className="text-sm font-mono font-medium text-slate-600">-${Number(t.amount).toLocaleString()}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }}
@@ -1651,7 +1652,16 @@ export default function App() {
     const unsubs = [];
     const createSub = (col, setter, order = 'date', dir = 'desc') => {
       const q = query(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col), orderBy(order, dir));
-      unsubs.push(onSnapshot(q, (s) => setter(s.docs.map(d => ({ id: d.id, ...d.data() }))), (error) => console.error(`Error fetching ${col}:`, error)));
+      unsubs.push(onSnapshot(q, (s) => {
+        const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Debug: Check for duplicates
+        const ids = data.map(i => i.id);
+        const uniqueIds = new Set(ids);
+        if (ids.length !== uniqueIds.size) {
+          console.error(`[CRITICAL] Duplicate IDs found in ${col}!`, ids.length, uniqueIds.size);
+        }
+        setter(data);
+      }, (error) => console.error(`Error fetching ${col}:`, error)));
     };
 
     createSub('transactions', setTransactions);
@@ -1784,12 +1794,13 @@ export default function App() {
     withSubmission(async () => {
       if (editingId) {
         console.log('[DEBUG] Updating existing transaction:', editingId);
-        // Update existing transaction (use setDoc merge to prevent 'No document to update' error if doc is ghost/missing)
-        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...newTrans, amount: Number(newTrans.amount) }, { merge: true });
+        // Clean data: remove ID from body and ensure numeric amount
+        const { id, ...updateData } = newTrans;
+        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...updateData, amount: Number(newTrans.amount) }, { merge: true });
       } else {
         console.log('[DEBUG] Creating new transaction');
-        // Add new transaction
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...newTrans, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
+        const { id, ...createData } = newTrans;
+        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...createData, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
       }
       setNewTrans(prev => ({ ...prev, amount: '', note: '' }));
       setIsAddTxModalOpen(false);
