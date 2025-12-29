@@ -890,25 +890,9 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
           <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-600"><Target className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-slate-800 leading-tight">年度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
         </div>
-        {/* Redesigned Annual Summary - Compact inline stats */}
-        <div className={`${GLASS_CARD} p-4 mb-4 flex items-center justify-between`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center">
-              <Target className="w-5 h-5 text-stone-600" />
-            </div>
-            <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase">本年總支出</div>
-              <div className="text-lg font-bold font-mono text-slate-800">${annualStats.totalUsed.toLocaleString()}</div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className={`text-[10px] font-bold uppercase ${annualStats.totalUsed > annualStats.totalBudget ? 'text-rose-400' : 'text-emerald-400'}`}>
-              {annualStats.totalUsed > annualStats.totalBudget ? '超支' : '剩餘'}
-            </div>
-            <div className={`text-lg font-bold font-mono ${annualStats.totalUsed > annualStats.totalBudget ? 'text-rose-500' : 'text-emerald-600'}`}>
-              {annualStats.totalUsed > annualStats.totalBudget ? '-' : ''}${Math.abs(annualStats.totalBudget - annualStats.totalUsed).toLocaleString()}
-            </div>
-          </div>
+        {/* Annual Summary - Same design as monthly */}
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
+          <BudgetProgressBar current={annualStats.totalUsed} total={annualStats.totalBudget} label="本年總剩餘" colorTheme="stone" />
         </div>
         <div className="space-y-3">{annualStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="stone" />))}</div>
       </section>
@@ -1145,8 +1129,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                   {selectedDay}
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-slate-700">{viewDate.getMonth() + 1}月{selectedDay}日</div>
-                  <div className="text-[10px] text-slate-400">{selectedTrans.length} 筆消費</div>
+                  <div className="text-sm font-bold text-slate-700">{selectedTrans.length} 筆消費</div>
                 </div>
               </div>
               <div className="text-right">
@@ -1158,7 +1141,11 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {selectedTrans.map(t => (
-                  <div key={t.id} className="flex items-center justify-between p-2 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 transition-colors group">
+                  <div
+                    key={t.id}
+                    onClick={() => onEdit && onEdit(t)}
+                    className="flex items-center justify-between p-2 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 transition-colors cursor-pointer group"
+                  >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-slate-400'}`}></span>
                       <span className="text-sm font-medium text-slate-700 truncate">{t.category}</span>
@@ -1166,12 +1153,6 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="text-sm font-mono font-medium text-slate-600">-${Number(t.amount).toLocaleString()}</span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(t); }}
-                        className="p-1 text-slate-300 hover:text-blue-500 transition-colors"
-                      >
-                        <PenTool className="w-3 h-3" />
-                      </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }}
                         className="p-1 text-slate-300 hover:text-rose-500 transition-colors"
