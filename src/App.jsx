@@ -1653,14 +1653,20 @@ export default function App() {
     const createSub = (col, setter, order = 'date', dir = 'desc') => {
       const q = query(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col), orderBy(order, dir));
       unsubs.push(onSnapshot(q, (s) => {
-        const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Debug: Check for duplicates
-        const ids = data.map(i => i.id);
-        const uniqueIds = new Set(ids);
-        if (ids.length !== uniqueIds.size) {
-          console.error(`[CRITICAL] Duplicate IDs found in ${col}!`, ids.length, uniqueIds.size);
+        const rawData = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Robust Deduplication
+        const seen = new Set();
+        const uniqueData = [];
+        rawData.forEach(item => {
+          if (!seen.has(item.id)) {
+            seen.add(item.id);
+            uniqueData.push(item);
+          }
+        });
+        if (rawData.length !== uniqueData.length) {
+          console.warn(`[Auto-Fix] Removed ${rawData.length - uniqueData.length} duplicate records from ${col}`);
         }
-        setter(data);
+        setter(uniqueData);
       }, (error) => console.error(`Error fetching ${col}:`, error)));
     };
 
