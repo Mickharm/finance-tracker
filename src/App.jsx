@@ -1679,7 +1679,7 @@ export default function App() {
   const withSubmission = async (action) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    try { await action(); } catch (e) { console.error(e); } finally { setIsSubmitting(false); }
+    try { await action(); } catch (e) { console.error(e); alert('發生錯誤: ' + e.message); } finally { setIsSubmitting(false); }
   };
 
   const requestConfirmation = ({ message, title = '確認', confirmText = '確定', confirmColor = 'bg-slate-800', onConfirm }) => {
@@ -2145,6 +2145,16 @@ export default function App() {
           </form>
         </ModalWrapper>
       )}
-    </div>
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={() => { confirmModal.onConfirm(); setConfirmModal(prev => ({ ...prev, isOpen: false })); }}
+        message={confirmModal.message}
+        title={confirmModal.title}
+        confirmText={confirmModal.confirmText}
+        confirmColor={confirmModal.confirmColor}
+      />
+    </div >
   );
 }
