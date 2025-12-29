@@ -891,12 +891,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
         </div>
         {/* Annual Summary - Same design as monthly */}
         <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
-          <BudgetProgressBar
-            current={annualStats.groups.reduce((s, g) => s + g.used, 0)}
-            total={annualStats.groups.reduce((s, g) => s + g.budget, 0)}
-            label="本年總剩餘"
-            colorTheme="stone"
-          />
+          <BudgetProgressBar current={annualStats.totalUsed} total={annualStats.totalBudget} label="本年總剩餘" colorTheme="stone" />
         </div>
         <div className="space-y-3">{annualStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="stone" />))}</div>
       </section>
@@ -1539,6 +1534,13 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Force re-render on mount to fix mobile display anomaly
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    const timer = setTimeout(() => forceUpdate(prev => prev + 1), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [editingId, setEditingId] = useState(null); // Track ID of item being edited
   const mainRef = useRef(null);
