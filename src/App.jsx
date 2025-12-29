@@ -876,9 +876,6 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
           <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-600"><Target className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-slate-800 leading-tight">年度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
         </div>
-        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
-          <BudgetProgressBar current={annualStats.totalUsed} total={annualStats.totalBudget} label="本年總剩餘" colorTheme="stone" />
-        </div>
         <div className="space-y-3">{annualStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="stone" />))}</div>
       </section>
     </div>
@@ -1104,7 +1101,6 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
         <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
       </div>
-      {selectedDay && (<div key={`detail-${selectedDateStr}-${selectedTrans.length}`} className="mt-6 bg-white/80 rounded-2xl p-5 shadow-lg border border-slate-100 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-md"><div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2"><div><h3 className="text-lg font-bold text-slate-800">{viewDate.getMonth() + 1}月{selectedDay}日</h3><p className="text-xs text-slate-400">當日消費明細</p></div><span className="text-xl font-bold text-slate-600">${selectedTrans.reduce((sum, t) => sum + Number(t.amount), 0).toLocaleString()}</span></div><div className="space-y-3">{selectedTrans.length === 0 ? (<p className="text-center text-slate-400 py-4 text-sm">當日無消費紀錄</p>) : (selectedTrans.map(t => (<div key={`${t.id}-${t.amount}`} onClick={() => onEdit && onEdit(t)} className="flex justify-between items-center group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"><div className="flex flex-col"><div className="flex items-center gap-2"><span className="text-sm font-bold text-slate-700">{t.category}</span><span className={`text-[10px] px-1.5 rounded ${t.payer === 'partner' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>{t.payer === 'partner' ? '佳欣' : '士程'}</span></div>{t.note && <span className="text-xs text-slate-400">{t.note}</span>}</div><div className="flex items-center gap-3"><span className={`font-mono font-medium ${t.type === 'annual' ? 'text-stone-500' : 'text-slate-500'}`}>-${Number(t.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button></div></div>)))}</div></div>)}
       {/* Add expense FAB */}
       {onAddExpense && <button onClick={onAddExpense} className="absolute bottom-8 right-6 w-14 h-14 bg-slate-800 rounded-full shadow-2xl shadow-slate-400/50 flex items-center justify-center text-white hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>}
     </div>
