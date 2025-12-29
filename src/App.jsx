@@ -145,7 +145,6 @@ const toLocalISOString = (date) => {
 const getTodayString = () => toLocalISOString(new Date());
 const getFixedDepositAmount = (year) => {
   if (year >= 2022 && year <= 2029) return 20000;
-  if (year >= 2030 && year <= 2039) return 24000;
   if (year >= 2040) return 30000;
   return 0;
 };
@@ -1612,21 +1611,35 @@ export default function App() {
   const [newExchange, setNewExchange] = useState({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT' });
 
   // --- Auth & Firestore ---
+  // --- Auth & Firestore ---
   useEffect(() => {
     const initAuth = async () => {
+      // Check if already signed in
+      if (auth.currentUser) return;
+
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
-          throw new Error('No custom token');
+          // If no custom token, check if we can restore session, otherwise anonymous
+          /* parse checking session persistence is handled automatically by Firebase SDK */
+          if (!auth.currentUser) {
+            console.log("No user session, signing in anonymously");
+            await signInAnonymously(auth);
+          }
         }
       } catch (e) {
-        console.warn("Auth check failed or custom token mismatch, falling back to anonymous:", e);
-        await signInAnonymously(auth);
+        console.warn("Auth check failed, falling back to anonymous:", e);
+        if (!auth.currentUser) await signInAnonymously(auth);
       }
     };
     initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      // Only update user state if it actually changed to avoid re-renders
+      if (u?.uid !== user?.uid) {
+        setUser(u);
+      }
+    });
     return () => unsubscribe();
   }, []);
 
