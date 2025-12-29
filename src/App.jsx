@@ -889,6 +889,9 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
           <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-600"><Target className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-slate-800 leading-tight">年度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
         </div>
+        <div className="bg-red-100 p-2 text-[10px] my-2 text-red-600 font-mono break-all z-50 relative">
+          DEBUG: T={annualStats.totalBudget} | G_Len={annualStats.groups.length} | G1_B={annualStats.groups[0]?.budget} | G1_N={annualStats.groups[0]?.name}
+        </div>
         {/* Annual Summary - Same design as monthly */}
         <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
           <BudgetProgressBar current={annualStats.totalUsed} total={annualStats.totalBudget} label="本年總剩餘" colorTheme="stone" />
@@ -1535,12 +1538,7 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Force re-render on mount to fix mobile display anomaly
-  const [, forceUpdate] = useState(0);
-  useEffect(() => {
-    const timer = setTimeout(() => forceUpdate(prev => prev + 1), 800);
-    return () => clearTimeout(timer);
-  }, []);
+  /* Force update removed - failed */
 
   const [editingId, setEditingId] = useState(null); // Track ID of item being edited
   const mainRef = useRef(null);
