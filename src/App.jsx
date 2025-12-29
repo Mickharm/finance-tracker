@@ -841,17 +841,17 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">年度總預算</h2>
-            <div className="text-xl sm:text-2xl font-bold text-slate-800 font-mono break-words">${totalAnnualBudget.toLocaleString()}</div>
+            <div className="text-xl sm:text-2xl font-bold text-slate-800 font-mono break-all line-clamp-1">${totalAnnualBudget.toLocaleString()}</div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-slate-50/50 rounded-xl p-3 min-w-0">
             <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">已花費</div>
-            <div className="text-base sm:text-lg font-bold text-slate-700 font-mono break-words">${totalAnnualUsed.toLocaleString()}</div>
+            <div className="text-base sm:text-lg font-bold text-slate-700 font-mono break-all line-clamp-1">${totalAnnualUsed.toLocaleString()}</div>
           </div>
           <div className={`rounded-xl p-3 min-w-0 ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
             <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-rose-400' : 'text-emerald-400'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
-            <div className={`text-base sm:text-lg font-bold font-mono break-words ${isOverBudget ? 'text-rose-600' : 'text-emerald-600'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
+            <div className={`text-base sm:text-lg font-bold font-mono break-all line-clamp-1 ${isOverBudget ? 'text-rose-600' : 'text-emerald-600'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -1568,7 +1568,7 @@ export default function App() {
     const unsubs = [];
     const createSub = (col, setter, order = 'date', dir = 'desc') => {
       const q = query(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col), orderBy(order, dir));
-      unsubs.push(onSnapshot(q, (s) => setter(s.docs.map(d => ({ id: d.id, ...d.data() })))));
+      unsubs.push(onSnapshot(q, (s) => setter(s.docs.map(d => ({ id: d.id, ...d.data() }))), (error) => console.error(`Error fetching ${col}:`, error)));
     };
 
     createSub('transactions', setTransactions);
@@ -2149,7 +2149,16 @@ export default function App() {
       <ConfirmationModal
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={() => { confirmModal.onConfirm(); setConfirmModal(prev => ({ ...prev, isOpen: false })); }}
+        onConfirm={async () => {
+          try {
+            await confirmModal.onConfirm();
+          } catch (e) {
+            console.error("Action Failed:", e);
+            alert("操作失敗: " + e.message);
+          } finally {
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        }}
         message={confirmModal.message}
         title={confirmModal.title}
         confirmText={confirmModal.confirmText}
