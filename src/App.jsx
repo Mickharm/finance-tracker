@@ -111,8 +111,8 @@ const MENU_SECTIONS = [
     items: [
       { id: 'home', label: '帳務總覽', icon: Home },
       { id: 'calendar', label: '每日明細', icon: Calendar },
-      { id: 'income', label: '收入管理', icon: DollarSign },
       { id: 'visualization', label: '支出分析', icon: BarChart2 },
+      { id: 'income', label: '收入管理', icon: DollarSign },
       { id: 'settings', label: '預算設定', icon: SettingsIcon },
     ]
   },
@@ -193,6 +193,85 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, requir
   </div>
 );
 
+// Calculator Input Component
+const CalculatorInput = ({ value, onChange, label }) => {
+  const [displayValue, setDisplayValue] = useState(value || '0');
+  const [expression, setExpression] = useState('');
+
+  const handleButton = (btn) => {
+    if (btn === 'C') {
+      setDisplayValue('0');
+      setExpression('');
+      onChange('');
+    } else if (btn === '=') {
+      try {
+        // eslint-disable-next-line no-eval
+        const result = Math.round(eval(displayValue.replace(/,/g, '')) || 0);
+        setDisplayValue(result.toString());
+        setExpression('');
+        onChange(result.toString());
+      } catch {
+        setDisplayValue('錯誤');
+      }
+    } else if (btn === '⌫') {
+      const newVal = displayValue.slice(0, -1) || '0';
+      setDisplayValue(newVal);
+      if (!isNaN(Number(newVal))) onChange(newVal);
+    } else if (['+', '-', '*', '/'].includes(btn)) {
+      setExpression(displayValue + btn);
+      setDisplayValue(displayValue + btn);
+    } else {
+      const newVal = displayValue === '0' ? btn : displayValue + btn;
+      setDisplayValue(newVal);
+      if (!isNaN(Number(newVal))) onChange(newVal);
+    }
+  };
+
+  const buttons = [
+    ['7', '8', '9', '/'],
+    ['4', '5', '6', '*'],
+    ['1', '2', '3', '-'],
+    ['C', '0', '=', '+'],
+  ];
+
+  return (
+    <div className="space-y-3">
+      {label && <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">{label}</label>}
+      <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100">
+        <div className="text-right mb-4">
+          <div className="text-3xl font-bold text-slate-800 font-mono tracking-tight">
+            ${Number(displayValue.replace(/[^0-9.-]/g, '') || 0).toLocaleString()}
+          </div>
+          {expression && <div className="text-xs text-slate-400 font-mono">{expression}</div>}
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {buttons.flat().map((btn) => (
+            <button
+              key={btn}
+              type="button"
+              onClick={() => handleButton(btn)}
+              className={`py-4 rounded-xl font-bold text-lg transition-all active:scale-95 ${btn === '=' ? 'bg-slate-800 text-white col-span-1' :
+                btn === 'C' ? 'bg-rose-100 text-rose-600' :
+                  ['+', '-', '*', '/'].includes(btn) ? 'bg-slate-200 text-slate-700' :
+                    'bg-white text-slate-700 border border-slate-100'
+                }`}
+            >
+              {btn}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => handleButton('⌫')}
+            className="py-4 rounded-xl font-bold text-lg bg-amber-100 text-amber-600 transition-all active:scale-95"
+          >
+            ⌫
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const GlassButton = ({ onClick, children, className = "", disabled = false, variant = 'primary', type = "button" }) => {
   const variants = {
     primary: "bg-slate-800 text-white shadow-lg shadow-slate-300/30 hover:bg-slate-900",
@@ -219,9 +298,9 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
     <div className="w-full">
       <div className="flex justify-between items-end mb-2">
         <span className={`text-xs font-bold uppercase tracking-wider ${theme.text} opacity-80 flex items-center gap-2`}>{label} {isOverBudget && <span className="bg-rose-50 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">超支</span>}</span>
-        {showDetails && (<span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-700'} flex flex-wrap justify-end`}><span className="text-[10px] text-slate-400 font-sans mr-1 font-medium whitespace-nowrap">剩餘</span> <span className={`${remaining > 1000000 ? 'text-sm' : ''}`}>${Math.abs(remaining).toLocaleString()}</span></span>)}
+        {showDetails && (<span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-700'} flex flex-wrap justify-end`}><span className="text-[10px] text-slate-400 font-sans mr-1 font-medium whitespace-nowrap">{isOverBudget ? '超支' : '剩餘'}</span> <span className={`${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span></span>)}
       </div>
-      <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}><div className={`h-full transition-all duration-1000 ease-out ${statusColor}`} style={{ width: `${percentage}%` }} /></div>
+      <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}><div className={`h-full transition-all duration-1000 ease-out ${statusColor}`} style={{ width: `${isOverBudget ? 100 : percentage}%` }} /></div>
       {showDetails && variant === 'main' && (<div className="flex justify-between mt-1.5 text-[10px] text-slate-400 font-medium"><span>{Math.round(usedPercentage)}% 已用</span><span>總額: ${total.toLocaleString()}</span></div>)}
     </div>
   );
@@ -720,30 +799,60 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
 
 // --- 6. View Components (Top Layer) ---
 
-const HomeView = ({ monthlyStats, annualStats }) => (
-  <div className="space-y-8 pb-24 animate-in fade-in duration-500">
-    <section>
-      <div className="flex items-center gap-2 mb-4 px-1">
-        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"><Calendar className="w-4 h-4" /></div>
-        <div><h2 className="text-lg font-bold text-slate-800 leading-tight">月度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">經常性支出</p></div>
+const HomeView = ({ monthlyStats, annualStats }) => {
+  const totalAnnualBudget = monthlyStats.totalBudget * 12 + annualStats.totalBudget;
+  const totalAnnualUsed = monthlyStats.totalUsed + annualStats.totalUsed;
+  const totalRemaining = totalAnnualBudget - totalAnnualUsed;
+  const isOverBudget = totalRemaining < 0;
+
+  return (
+    <div className="space-y-8 pb-24 animate-in fade-in duration-500">
+      {/* Annual Summary Card */}
+      <div className={`${GLASS_CARD} p-6 border-l-4 ${isOverBudget ? 'border-rose-400' : 'border-emerald-400'}`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`p-2 rounded-xl ${isOverBudget ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
+            <Target className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">年度總預算</h2>
+            <div className="text-2xl font-bold text-slate-800 font-mono">${totalAnnualBudget.toLocaleString()}</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-slate-50/50 rounded-xl p-3">
+            <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">已花費</div>
+            <div className="text-lg font-bold text-slate-700 font-mono">${totalAnnualUsed.toLocaleString()}</div>
+          </div>
+          <div className={`rounded-xl p-3 ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
+            <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-rose-400' : 'text-emerald-400'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
+            <div className={`text-lg font-bold font-mono ${isOverBudget ? 'text-rose-600' : 'text-emerald-600'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
+          </div>
+        </div>
       </div>
-      <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-slate-400`}>
-        <BudgetProgressBar current={monthlyStats.totalUsed} total={monthlyStats.totalBudget} label="本月總剩餘" colorTheme="slate" />
-      </div>
-      <div className="space-y-3">{monthlyStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="slate" />))}</div>
-    </section>
-    <section>
-      <div className="flex items-center gap-2 mb-4 px-1 mt-10">
-        <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-600"><Target className="w-4 h-4" /></div>
-        <div><h2 className="text-lg font-bold text-slate-800 leading-tight">年度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
-      </div>
-      <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
-        <BudgetProgressBar current={annualStats.totalUsed} total={annualStats.totalBudget} label="本年總剩餘" colorTheme="stone" />
-      </div>
-      <div className="space-y-3">{annualStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="stone" />))}</div>
-    </section>
-  </div>
-);
+
+      <section>
+        <div className="flex items-center gap-2 mb-4 px-1">
+          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"><Calendar className="w-4 h-4" /></div>
+          <div><h2 className="text-lg font-bold text-slate-800 leading-tight">月度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">經常性支出</p></div>
+        </div>
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-slate-400`}>
+          <BudgetProgressBar current={monthlyStats.totalUsed} total={monthlyStats.totalBudget} label="本月總剩餘" colorTheme="slate" />
+        </div>
+        <div className="space-y-3">{monthlyStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="slate" />))}</div>
+      </section>
+      <section>
+        <div className="flex items-center gap-2 mb-4 px-1 mt-10">
+          <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-600"><Target className="w-4 h-4" /></div>
+          <div><h2 className="text-lg font-bold text-slate-800 leading-tight">年度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
+        </div>
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
+          <BudgetProgressBar current={annualStats.totalUsed} total={annualStats.totalBudget} label="本年總剩餘" colorTheme="stone" />
+        </div>
+        <div className="space-y-3">{annualStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="stone" />))}</div>
+      </section>
+    </div>
+  );
+};
 
 const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, deleteMortgageExp, deleteMortgageAnalysis, deleteMortgageFunding, setMortgageExpType, setIsAddMortgageExpModalOpen, setIsAddMortgageAnalysisModalOpen, setIsAddMortgageFundingModalOpen, onEditExp, onEditAnalysis, onEditFunding }) => {
   const downPaymentExp = mortgageExpenses.filter(e => e.type === 'down_payment');
@@ -896,6 +1005,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         items={applianceExp}
         onDelete={deleteMortgageExp}
         onAdd={(type) => { setMortgageExpType(type); setIsAddMortgageExpModalOpen(true); }}
+        onEdit={(item) => onEditExp(item)}
         type="misc_appliances"
         icon={Receipt}
         totalLabel="支出總計"
@@ -904,10 +1014,11 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         isCollapsible={true}
         defaultExpanded={false}
         itemRenderer={(item) => (
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-center">
             <div>
               <span className="font-bold text-slate-700 text-sm block">{item.name}</span>
               <span className="text-[10px] text-slate-400">{formatDetailedDate(item.date)} {item.brand && `• ${item.brand}`}</span>
+              {item.note && <span className="text-xs text-slate-500 block mt-1">{item.note}</span>}
             </div>
             <div className="flex items-center gap-2">
               <span className="font-mono font-bold text-slate-700">${Number(item.amount).toLocaleString()}</span>
@@ -919,10 +1030,19 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
   );
 };
 
-const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit }) => {
+const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit, onAddExpense }) => {
   const [viewDate, setViewDate] = useState(selectedDate);
   const [selectedDay, setSelectedDay] = useState(null);
   useEffect(() => setViewDate(selectedDate), [selectedDate]);
+
+  // Reset selectedDay when month changes
+  const handleMonthChange = (direction) => {
+    const newDate = new Date(viewDate);
+    newDate.setMonth(viewDate.getMonth() + direction);
+    setViewDate(newDate);
+    setSelectedDay(null); // Reset selection when changing months
+  };
+
   const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   const daysInMonth = getDaysInMonth(viewDate);
@@ -947,13 +1067,15 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
   const selectedDateStr = selectedDay ? toLocalISOString(new Date(viewDate.getFullYear(), viewDate.getMonth(), selectedDay)) : null;
   const selectedTrans = selectedDateStr ? transactions.filter(t => t.date === selectedDateStr) : [];
   return (
-    <div className="pb-24 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-slate-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))} className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600"><ChevronRight className="w-5 h-5" /></button></div></div>
+    <div className="pb-24 animate-in fade-in duration-300 relative">
+      <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-slate-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600"><ChevronRight className="w-5 h-5" /></button></div></div>
       <div className={`${GLASS_CARD} p-0 border border-slate-100`}>
         <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
       </div>
       {selectedDay && (<div className="mt-6 bg-white/80 rounded-2xl p-5 shadow-lg border border-slate-100 animate-in slide-in-from-bottom-4 duration-300 backdrop-blur-md"><div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2"><div><h3 className="text-lg font-bold text-slate-800">{viewDate.getMonth() + 1}月{selectedDay}日</h3><p className="text-xs text-slate-400">當日消費明細</p></div><span className="text-xl font-bold text-slate-600">${selectedTrans.reduce((sum, t) => sum + Number(t.amount), 0).toLocaleString()}</span></div><div className="space-y-3">{selectedTrans.length === 0 ? (<p className="text-center text-slate-400 py-4 text-sm">當日無消費紀錄</p>) : (selectedTrans.map(t => (<div key={t.id} onClick={() => onEdit && onEdit(t)} className="flex justify-between items-center group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"><div className="flex flex-col"><div className="flex items-center gap-2"><span className="text-sm font-bold text-slate-700">{t.category}</span><span className={`text-[10px] px-1.5 rounded ${t.payer === 'partner' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>{t.payer === 'partner' ? '佳欣' : '士程'}</span></div>{t.note && <span className="text-xs text-slate-400">{t.note}</span>}</div><div className="flex items-center gap-3"><span className={`font-mono font-medium ${t.type === 'annual' ? 'text-stone-500' : 'text-slate-500'}`}>-${Number(t.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button></div></div>)))}</div></div>)}
+      {/* Add expense FAB */}
+      {onAddExpense && <button onClick={onAddExpense} className="absolute bottom-8 right-6 w-14 h-14 bg-slate-800 rounded-full shadow-2xl shadow-slate-400/50 flex items-center justify-center text-white hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>}
     </div>
   );
 };
@@ -1062,7 +1184,7 @@ const VisualizationView = ({ transactions }) => {
           {isCompareMode && (<div className="flex-1 animate-in slide-in-from-right-2 duration-200"><label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">對比年份</label><select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-500`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select></div>)}
         </div>
 
-        <div className="h-64 flex items-end justify-between gap-1 mt-4 relative">
+        <div className="h-64 flex items-end justify-between gap-0.5 mt-4 relative overflow-x-auto">
           {/* Background Grid */}
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
             <div className="border-t border-dashed border-slate-100 w-full h-px"></div>
@@ -1097,7 +1219,7 @@ const VisualizationView = ({ transactions }) => {
               </div>
 
               {/* X Axis Label */}
-              <div className={`mt-2 text-[10px] font-bold transition-colors ${selectedMonth === idx ? 'text-slate-800 scale-110' : 'text-slate-400 group-hover:text-slate-600'}`}>{idx + 1}月</div>
+              <div className={`mt-2 text-[9px] font-bold transition-colors whitespace-nowrap ${selectedMonth === idx ? 'text-slate-800 scale-110' : 'text-slate-400 group-hover:text-slate-600'}`}>{idx + 1}</div>
             </div>
           ))}
         </div>
@@ -1801,6 +1923,7 @@ export default function App() {
               setEditingId(item.id);
               setIsAddTxModalOpen(true);
             }}
+            onAddExpense={() => setIsAddTxModalOpen(true)}
           />
         )}
         {currentView === 'settings' && (
@@ -1832,19 +1955,12 @@ export default function App() {
               <GlassButton onClick={() => { setIsAddTxModalOpen(false); setCurrentView('settings'); }}>前往設定</GlassButton>
             </div>
           ) : (
-            <form onSubmit={handleAddTransaction} className="space-y-6">
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">$</span>
-                <input
-                  type="number"
-                  value={newTrans.amount}
-                  onChange={(e) => setNewTrans({ ...newTrans, amount: e.target.value })}
-                  className={`w-full text-center text-4xl font-bold py-6 text-slate-800 outline-none bg-transparent placeholder:text-slate-200 border-b-2 border-slate-100 focus:border-slate-800 transition-colors`}
-                  placeholder="0"
-                  autoFocus
-                  required
-                />
-              </div>
+            <form onSubmit={handleAddTransaction} className="space-y-4">
+              <CalculatorInput
+                value={newTrans.amount}
+                onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
+                label="金額"
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-100/50 p-1 rounded-2xl flex">
