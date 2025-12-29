@@ -254,7 +254,21 @@ const CalculatorInput = ({ value, onChange, label }) => {
     try {
       return String(val).split(/([+\-*/])/).map(part => {
         if (['+', '-', '*', '/'].includes(part)) return ` ${part} `;
-        return !isNaN(Number(part)) && part !== '' ? Number(part).toLocaleString() : part;
+        if (part === '') return '';
+        // If it's a valid number
+        if (!isNaN(Number(part))) {
+          // If it ends with '.', Number() will strip it, so we strictly check usage
+          if (part.endsWith('.')) {
+            return Number(part.slice(0, -1)).toLocaleString() + '.';
+          }
+          // If it has decimal part, ensure we don't lose .0 or .00 (e.g. 1.0)
+          if (part.includes('.')) {
+            const [int, dec] = part.split('.');
+            return Number(int).toLocaleString() + '.' + dec;
+          }
+          return Number(part).toLocaleString();
+        }
+        return part;
       }).join('');
     } catch { return val; }
   };
