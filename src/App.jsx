@@ -844,12 +844,12 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
             <div className="text-xl sm:text-2xl font-bold text-slate-800 font-mono break-all line-clamp-1">${totalAnnualBudget.toLocaleString()}</div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-slate-50/50 rounded-xl p-3 min-w-0">
+        <div className="flex flex-row gap-4">
+          <div className="bg-slate-50/50 rounded-xl p-3 flex-1 min-w-0">
             <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">已花費</div>
             <div className="text-base sm:text-lg font-bold text-slate-700 font-mono break-all line-clamp-1">${totalAnnualUsed.toLocaleString()}</div>
           </div>
-          <div className={`rounded-xl p-3 min-w-0 ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
+          <div className={`rounded-xl p-3 flex-1 min-w-0 ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
             <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-rose-400' : 'text-emerald-400'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
             <div className={`text-base sm:text-lg font-bold font-mono break-all line-clamp-1 ${isOverBudget ? 'text-rose-600' : 'text-emerald-600'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
           </div>
@@ -1693,7 +1693,8 @@ export default function App() {
     withSubmission(async () => {
       if (editingId) {
         // Update existing transaction
-        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...newTrans, amount: Number(newTrans.amount) });
+        // Update existing transaction (use setDoc merge to prevent 'No document to update' error if doc is ghost/missing)
+        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...newTrans, amount: Number(newTrans.amount) }, { merge: true });
       } else {
         // Add new transaction
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...newTrans, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
@@ -1709,7 +1710,7 @@ export default function App() {
     e.preventDefault();
     withSubmission(async () => {
       if (editingId) {
-        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', editingId), { ...newIncome, amount: Number(newIncome.amount) });
+        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', editingId), { ...newIncome, amount: Number(newIncome.amount) }, { merge: true });
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes'), { ...newIncome, amount: Number(newIncome.amount), createdAt: serverTimestamp() });
       }
@@ -1724,7 +1725,7 @@ export default function App() {
     e.preventDefault();
     withSubmission(async () => {
       if (editingId) {
-        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', editingId), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount) });
+        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', editingId), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount) }, { merge: true });
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history'), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount), createdAt: serverTimestamp() });
       }
@@ -1739,7 +1740,7 @@ export default function App() {
     e.preventDefault();
     withSubmission(async () => {
       if (editingId) {
-        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', editingId), { ...newPartnerTx, amount: Number(newPartnerTx.amount) });
+        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', editingId), { ...newPartnerTx, amount: Number(newPartnerTx.amount) }, { merge: true });
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings'), { ...newPartnerTx, amount: Number(newPartnerTx.amount), createdAt: serverTimestamp() });
       }
