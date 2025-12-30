@@ -1649,9 +1649,18 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
 
               <div className="grid grid-cols-6 gap-2">
                 <input placeholder="名稱" value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-4`} />
-                <div className="col-span-2 relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">日</span>
-                  <input type="number" min="1" max="31" value={newItem.day || 1} onChange={e => setNewItem({ ...newItem, day: e.target.value })} className={`${GLASS_INPUT} pl-6 pr-2 py-2 text-sm w-full`} />
+                <div className="col-span-2 flex items-center bg-white/50 rounded-xl border border-slate-200 px-2 focus-within:ring-2 focus-within:ring-slate-400 focus-within:border-transparent transition-all">
+                  <span className="text-xs text-slate-500 shrink-0 font-bold">每月</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={newItem.day}
+                    onChange={e => setNewItem({ ...newItem, day: e.target.value })}
+                    className="w-full bg-transparent text-center font-bold text-slate-700 outline-none py-2 text-sm"
+                    placeholder="1"
+                  />
+                  <span className="text-xs text-slate-500 shrink-0 font-bold">日</span>
                 </div>
                 <input type="number" placeholder="金額" value={newItem.amount} onChange={e => setNewItem({ ...newItem, amount: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-6`} />
 
