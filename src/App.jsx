@@ -101,7 +101,7 @@ const COLOR_VARIANTS = {
   },
 };
 
-const DEFAULT_SETTINGS = { monthlyGroups: [], annualGroups: [] };
+const DEFAULT_SETTINGS = { monthlyGroups: [], annualGroups: [], recurringItems: [], lastRecurringCheck: '' };
 const DEFAULT_PRINCIPAL_CONFIG = { assets: { bank: [], invest: [] }, liabilities: { encumbrance: [] } };
 const INCOME_CATEGORIES = ['薪水', '年終獎金', '激勵獎金', '其他獎金'];
 
@@ -399,6 +399,110 @@ const WatchlistGroup = ({ group, onUpdateStock, onDeleteStock, onDeleteGroup, on
   const [isExpanded, setIsExpanded] = useState(true);
   const [newSymbol, setNewSymbol] = useState('');
   const handleAdd = () => { if (newSymbol) { onAddStock(group.id, newSymbol.toUpperCase()); setNewSymbol(''); } };
+  // --- Recurring Expenses Manager ---
+  const RecurringManagerModal = ({ isOpen, onClose, items, onSave }) => {
+    const [localItems, setLocalItems] = useState(items || []);
+    const [newItem, setNewItem] = useState({ name: '', amount: '', group: '', category: '', payer: 'myself', active: true });
+
+    useEffect(() => { setLocalItems(items || []); }, [items]);
+
+    const handleAddItem = () => {
+      if (!newItem.name || !newItem.amount) return;
+      setLocalItems([...localItems, { ...newItem, id: Date.now().toString() }]);
+      setNewItem({ name: '', amount: '', group: '', category: '', payer: 'myself', active: true });
+    };
+
+    const handleDelete = (id) => setLocalItems(localItems.filter(i => i.id !== id));
+    const handleToggle = (id) => setLocalItems(localItems.map(i => i.id === id ? { ...i, active: !i.active } : i));
+    const handleSave = () => { onSave(localItems); onClose(); };
+
+    if (!isOpen) return null;
+    return (
+      <ModalWrapper title="固定支出設定" onClose={onClose}>
+        <div className="space-y-4">
+          <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex gap-2">
+            <span className="text-amber-600 font-bold shrink-0">💡</span>
+            <span className="text-xs text-amber-700">此處設定每月固定支出的項目（如房租、訂閱）。每月首次開啟 App 時，系統會自動詢問是否加入這些支出。</span>
+          </div>
+
+          <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+            {localItems.map(item => (
+              <div key={item.id} className={`flex items-center justify-between p-3 rounded-xl border ${item.active ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <button onClick={() => handleToggle(item.id)} className={`p-1.5 rounded-full ${item.active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700 truncate">{item.name}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${item.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>{item.payer === 'partner' ? '佳欣' : '士程'}</span>
+                    </div>
+                    <span className="text-xs text-slate-400">${Number(item.amount).toLocaleString()} • {item.group}-{item.category}</span>
+                  </div>
+                </div>
+                <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+            {localItems.length === 0 && <div className="text-center py-8 text-slate-400 text-sm">尚無設定項目</div>}
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 space-y-3">
+            <h4 className="text-xs font-bold text-slate-400 uppercase">新增項目</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <input placeholder="名稱 (如: 房租)" value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm`} />
+              <input type="number" placeholder="金額" value={newItem.amount} onChange={e => setNewItem({ ...newItem, amount: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm`} />
+              <input placeholder="群組 (如: 居住)" value={newItem.group} onChange={e => setNewItem({ ...newItem, group: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm`} />
+              <input placeholder="分類 (如: 房租)" value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm`} />
+              <div className="col-span-2 flex gap-2">
+                <select value={newItem.payer} onChange={e => setNewItem({ ...newItem, payer: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm flex-1`}>
+                  <option value="myself">付款：士程</option>
+                  <option value="partner">付款：佳欣</option>
+                </select>
+                <button onClick={handleAddItem} disabled={!newItem.name || !newItem.amount} className="bg-slate-800 text-white px-4 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-50"><Plus className="w-4 h-4" /> 新增</button>
+              </div>
+            </div>
+          </div>
+          <button onClick={handleSave} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg mt-4">儲存設定</button>
+        </div>
+      </ModalWrapper>
+    );
+  };
+
+  const RecurringConfirmModal = ({ isOpen, onClose, items, onConfirm, onSkip }) => {
+    if (!isOpen || items.length === 0) return null;
+    const total = items.reduce((sum, i) => sum + Number(i.amount), 0);
+    return (
+      <ModalWrapper title="本月固定支出確認" onClose={onClose}>
+        <div className="space-y-4">
+          <div className="text-center py-4">
+            <div className="text-sm text-slate-500 mb-1">檢測到新的月份，是否加入以下固定支出？</div>
+            <div className="text-2xl font-bold text-slate-800 font-mono">${total.toLocaleString()}</div>
+          </div>
+          <div className="space-y-2 bg-slate-50 p-3 rounded-xl max-h-[40vh] overflow-y-auto">
+            {items.map(item => (
+              <div key={item.id} className="flex justify-between items-center text-sm border-b border-slate-100 last:border-0 pb-2 last:pb-0">
+                <span className="text-slate-600 font-medium">{item.name}</span>
+                <span className="font-mono font-bold text-slate-700">${Number(item.amount).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-3 pt-2">
+            <button onClick={onConfirm} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-4 h-4" /> 確認入帳
+            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={onClose} className="bg-white border border-slate-200 text-slate-600 py-3 rounded-xl font-bold">
+                稍後提醒
+              </button>
+              <button onClick={onSkip} className="bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-xs">
+                本月不入帳
+              </button>
+            </div>
+          </div>
+        </div>
+      </ModalWrapper>
+    );
+  };
   const groupTotalBudget = useMemo(() => group.items.reduce((sum, item) => sum + (Number(item.budget) || 0), 0), [group.items]);
   const groupPercentage = totalSystemBudget > 0 ? (groupTotalBudget / totalSystemBudget) * 100 : 0;
   const theme = COLOR_VARIANTS.indigo;
@@ -1626,6 +1730,11 @@ export default function App() {
   const [mortgageFunding, setMortgageFunding] = useState([]);
   const [stockGoals, setStockGoals] = useState([]);
   const [usdExchanges, setUsdExchanges] = useState([]);
+
+  // Recurring Manager State
+  const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
+  const [isRecurringConfirmOpen, setIsRecurringConfirmOpen] = useState(false);
+  const [recurringConfirmItems, setRecurringConfirmItems] = useState([]);
 
   // Form States
   // Default amount 0 to prevent layout shift
