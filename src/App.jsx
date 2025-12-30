@@ -1167,8 +1167,11 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-slate-400'}`}></span>
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-700 leading-tight">{t.category}{t.note && ` / ${t.note}`}</span>
-                          <span className="text-xs font-medium text-slate-400 mt-0.5">{t.group}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-bold text-slate-700 leading-tight">{t.note || t.category}</span>
+                            {t.payer === 'partner' ? <Heart className="w-3 h-3 text-rose-400 fill-rose-400" /> : <User className="w-3 h-3 text-slate-400 fill-slate-400" />}
+                          </div>
+                          <span className="text-xs font-medium text-slate-400 mt-0.5">{t.group} / {t.category}</span>
                         </div>
                       </div>
                     </div>
