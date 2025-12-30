@@ -1833,7 +1833,7 @@ export default function App() {
         const { id, ...createData } = newTrans;
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...createData, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
       }
-      setNewTrans(prev => ({ ...prev, amount: '', note: '' }));
+      setNewTrans(prev => ({ ...prev, amount: '0', note: '' }));
       setIsAddTxModalOpen(false);
       setEditingId(null);
     });
