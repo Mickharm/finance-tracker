@@ -1848,6 +1848,63 @@ export default function App() {
     return () => unsubSettings();
   }, [user, selectedDate]);
 
+  // Recurring Check
+  useEffect(() => {
+    if (!settings.monthlyGroups) return;
+    const currentMonth = getTodayString().substring(0, 7);
+    if (settings.lastRecurringCheck !== currentMonth && settings.recurringItems && settings.recurringItems.length > 0) {
+      const activeItems = settings.recurringItems.filter(i => i.active);
+      if (activeItems.length > 0) {
+        setRecurringConfirmItems(activeItems);
+        setIsRecurringConfirmOpen(true);
+      }
+    }
+  }, [settings.lastRecurringCheck, settings.recurringItems]);
+
+  const handleSaveRecurring = async (items) => {
+    const year = selectedDate.getFullYear();
+    const updates = { recurringItems: items };
+    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${year}`), updates, { merge: true });
+    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true });
+  };
+
+  const handleBatchAddRecurring = async () => {
+    const currentMonth = getTodayString().substring(0, 7);
+    withSubmission(async () => {
+      const batch = [];
+      for (const item of recurringConfirmItems) {
+        const { id, active, ...txData } = item;
+        batch.push(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), {
+          amount: Number(txData.amount),
+          type: 'monthly',
+          group: txData.group,
+          category: txData.category,
+          note: txData.name,
+          date: getTodayString(),
+          payer: txData.payer || 'myself',
+          createdAt: serverTimestamp()
+        }));
+      }
+      await Promise.all(batch);
+      const year = selectedDate.getFullYear();
+      const updates = { lastRecurringCheck: currentMonth };
+      await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${year}`), updates, { merge: true });
+      await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true });
+
+      setIsRecurringConfirmOpen(false);
+      alert('已完成批量入帳');
+    });
+  };
+
+  const handleSkipRecurring = async () => {
+    const currentMonth = getTodayString().substring(0, 7);
+    const year = selectedDate.getFullYear();
+    const updates = { lastRecurringCheck: currentMonth };
+    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${year}`), updates, { merge: true });
+    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true });
+    setIsRecurringConfirmOpen(false);
+  };
+
   // Form Defaults Logic
   useEffect(() => {
     const groups = newTrans.type === 'monthly' ? settings.monthlyGroups : settings.annualGroups;
@@ -2254,6 +2311,9 @@ export default function App() {
             </div>
           ) : (
             <form onSubmit={handleAddTransaction} className="space-y-4">
+              <div className="flex justify-end">
+                <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-slate-500 underline flex items-center gap-1 hover:text-slate-800"><SettingsIcon className="w-3 h-3" />管理固定支出</button>
+              </div>
               <CalculatorInput
                 value={newTrans.amount}
                 onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
