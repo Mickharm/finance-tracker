@@ -2479,6 +2479,20 @@ export default function App() {
         confirmText={confirmModal.confirmText}
         confirmColor={confirmModal.confirmColor}
       />
+
+      <RecurringManagerModal
+        isOpen={isRecurringManagerOpen}
+        onClose={() => setIsRecurringManagerOpen(false)}
+        items={settings.recurringItems}
+        onSave={handleSaveRecurring}
+      />
+      <RecurringConfirmModal
+        isOpen={isRecurringConfirmOpen}
+        onClose={() => setIsRecurringConfirmOpen(false)}
+        items={recurringConfirmItems}
+        onConfirm={handleBatchAddRecurring}
+        onSkip={handleSkipRecurring}
+      />
     </div >
   );
 }
