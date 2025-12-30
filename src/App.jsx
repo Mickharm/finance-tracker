@@ -1557,27 +1557,49 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
 
 
 // --- Recurring Expenses Manager ---
+// --- Recurring Expenses Manager ---
 const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
   const [localItems, setLocalItems] = useState(items || []);
   const [isAdding, setIsAdding] = useState(false);
-  const [newItem, setNewItem] = useState({ name: '', amount: '', group: '', category: '', payer: 'myself', active: true });
+  const [editingId, setEditingId] = useState(null);
+  const [newItem, setNewItem] = useState({ name: '', amount: '', group: '', category: '', payer: 'myself', day: '1', active: true });
 
   useEffect(() => { setLocalItems(items || []); }, [items]);
 
   useEffect(() => {
-    if (isAdding && groups && groups.length > 0 && !newItem.group) {
+    if (isAdding && groups && groups.length > 0 && !editingId && !newItem.group) {
       setNewItem(prev => ({ ...prev, group: groups[0].name, category: groups[0].items[0]?.name || '' }));
     }
-  }, [isAdding, groups]);
+  }, [isAdding, groups, editingId]);
 
-  const handleAddItem = () => {
+  const handleSaveItem = () => {
     if (!newItem.name || !newItem.amount) return;
-    setLocalItems([...localItems, { ...newItem, id: Date.now().toString() }]);
-    setNewItem({ name: '', amount: '', group: '', category: '', payer: 'myself', active: true });
+    if (editingId) {
+      setLocalItems(prev => prev.map(item => item.id === editingId ? { ...newItem, id: editingId } : item));
+      setEditingId(null);
+    } else {
+      setLocalItems([...localItems, { ...newItem, id: Date.now().toString() }]);
+    }
+    setNewItem({ name: '', amount: '', group: '', category: '', payer: 'myself', day: '1', active: true });
     setIsAdding(false);
   };
 
-  const handleDelete = (id) => setLocalItems(localItems.filter(i => i.id !== id));
+  const handleEditClick = (item) => {
+    setNewItem({ ...item, day: item.day || '1' });
+    setEditingId(item.id);
+    setIsAdding(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsAdding(false);
+    setEditingId(null);
+    setNewItem({ name: '', amount: '', group: '', category: '', payer: 'myself', day: '1', active: true });
+  };
+
+  const handleDelete = (id) => {
+    setLocalItems(localItems.filter(i => i.id !== id));
+    if (editingId === id) handleCancelEdit();
+  };
   const handleToggle = (id) => setLocalItems(localItems.map(i => i.id === id ? { ...i, active: !i.active } : i));
   const handleSave = () => { onSave(localItems); onClose(); };
 
@@ -1587,29 +1609,31 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
       <div className="space-y-4">
         <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex gap-2">
           <span className="text-amber-600 font-bold shrink-0">💡</span>
-          <span className="text-xs text-amber-700">此處設定每月固定支出的項目（如房租、訂閱）。每月首次開啟 App 時，系統會自動詢問是否加入這些支出。</span>
+          <span className="text-xs text-amber-700">可設定每月的入帳日 (1-31)。若當月無該日期 (如2月30日)，將自動紀錄於該月最後一天。</span>
         </div>
 
-        <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-          {localItems.map(item => (
-            <div key={item.id} className={`flex items-center justify-between p-3 rounded-xl border ${item.active ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <button onClick={() => handleToggle(item.id)} className={`p-1.5 rounded-full ${item.active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
-                  <CheckCircle2 className="w-4 h-4" />
-                </button>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-700 truncate">{item.name}</span>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${item.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>{item.payer === 'partner' ? '佳欣' : '士程'}</span>
+        {!isAdding && (
+          <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+            {localItems.map(item => (
+              <div key={item.id} onClick={() => handleEditClick(item)} className={`relative flex items-center justify-between p-3 rounded-xl border cursor-pointer hover:border-indigo-300 transition-colors ${item.active ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <button onClick={(e) => { e.stopPropagation(); handleToggle(item.id); }} className={`p-1.5 rounded-full ${item.active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700 truncate">{item.name}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${item.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>{item.payer === 'partner' ? '佳欣' : '士程'}</span>
+                    </div>
+                    <span className="text-xs text-slate-400">每月 {item.day || 1} 日 • ${Number(item.amount).toLocaleString()} • {item.group}-{item.category}</span>
                   </div>
-                  <span className="text-xs text-slate-400">${Number(item.amount).toLocaleString()} • {item.group}-{item.category}</span>
                 </div>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
               </div>
-              <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
-            </div>
-          ))}
-          {localItems.length === 0 && <div className="text-center py-8 text-slate-400 text-sm">尚無設定項目</div>}
-        </div>
+            ))}
+            {localItems.length === 0 && <div className="text-center py-8 text-slate-400 text-sm">尚無設定項目</div>}
+          </div>
+        )}
 
         <div className="pt-4 border-t border-slate-100 space-y-3">
           {!isAdding ? (
@@ -1619,15 +1643,19 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
           ) : (
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-3 animate-in slide-in-from-top-2">
               <div className="flex justify-between items-center mb-1">
-                <h4 className="text-xs font-bold text-slate-400 uppercase">新增項目</h4>
-                <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+                <h4 className="text-xs font-bold text-slate-400 uppercase">{editingId ? '編輯項目' : '新增項目'}</h4>
+                <button onClick={handleCancelEdit} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <input placeholder="名稱 (如: 房租)" value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-2`} />
-                <input type="number" placeholder="金額" value={newItem.amount} onChange={e => setNewItem({ ...newItem, amount: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-2`} />
+              <div className="grid grid-cols-6 gap-2">
+                <input placeholder="名稱" value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-4`} />
+                <div className="col-span-2 relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">日</span>
+                  <input type="number" min="1" max="31" value={newItem.day || 1} onChange={e => setNewItem({ ...newItem, day: e.target.value })} className={`${GLASS_INPUT} pl-6 pr-2 py-2 text-sm w-full`} />
+                </div>
+                <input type="number" placeholder="金額" value={newItem.amount} onChange={e => setNewItem({ ...newItem, amount: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-6`} />
 
-                <div className="relative col-span-1">
+                <div className="relative col-span-3">
                   <select value={newItem.group} onChange={e => {
                     const g = (groups || []).find(grp => grp.name === e.target.value);
                     setNewItem({ ...newItem, group: e.target.value, category: g ? g.items[0]?.name : '' });
@@ -1636,27 +1664,130 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
                   </select>
                   <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
                 </div>
-                <div className="relative col-span-1">
+                <div className="relative col-span-3">
                   <select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })} className={`${GLASS_INPUT} w-full px-3 py-2 text-sm appearance-none`}>
                     {(groups || []).find(g => g.name === newItem.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
                   </select>
                   <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
                 </div>
 
-                <div className="col-span-2 flex gap-2 pt-1">
+                <div className="col-span-6 flex gap-2 pt-1">
                   <button onClick={() => setNewItem({ ...newItem, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${newItem.payer === 'myself' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-400'}`}>士程</button>
                   <button onClick={() => setNewItem({ ...newItem, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${newItem.payer === 'partner' ? 'bg-rose-50 border-rose-200 text-rose-500' : 'bg-white border-slate-200 text-slate-400'}`}>佳欣</button>
                 </div>
 
-                <button onClick={handleAddItem} disabled={!newItem.name || !newItem.amount} className="col-span-2 bg-slate-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-50 mt-2"><Plus className="w-4 h-4" /> 確認新增</button>
+                <button onClick={handleSaveItem} disabled={!newItem.name || !newItem.amount} className="col-span-6 bg-slate-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-50 mt-2">
+                  {editingId ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {editingId ? '確認修改' : '確認新增'}
+                </button>
               </div>
             </div>
           )}
         </div>
-        <button onClick={handleSave} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg mt-4">儲存設定</button>
+        {!isAdding && <button onClick={handleSave} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg mt-4">儲存設定</button>}
       </div>
     </ModalWrapper>
   );
+};
+const [localItems, setLocalItems] = useState(items || []);
+const [isAdding, setIsAdding] = useState(false);
+const [newItem, setNewItem] = useState({ name: '', amount: '', group: '', category: '', payer: 'myself', active: true });
+
+useEffect(() => { setLocalItems(items || []); }, [items]);
+
+useEffect(() => {
+  if (isAdding && groups && groups.length > 0 && !newItem.group) {
+    setNewItem(prev => ({ ...prev, group: groups[0].name, category: groups[0].items[0]?.name || '' }));
+  }
+}, [isAdding, groups]);
+
+const handleAddItem = () => {
+  if (!newItem.name || !newItem.amount) return;
+  setLocalItems([...localItems, { ...newItem, id: Date.now().toString() }]);
+  setNewItem({ name: '', amount: '', group: '', category: '', payer: 'myself', active: true });
+  setIsAdding(false);
+};
+
+const handleDelete = (id) => setLocalItems(localItems.filter(i => i.id !== id));
+const handleToggle = (id) => setLocalItems(localItems.map(i => i.id === id ? { ...i, active: !i.active } : i));
+const handleSave = () => { onSave(localItems); onClose(); };
+
+if (!isOpen) return null;
+return (
+  <ModalWrapper title="固定支出設定" onClose={onClose}>
+    <div className="space-y-4">
+      <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex gap-2">
+        <span className="text-amber-600 font-bold shrink-0">💡</span>
+        <span className="text-xs text-amber-700">此處設定每月固定支出的項目（如房租、訂閱）。每月首次開啟 App 時，系統會自動詢問是否加入這些支出。</span>
+      </div>
+
+      <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+        {localItems.map(item => (
+          <div key={item.id} className={`flex items-center justify-between p-3 rounded-xl border ${item.active ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <button onClick={() => handleToggle(item.id)} className={`p-1.5 rounded-full ${item.active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+                <CheckCircle2 className="w-4 h-4" />
+              </button>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-700 truncate">{item.name}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${item.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>{item.payer === 'partner' ? '佳欣' : '士程'}</span>
+                </div>
+                <span className="text-xs text-slate-400">${Number(item.amount).toLocaleString()} • {item.group}-{item.category}</span>
+              </div>
+            </div>
+            <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
+          </div>
+        ))}
+        {localItems.length === 0 && <div className="text-center py-8 text-slate-400 text-sm">尚無設定項目</div>}
+      </div>
+
+      <div className="pt-4 border-t border-slate-100 space-y-3">
+        {!isAdding ? (
+          <button onClick={() => setIsAdding(true)} className="w-full py-3 bg-slate-50 text-slate-500 font-bold rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors flex items-center justify-center gap-2">
+            <Plus className="w-4 h-4" /> 新增項目
+          </button>
+        ) : (
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-3 animate-in slide-in-from-top-2">
+            <div className="flex justify-between items-center mb-1">
+              <h4 className="text-xs font-bold text-slate-400 uppercase">新增項目</h4>
+              <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <input placeholder="名稱 (如: 房租)" value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-2`} />
+              <input type="number" placeholder="金額" value={newItem.amount} onChange={e => setNewItem({ ...newItem, amount: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-2`} />
+
+              <div className="relative col-span-1">
+                <select value={newItem.group} onChange={e => {
+                  const g = (groups || []).find(grp => grp.name === e.target.value);
+                  setNewItem({ ...newItem, group: e.target.value, category: g ? g.items[0]?.name : '' });
+                }} className={`${GLASS_INPUT} w-full px-3 py-2 text-sm appearance-none`}>
+                  {(groups || []).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+              </div>
+              <div className="relative col-span-1">
+                <select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })} className={`${GLASS_INPUT} w-full px-3 py-2 text-sm appearance-none`}>
+                  {(groups || []).find(g => g.name === newItem.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+              </div>
+
+              <div className="col-span-2 flex gap-2 pt-1">
+                <button onClick={() => setNewItem({ ...newItem, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${newItem.payer === 'myself' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-400'}`}>士程</button>
+                <button onClick={() => setNewItem({ ...newItem, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${newItem.payer === 'partner' ? 'bg-rose-50 border-rose-200 text-rose-500' : 'bg-white border-slate-200 text-slate-400'}`}>佳欣</button>
+              </div>
+
+              <button onClick={handleAddItem} disabled={!newItem.name || !newItem.amount} className="col-span-2 bg-slate-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-50 mt-2"><Plus className="w-4 h-4" /> 確認新增</button>
+            </div>
+          </div>
+        )}
+      </div>
+      <button onClick={handleSave} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg mt-4">儲存設定</button>
+    </div>
+  </ModalWrapper>
+);
 };
 
 
@@ -1911,13 +2042,23 @@ export default function App() {
       const batch = [];
       for (const item of recurringConfirmItems) {
         const { id, active, ...txData } = item;
+
+        // Calculate dynamic date
+        const day = parseInt(txData.day || 1);
+        const [yearStr, monthStr] = currentMonth.split('-');
+        const year = parseInt(yearStr);
+        const month = parseInt(monthStr);
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const validDay = Math.min(day, daysInMonth);
+        const finalDate = `${currentMonth}-${validDay.toString().padStart(2, '0')}`;
+
         batch.push(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), {
           amount: Number(txData.amount),
           type: 'monthly',
           group: txData.group,
           category: txData.category,
           note: txData.name,
-          date: getTodayString(),
+          date: finalDate,
           payer: txData.payer || 'myself',
           createdAt: serverTimestamp()
         }));
