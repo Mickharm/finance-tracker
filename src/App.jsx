@@ -1168,7 +1168,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-slate-400'}`}></span>
                         <div className="flex flex-col">
                           <span className="text-sm font-bold text-slate-700 leading-tight">{t.category}{t.note && ` / ${t.note}`}</span>
-                          <span className="text-[10px] font-medium text-slate-400">{t.group}</span>
+                          <span className="text-xs font-medium text-slate-400 mt-0.5">{t.group}</span>
                         </div>
                       </div>
                     </div>
