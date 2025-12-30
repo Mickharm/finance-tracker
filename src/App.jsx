@@ -1166,7 +1166,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                     <div className="flex flex-col min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-slate-400'}`}></span>
-                        <span className="text-sm font-medium text-slate-700">{t.category}</span>
+                        <span className="text-sm font-medium text-slate-700">{t.group} - {t.category}</span>
                       </div>
                       {t.note && <span className="text-[10px] text-slate-400 ml-4 truncate">{t.note}</span>}
                     </div>
@@ -1187,7 +1187,8 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
         </div>
       )}
       {/* Add expense FAB */}
-      {onAddExpense && <button onClick={onAddExpense} className="absolute bottom-8 right-6 w-14 h-14 bg-slate-800 rounded-full shadow-2xl shadow-slate-400/50 flex items-center justify-center text-white hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>}
+      {/* Add expense FAB - Fixed position */}
+      {onAddExpense && <button onClick={onAddExpense} className="fixed bottom-6 right-6 w-14 h-14 bg-slate-800 rounded-full shadow-2xl shadow-slate-400/50 flex items-center justify-center text-white hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-50"><Plus className="w-6 h-6" /></button>}
     </div>
   );
 };
@@ -1620,7 +1621,8 @@ export default function App() {
   const [usdExchanges, setUsdExchanges] = useState([]);
 
   // Form States
-  const [newTrans, setNewTrans] = useState({ amount: '', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' });
+  // Default amount 0 to prevent layout shift
+  const [newTrans, setNewTrans] = useState({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' });
   const [newIncome, setNewIncome] = useState({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' });
   const [newSalaryRecord, setNewSalaryRecord] = useState({ amount: '', owner: 'myself', date: getTodayString(), note: '' });
   const [newPartnerTx, setNewPartnerTx] = useState({ amount: '', type: 'saving', date: getTodayString(), note: '' });
@@ -2127,7 +2129,7 @@ export default function App() {
 
       {/* --- Modals --- */}
       {isAddTxModalOpen && (
-        <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
+        <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
           {/* 檢查是否有設定預算群組，若無則提示 */}
           {(settings.monthlyGroups.length === 0 && settings.annualGroups.length === 0) ? (
             <div className="text-center py-10">
