@@ -1248,7 +1248,7 @@ const VisualizationView = ({ transactions, settings }) => {
   const [compareYear, setCompareYear] = useState(new Date().getFullYear() - 1);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(null); // Drill-down state: month
-  const [selectedMonth, setSelectedMonth] = useState(null); // Drill-down state: month
+
   const [selectedFilter, setSelectedFilter] = useState(null); // { type: 'group'|'category', value: string }
   const [sortMode, setSortMode] = useState('amount'); // 'amount' | 'budget'
   const [expandedGroups, setExpandedGroups] = useState({}); // { groupName: boolean }
