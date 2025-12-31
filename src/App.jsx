@@ -1248,8 +1248,10 @@ const VisualizationView = ({ transactions, settings }) => {
   const [compareYear, setCompareYear] = useState(new Date().getFullYear() - 1);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(null); // Drill-down state: month
-  const [selectedCategory, setSelectedCategory] = useState(null); // Drill-down state: category (or group in some modes)
+  const [selectedMonth, setSelectedMonth] = useState(null); // Drill-down state: month
+  const [selectedFilter, setSelectedFilter] = useState(null); // { type: 'group'|'category', value: string }
   const [sortMode, setSortMode] = useState('amount'); // 'amount' | 'budget'
+  const [expandedGroups, setExpandedGroups] = useState({}); // { groupName: boolean }
 
   const generateYearOptions = () => { const currentY = new Date().getFullYear(); const startY = 2020; const years = []; for (let y = currentY + 1; y >= startY; y--) { years.push(y); } return years; };
   const availableYears = useMemo(() => generateYearOptions(), []);
@@ -1263,61 +1265,75 @@ const VisualizationView = ({ transactions, settings }) => {
   const breakdownData = useMemo(() => {
     if (isCompareMode) return [];
 
-    const isAnnualView = selectedMonth === null;
     const isBudgetSort = sortMode === 'budget';
-    const useGroupAggregation = isBudgetSort && isAnnualView;
-
     const stats = {};
     let total = 0;
+
     transactions.forEach(t => {
       const d = new Date(t.date);
       if (d.getFullYear() === baseYear) {
         if (selectedMonth !== null && d.getMonth() !== selectedMonth) return; // Filter by month if selected
 
-        let key = t.category;
-        // If Budget Sort & Annual View -> Group by 'Group'
-        if (useGroupAggregation) {
-          key = t.group || '其他';
-        }
-
         const amount = Number(t.amount);
-        stats[key] = (stats[key] || 0) + amount;
         total += amount;
+
+        if (isBudgetSort) {
+          // Hierarchical: Group -> Category
+          const groupKey = t.group || '其他';
+          if (!stats[groupKey]) stats[groupKey] = { value: 0, items: {} };
+          stats[groupKey].value += amount;
+          stats[groupKey].items[t.category] = (stats[groupKey].items[t.category] || 0) + amount;
+        } else {
+          // Flat: Category
+          stats[t.category] = (stats[t.category] || 0) + amount;
+        }
       }
     });
 
-    const items = Object.entries(stats).map(([name, value]) => ({ name, value, percent: total > 0 ? (value / total) * 100 : 0 }));
-
-    if (sortMode === 'amount') {
-      return items.sort((a, b) => b.value - a.value);
+    if (!isBudgetSort) {
+      // Flat Amount Sort
+      return Object.entries(stats)
+        .map(([name, value]) => ({ name, value, percent: total > 0 ? (value / total) * 100 : 0 }))
+        .sort((a, b) => b.value - a.value);
     } else {
-      // Budget Sort
-      if (isAnnualView) {
-        const order = (settings?.annualGroups || []).map(g => g.name);
-        return items.sort((a, b) => {
-          const idxA = order.indexOf(a.name);
-          const idxB = order.indexOf(b.name);
-          if (idxA === -1 && idxB === -1) return b.value - a.value; // Fallback
-          if (idxA === -1) return 1;
-          if (idxB === -1) return -1;
-          return idxA - idxB;
-        });
-      } else {
-        // Monthly View: Categories
-        const orderMap = {};
-        let idx = 0;
-        (settings?.monthlyGroups || []).forEach(g => {
-          g.items.forEach(i => { orderMap[i.name] = idx++; });
-        });
-        return items.sort((a, b) => {
-          const idxA = orderMap[a.name];
-          const idxB = orderMap[b.name];
+      // Budget Sort: Hierarchical
+      // Order: Monthly Groups -> Annual Groups -> Others
+      const monthlyOrder = (settings?.monthlyGroups || []).map(g => g.name);
+      const annualOrder = (settings?.annualGroups || []).map(g => g.name);
+      const fullOrder = [...monthlyOrder, ...annualOrder];
+
+      // Build Item Order Map (Category -> Index inside Group)
+      const itemOrderMap = {};
+      [...(settings?.monthlyGroups || []), ...(settings?.annualGroups || [])].forEach(g => {
+        g.items.forEach((item, idx) => { itemOrderMap[item.name] = idx; });
+      });
+
+      return Object.entries(stats).map(([gName, data]) => ({
+        name: gName,
+        value: data.value,
+        percent: total > 0 ? (data.value / total) * 100 : 0,
+        items: Object.entries(data.items).map(([cName, val]) => ({
+          name: cName,
+          value: val,
+          percent: data.value > 0 ? (val / data.value) * 100 : 0
+        })).sort((a, b) => {
+          // Sort Items by Budget Order
+          const idxA = itemOrderMap[a.name];
+          const idxB = itemOrderMap[b.name];
           if (idxA === undefined && idxB === undefined) return b.value - a.value;
           if (idxA === undefined) return 1;
           if (idxB === undefined) return -1;
           return idxA - idxB;
-        });
-      }
+        })
+      })).sort((a, b) => {
+        // Sort Groups
+        let idxA = fullOrder.indexOf(a.name);
+        let idxB = fullOrder.indexOf(b.name);
+        if (idxA === -1 && idxB === -1) return b.value - a.value;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
     }
   }, [transactions, baseYear, isCompareMode, selectedMonth, sortMode, settings]);
 
@@ -1325,30 +1341,22 @@ const VisualizationView = ({ transactions, settings }) => {
 
   // Get detailed transactions for selected month/category
   const detailedTransactions = useMemo(() => {
-    if (selectedMonth === null && selectedCategory === null) return [];
-
-    // Determine aggregation context
-    const isAnnualView = selectedMonth === null;
-    const isBudgetSort = sortMode === 'budget';
-    const useGroupAggregation = isBudgetSort && isAnnualView;
+    if (selectedMonth === null && selectedFilter === null) return [];
 
     return transactions.filter(t => {
       const d = new Date(t.date);
       const matchYear = d.getFullYear() === baseYear;
       const matchMonth = selectedMonth !== null ? d.getMonth() === selectedMonth : true;
 
-      let matchCategory = true;
-      if (selectedCategory !== null) {
-        if (useGroupAggregation) {
-          matchCategory = (t.group || '其他') === selectedCategory;
-        } else {
-          matchCategory = t.category === selectedCategory;
-        }
+      let matchFilter = true;
+      if (selectedFilter) {
+        if (selectedFilter.type === 'group') matchFilter = t.group === selectedFilter.value;
+        else if (selectedFilter.type === 'category') matchFilter = t.category === selectedFilter.value;
       }
 
-      return matchYear && matchMonth && matchCategory;
+      return matchYear && matchMonth && matchFilter;
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [transactions, baseYear, selectedMonth, selectedCategory, sortMode]);
+  }, [transactions, baseYear, selectedMonth, selectedFilter]);
 
   return (
     <div className="space-y-6 pb-24 animate-in fade-in">
@@ -1358,7 +1366,7 @@ const VisualizationView = ({ transactions, settings }) => {
           <div className="flex items-center gap-2">
             {!isCompareMode && (
               <button
-                onClick={() => { setSortMode(prev => prev === 'amount' ? 'budget' : 'amount'); setSelectedCategory(null); }}
+                onClick={() => { setSortMode(prev => prev === 'amount' ? 'budget' : 'amount'); setSelectedFilter(null); }}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${sortMode === 'budget' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
               >
                 {sortMode === 'budget' ? '排序: 預算' : '排序: 金額'}
@@ -1373,7 +1381,7 @@ const VisualizationView = ({ transactions, settings }) => {
         <div className="flex gap-4 mb-6">
           <div className="flex-1">
             <label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">{isCompareMode ? '主年份' : '選擇年份'}</label>
-            <select value={baseYear} onChange={(e) => { setBaseYear(Number(e.target.value)); setSelectedMonth(null); setSelectedCategory(null); }} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-700`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select>
+            <select value={baseYear} onChange={(e) => { setBaseYear(Number(e.target.value)); setSelectedMonth(null); setSelectedFilter(null); }} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-700`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select>
           </div>
           {isCompareMode && (<div className="flex-1 animate-in slide-in-from-right-2 duration-200"><label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">對比年份</label><select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-500`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select></div>)}
         </div>
@@ -1390,7 +1398,7 @@ const VisualizationView = ({ transactions, settings }) => {
           {baseData.map((val, idx) => (
             <div
               key={idx}
-              onClick={() => { if (!isCompareMode) { setSelectedMonth(selectedMonth === idx ? null : idx); setSelectedCategory(null); } }}
+              onClick={() => { if (!isCompareMode) { setSelectedMonth(selectedMonth === idx ? null : idx); setSelectedFilter(null); } }}
               className={`flex-1 flex flex-col justify-end items-center h-full z-10 group relative ${!isCompareMode ? 'cursor-pointer' : ''}`}
             >
               {/* Value Label moved above the bar */}
@@ -1439,27 +1447,79 @@ const VisualizationView = ({ transactions, settings }) => {
               <h3 className="font-bold text-slate-700 flex items-center gap-2">
                 <div className="p-1.5 bg-slate-100 rounded-lg"><PieChart className="w-4 h-4 text-slate-500" /></div>
                 {selectedMonth !== null ? `${baseYear}年 ${selectedMonth + 1}月 支出組成` : `${baseYear} 年度支出組成`}
-                {(selectedMonth !== null || selectedCategory !== null) && <button onClick={(e) => { e.stopPropagation(); setSelectedMonth(null); setSelectedCategory(null); }} className="text-[10px] bg-slate-100 px-2 py-1 rounded-full text-slate-500 hover:bg-slate-200">重設篩選</button>}
+                {(selectedMonth !== null || selectedFilter !== null) && <button onClick={(e) => { e.stopPropagation(); setSelectedMonth(null); setSelectedFilter(null); }} className="text-[10px] bg-slate-100 px-2 py-1 rounded-full text-slate-500 hover:bg-slate-200">重設篩選</button>}
               </h3>
             </div>
             <div className="space-y-4">
-              {breakdownData.length > 0 ? breakdownData.map((item) => (
-                <div key={item.name} onClick={() => setSelectedCategory(selectedCategory === item.name ? null : item.name)} className={`cursor-pointer transition-all hover:bg-slate-50 p-2 rounded-xl border border-transparent ${selectedCategory === item.name ? 'bg-slate-50 border-slate-200' : ''}`}>
-                  <div className="flex justify-between items-end mb-1 text-sm">
-                    <span className="text-slate-600 font-medium">{item.name}</span>
-                    <span className="font-bold text-slate-800">${item.value.toLocaleString()} <span className="text-xs text-slate-400 font-normal">({item.percent.toFixed(1)}%)</span></span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                    <div className="h-full bg-slate-700 rounded-full transition-all duration-500" style={{ width: `${item.percent}%` }}></div>
-                  </div>
-                </div>
-              )) : (
+              {breakdownData.length > 0 ? (
+                sortMode === 'amount' ? (
+                  /* Flat Amount List */
+                  breakdownData.map((item) => (
+                    <div key={item.name} onClick={() => setSelectedFilter(selectedFilter?.value === item.name ? null : { type: 'category', value: item.name })} className={`cursor-pointer transition-all hover:bg-slate-50 p-2 rounded-xl border border-transparent ${selectedFilter?.value === item.name ? 'bg-slate-50 border-slate-200' : ''}`}>
+                      <div className="flex justify-between items-end mb-1 text-sm">
+                        <span className="text-slate-600 font-medium">{item.name}</span>
+                        <span className="font-bold text-slate-800">${item.value.toLocaleString()} <span className="text-xs text-slate-400 font-normal">({item.percent.toFixed(1)}%)</span></span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div className="h-full bg-slate-700 rounded-full transition-all duration-500" style={{ width: `${item.percent}%` }}></div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  /* Budget Sort: Collapsible Groups */
+                  breakdownData.map((group) => (
+                    <div key={group.name} className={`rounded-xl border transition-all overflow-hidden ${selectedFilter?.value === group.name ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-100 bg-white'}`}>
+                      <div
+                        onClick={() => {
+                          // Toggle Expand
+                          setExpandedGroups(prev => ({ ...prev, [group.name]: !prev[group.name] }));
+                          // Also select for analysis
+                          setSelectedFilter({ type: 'group', value: group.name });
+                        }}
+                        className="p-3 cursor-pointer flex justify-between items-center hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0 pr-4">
+                          <div className="flex justify-between items-end mb-1 text-sm">
+                            <span className="font-bold text-slate-700 flex items-center gap-2">
+                              {group.name}
+                              {expandedGroups[group.name] ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
+                            </span>
+                            <span className="font-bold text-slate-800">${group.value.toLocaleString()} <span className="text-xs text-slate-400 font-normal">({group.percent.toFixed(1)}%)</span></span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div className="h-full bg-slate-600 rounded-full transition-all duration-500" style={{ width: `${group.percent}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expanded Items */}
+                      {expandedGroups[group.name] && (
+                        <div className="bg-slate-50/50 p-2 space-y-1 border-t border-slate-100 animate-in slide-in-from-top-1">
+                          {group.items.map(item => (
+                            <div
+                              key={item.name}
+                              onClick={(e) => { e.stopPropagation(); setSelectedFilter({ type: 'category', value: item.name }); }}
+                              className={`flex justify-between items-center text-xs p-2 rounded-lg cursor-pointer hover:bg-white transition-colors ${selectedFilter?.value === item.name ? 'bg-white shadow-sm ring-1 ring-indigo-100' : ''}`}
+                            >
+                              <span className="text-slate-600 font-medium">{item.name}</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 bg-slate-200 rounded-full h-1 overflow-hidden"><div className="h-full bg-slate-400 rounded-full" style={{ width: `${item.percent}%` }} /></div>
+                                <span className="font-mono text-slate-600 w-12 text-right">${item.value.toLocaleString()}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )
+              ) : (
                 <div className="text-center text-slate-400 py-6 text-sm">該時段尚無支出資料</div>
               )}
             </div>
           </Card>
 
-          {(selectedMonth !== null || selectedCategory !== null) && (
+          {(selectedMonth !== null || selectedFilter !== null) && (
             <div className="animate-in slide-in-from-bottom-4 duration-500">
               <h3 className="text-sm font-bold text-slate-500 mb-3 px-2">詳細明細 </h3>
               <div className="space-y-3">
