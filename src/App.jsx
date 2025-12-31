@@ -1350,7 +1350,7 @@ const VisualizationView = ({ transactions, settings }) => {
 
       let matchFilter = true;
       if (selectedFilter) {
-        if (selectedFilter.type === 'group') matchFilter = t.group === selectedFilter.value;
+        if (selectedFilter.type === 'group') matchFilter = (t.group || '其他') === selectedFilter.value;
         else if (selectedFilter.type === 'category') matchFilter = t.category === selectedFilter.value;
       }
 
@@ -1443,12 +1443,19 @@ const VisualizationView = ({ transactions, settings }) => {
       ) : (
         <>
           <Card>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                <div className="p-1.5 bg-slate-100 rounded-lg"><PieChart className="w-4 h-4 text-slate-500" /></div>
-                {selectedMonth !== null ? `${baseYear}年 ${selectedMonth + 1}月 支出組成` : `${baseYear} 年度支出組成`}
-                {(selectedMonth !== null || selectedFilter !== null) && <button onClick={(e) => { e.stopPropagation(); setSelectedMonth(null); setSelectedFilter(null); }} className="text-[10px] bg-slate-100 px-2 py-1 rounded-full text-slate-500 hover:bg-slate-200">重設篩選</button>}
-              </h3>
+            <div className="mb-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-bold text-slate-500 text-xs flex items-center gap-2 mb-1">
+                    <div className="p-1 bg-slate-100 rounded-lg"><PieChart className="w-3 h-3 text-slate-500" /></div>
+                    {selectedMonth !== null ? `${baseYear}年 ${selectedMonth + 1}月` : `${baseYear} 年度`} 支出組成
+                    {(selectedMonth !== null || selectedFilter !== null) && <button onClick={(e) => { e.stopPropagation(); setSelectedMonth(null); setSelectedFilter(null); }} className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 hover:bg-slate-200 ml-2">重設篩選</button>}
+                  </h3>
+                  <div className="text-3xl font-bold text-slate-800 tracking-tight">
+                    ${(selectedMonth !== null ? baseData[selectedMonth] : baseData.reduce((a, b) => a + b, 0)).toLocaleString()}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="space-y-4">
               {breakdownData.length > 0 ? (
