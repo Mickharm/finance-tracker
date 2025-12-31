@@ -1243,12 +1243,13 @@ const PartnerView = ({ partnerTransactions, onDelete, onAdd, onEdit }) => {
   );
 };
 
-const VisualizationView = ({ transactions }) => {
+const VisualizationView = ({ transactions, settings }) => {
   const [baseYear, setBaseYear] = useState(new Date().getFullYear());
   const [compareYear, setCompareYear] = useState(new Date().getFullYear() - 1);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(null); // Drill-down state: month
-  const [selectedCategory, setSelectedCategory] = useState(null); // Drill-down state: category
+  const [selectedCategory, setSelectedCategory] = useState(null); // Drill-down state: category (or group in some modes)
+  const [sortMode, setSortMode] = useState('amount'); // 'amount' | 'budget'
 
   const generateYearOptions = () => { const currentY = new Date().getFullYear(); const startY = 2020; const years = []; for (let y = currentY + 1; y >= startY; y--) { years.push(y); } return years; };
   const availableYears = useMemo(() => generateYearOptions(), []);
@@ -1261,42 +1262,112 @@ const VisualizationView = ({ transactions }) => {
   // Filter breakdown data based on selected month or full year
   const breakdownData = useMemo(() => {
     if (isCompareMode) return [];
+
+    const isAnnualView = selectedMonth === null;
+    const isBudgetSort = sortMode === 'budget';
+    const useGroupAggregation = isBudgetSort && isAnnualView;
+
     const stats = {};
     let total = 0;
     transactions.forEach(t => {
       const d = new Date(t.date);
       if (d.getFullYear() === baseYear) {
         if (selectedMonth !== null && d.getMonth() !== selectedMonth) return; // Filter by month if selected
+
+        let key = t.category;
+        // If Budget Sort & Annual View -> Group by 'Group'
+        if (useGroupAggregation) {
+          key = t.group || '其他';
+        }
+
         const amount = Number(t.amount);
-        stats[t.category] = (stats[t.category] || 0) + amount;
+        stats[key] = (stats[key] || 0) + amount;
         total += amount;
       }
     });
-    return Object.entries(stats).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value, percent: total > 0 ? (value / total) * 100 : 0 }));
-  }, [transactions, baseYear, isCompareMode, selectedMonth]);
+
+    const items = Object.entries(stats).map(([name, value]) => ({ name, value, percent: total > 0 ? (value / total) * 100 : 0 }));
+
+    if (sortMode === 'amount') {
+      return items.sort((a, b) => b.value - a.value);
+    } else {
+      // Budget Sort
+      if (isAnnualView) {
+        const order = (settings?.annualGroups || []).map(g => g.name);
+        return items.sort((a, b) => {
+          const idxA = order.indexOf(a.name);
+          const idxB = order.indexOf(b.name);
+          if (idxA === -1 && idxB === -1) return b.value - a.value; // Fallback
+          if (idxA === -1) return 1;
+          if (idxB === -1) return -1;
+          return idxA - idxB;
+        });
+      } else {
+        // Monthly View: Categories
+        const orderMap = {};
+        let idx = 0;
+        (settings?.monthlyGroups || []).forEach(g => {
+          g.items.forEach(i => { orderMap[i.name] = idx++; });
+        });
+        return items.sort((a, b) => {
+          const idxA = orderMap[a.name];
+          const idxB = orderMap[b.name];
+          if (idxA === undefined && idxB === undefined) return b.value - a.value;
+          if (idxA === undefined) return 1;
+          if (idxB === undefined) return -1;
+          return idxA - idxB;
+        });
+      }
+    }
+  }, [transactions, baseYear, isCompareMode, selectedMonth, sortMode, settings]);
 
   const monthlyDiffs = useMemo(() => { if (!isCompareMode) return []; return baseData.map((val, idx) => ({ month: idx + 1, base: val, compare: compareData[idx], diff: val - compareData[idx] })); }, [baseData, compareData, isCompareMode]);
 
   // Get detailed transactions for selected month/category
   const detailedTransactions = useMemo(() => {
     if (selectedMonth === null && selectedCategory === null) return [];
+
+    // Determine aggregation context
+    const isAnnualView = selectedMonth === null;
+    const isBudgetSort = sortMode === 'budget';
+    const useGroupAggregation = isBudgetSort && isAnnualView;
+
     return transactions.filter(t => {
       const d = new Date(t.date);
       const matchYear = d.getFullYear() === baseYear;
       const matchMonth = selectedMonth !== null ? d.getMonth() === selectedMonth : true;
-      const matchCategory = selectedCategory !== null ? t.category === selectedCategory : true;
+
+      let matchCategory = true;
+      if (selectedCategory !== null) {
+        if (useGroupAggregation) {
+          matchCategory = (t.group || '其他') === selectedCategory;
+        } else {
+          matchCategory = t.category === selectedCategory;
+        }
+      }
+
       return matchYear && matchMonth && matchCategory;
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [transactions, baseYear, selectedMonth, selectedCategory]);
+  }, [transactions, baseYear, selectedMonth, selectedCategory, sortMode]);
 
   return (
     <div className="space-y-6 pb-24 animate-in fade-in">
       <Card>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-slate-800">{isCompareMode ? '年度支出比較' : '年度支出分析'}</h2>
-          <button onClick={() => { setIsCompareMode(!isCompareMode); setSelectedMonth(null); }} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isCompareMode ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'}`}>
-            {isCompareMode ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />} 比較模式
-          </button>
+          <div className="flex items-center gap-2">
+            {!isCompareMode && (
+              <button
+                onClick={() => { setSortMode(prev => prev === 'amount' ? 'budget' : 'amount'); setSelectedCategory(null); }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${sortMode === 'budget' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+              >
+                {sortMode === 'budget' ? '排序: 預算' : '排序: 金額'}
+              </button>
+            )}
+            <button onClick={() => { setIsCompareMode(!isCompareMode); setSelectedMonth(null); }} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isCompareMode ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'}`}>
+              {isCompareMode ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />} 比較模式
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-4 mb-6">
@@ -2306,7 +2377,7 @@ export default function App() {
         {currentView === 'principal' && (
           <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
         )}
-        {currentView === 'visualization' && <VisualizationView transactions={transactions} />}
+        {currentView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} />}
         {currentView === 'income' && (
           <IncomeView
             incomes={incomes}
