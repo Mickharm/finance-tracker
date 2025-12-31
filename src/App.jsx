@@ -341,7 +341,7 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
         </span>
         {showDetails && (
           <div className="flex items-baseline gap-1 text-right">
-            <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-rose-400' : 'text-slate-400'}`}>{isOverBudget ? '超支' : '剩餘'}</span>
+            <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-rose-400' : 'text-slate-400'}`}>{isOverBudget ? '已超支' : '剩餘'}</span>
             <span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         )}
@@ -384,6 +384,8 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
   const theme = COLOR_VARIANTS[colorTheme] || COLOR_VARIANTS.slate;
   const isOverBudget = group.used > group.budget;
   const remaining = group.budget - group.used;
+  const remainingPercentage = group.budget > 0 ? (Math.max(0, remaining) / group.budget) * 100 : 0;
+
   return (
     <div className={`${GLASS_CARD} p-5 hover:border-slate-300 transition-all duration-300`}>
       <div className="flex flex-col cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
@@ -391,18 +393,33 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
           <div className="flex items-center gap-3">
             <div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
             <h3 className="text-sm font-bold text-slate-700 tracking-tight">{group.name}</h3>
-            {isOverBudget && <span className="bg-rose-100 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">超支</span>}
+            {isOverBudget && <span className="bg-rose-100 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">已超支</span>}
           </div>
-          <div className="text-right">
-            <span className={`text-sm font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-800'}`}>${group.used.toLocaleString()}</span>
-            <span className="text-[10px] text-slate-400 ml-1">/ ${group.budget.toLocaleString()}</span>
+          <div className="text-right flex items-baseline gap-1">
+            <span className="text-[10px] text-slate-400">剩餘</span>
+            <span className={`text-sm font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         </div>
         <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}>
-          <div className={`h-full transition-all duration-500 ${isOverBudget ? 'bg-rose-400' : theme.bar}`} style={{ width: `${Math.min((group.used / group.budget) * 100, 100)}%` }} />
+          <div className={`h-full transition-all duration-500 ${theme.bar}`} style={{ width: `${remainingPercentage}%` }} />
         </div>
       </div>
-      {isExpanded && (<div className="mt-5 pl-2 space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-slate-100/50 pt-3">{group.items.map((item, idx) => (<div key={idx}><div className="flex justify-between text-xs mb-1.5 font-medium text-slate-500"><span>{item.name}</span><span className="text-slate-400 font-mono">${item.used.toLocaleString()} <span className="text-slate-300">/</span> ${item.budget.toLocaleString()}</span></div><div className={`w-full bg-slate-100/50 rounded-full h-1 overflow-hidden`}><div className={`h-full transition-all duration-500 ${item.used > item.budget ? 'bg-rose-400' : theme.bar}`} style={{ width: `${Math.min((item.used / item.budget) * 100, 100)}%` }} /></div></div>))}</div>)}
+      {isExpanded && (<div className="mt-5 pl-2 space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-slate-100/50 pt-3">{group.items.map((item, idx) => {
+        const itemRemaining = item.budget - item.used;
+        const itemIsOver = itemRemaining < 0;
+        const itemPercent = item.budget > 0 ? (Math.max(0, itemRemaining) / item.budget) * 100 : 0;
+        return (
+          <div key={idx}>
+            <div className="flex justify-between text-xs mb-1.5 font-medium text-slate-500">
+              <span>{item.name}</span>
+              <span className={`font-mono ${itemIsOver ? 'text-rose-500' : 'text-slate-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
+            </div>
+            <div className={`w-full bg-slate-100/50 rounded-full h-1 overflow-hidden`}>
+              <div className={`h-full transition-all duration-500 ${theme.bar}`} style={{ width: `${itemPercent}%` }} />
+            </div>
+          </div>
+        );
+      })}</div>)}
     </div>
   );
 };
