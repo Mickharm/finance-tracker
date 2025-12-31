@@ -321,29 +321,40 @@ const GlassButton = ({ onClick, children, className = "", disabled = false, vari
 
 const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme = 'slate', showDetails = true, showOverBudgetLabel = true }) => {
   const remaining = total - current;
-  const usedPercentage = total > 0 ? (current / total) * 100 : 0;
   const isOverBudget = remaining < 0;
-  const theme = COLOR_VARIANTS[colorTheme] || COLOR_VARIANTS.slate;
-  let statusColor = theme.bar;
+  // Progress: Show % remaining. If over budget (remaining < 0), show 0% (empty bar).
+  const remainingPercentage = total > 0 ? (Math.max(0, remaining) / total) * 100 : 0;
 
-  // Color logic: Green/Blue normally, Yellow if near limit (>80%), Red if Over
-  if (isOverBudget) statusColor = 'bg-rose-400';
-  else if (usedPercentage > 90) statusColor = 'bg-rose-300'; // Critical
-  else if (usedPercentage > 75) statusColor = 'bg-amber-300'; // Warning
+  const theme = COLOR_VARIANTS[colorTheme] || COLOR_VARIANTS.slate;
+
+  // Color logic:
+  // If OverBudget: Bar is 0 width (no color visible effectively, but we can set it to transparent or slate).
+  // If Normal: Use theme color.
+  const statusColor = theme.bar;
 
   return (
     <div className="w-full">
       <div className="flex justify-between items-end mb-2">
-        <span className={`text-xs font-bold uppercase tracking-wider ${theme.text} opacity-80 flex items-center gap-2`}>{label} {isOverBudget && showOverBudgetLabel && <span className="bg-rose-50 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">超支</span>}</span>
+        <span className={`text-xs font-bold uppercase tracking-wider ${theme.text} opacity-80 flex items-center gap-2`}>
+          {label}
+          {isOverBudget && showOverBudgetLabel && <span className="bg-rose-50 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">已超支</span>}
+        </span>
         {showDetails && (
           <div className="flex items-baseline gap-1 text-right">
-            <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{isOverBudget ? '超支' : '剩餘'}</span>
+            <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-rose-400' : 'text-slate-400'}`}>{isOverBudget ? '超支' : '剩餘'}</span>
             <span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         )}
       </div>
-      <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}><div className={`h-full transition-all duration-1000 ease-out ${statusColor}`} style={{ width: `${Math.min(100, usedPercentage)}%` }} /></div>
-      {showDetails && variant === 'main' && (<div className="flex justify-between mt-1.5 text-[10px] text-slate-400 font-medium"><span>{Math.round(usedPercentage)}% 已用</span><span>總額: ${total.toLocaleString()}</span></div>)}
+      <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}>
+        <div className={`h-full transition-all duration-1000 ease-out ${statusColor}`} style={{ width: `${remainingPercentage}%` }} />
+      </div>
+      {showDetails && variant === 'main' && (
+        <div className="flex justify-between mt-1.5 text-[10px] text-slate-400 font-medium">
+          <span className={isOverBudget ? 'text-rose-400' : ''}>{Math.round(remainingPercentage)}% 剩餘</span>
+          <span>總額: ${total.toLocaleString()}</span>
+        </div>
+      )}
     </div>
   );
 };
@@ -894,7 +905,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
           <div><h2 className="text-lg font-bold text-slate-800 leading-tight">月度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">經常性支出</p></div>
         </div>
         <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-slate-400`}>
-          <BudgetProgressBar current={monthlyStats.totalUsed} total={monthlyStats.totalBudget} label="本月總已用" colorTheme="slate" />
+          <BudgetProgressBar current={monthlyStats.totalUsed} total={monthlyStats.totalBudget} label="本月總剩餘" colorTheme="slate" />
         </div>
         <div className="space-y-3">{monthlyStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="slate" />))}</div>
       </section>
