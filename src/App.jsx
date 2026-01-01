@@ -355,7 +355,7 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
   if (!isOverBudget && total > 0) {
     if (remainingPercentage < 20) statusColor = 'bg-[#C48286]'; // 灰櫻 Haizakura (Rose)
     else if (remainingPercentage < 50) statusColor = 'bg-[#B8AA54]'; // 蒸栗 Mushikuri (Amber)
-    else statusColor = 'bg-[#4DA391]'; // 青竹 Aotake (Emerald)
+    else statusColor = theme.bar; // Theme Color (Aotake / Indigo)
   }
 
   return (
@@ -416,7 +416,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
   if (!isOverBudget && group.budget > 0) {
     if (remainingPercentage < 20) statusBarColor = 'bg-[#C48286]'; // Haizakura
     else if (remainingPercentage < 50) statusBarColor = 'bg-[#B8AA54]'; // Mushikuri
-    else statusBarColor = 'bg-[#4DA391]'; // Aotake
+    else statusBarColor = theme.bar; // Theme Color
   }
 
   return (
@@ -449,7 +449,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
             </div>
             <div className={`w-full bg-stone-100/50 rounded-full h-1 overflow-hidden`}>
               <div className={`h-full transition-all duration-500 ${!itemIsOver && item.budget > 0
-                ? (itemPercent < 20 ? 'bg-[#C48286]' : itemPercent < 50 ? 'bg-[#B8AA54]' : 'bg-[#4DA391]')
+                ? (itemPercent < 20 ? 'bg-[#C48286]' : itemPercent < 50 ? 'bg-[#B8AA54]' : theme.bar)
                 : theme.bar
                 }`} style={{ width: `${itemPercent}%` }} />
             </div>
@@ -716,7 +716,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
   return (
     <div className={`${GLASS_CARD} overflow-hidden p-0 mb-6 ${theme.glow}`}>
       <div
-        className={`p-5 flex justify-between items-center ${isCollapsible ? 'cursor-pointer hover:bg-white/30 transition-colors' : ''} ${!isExpanded ? 'border-b-0' : 'border-b border-white/10'}`}
+        className={`p-5 flex justify-between items-center ${isCollapsible ? 'cursor-pointer hover:bg-white/30 transition-colors' : ''} ${!isExpanded ? 'border-b-0' : ''}`}
         onClick={() => isCollapsible && setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
@@ -740,7 +740,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
       </div>
 
       {isExpanded && (
-        <div className="p-5 animate-in slide-in-from-top-2 duration-200">
+        <div className="p-5 pt-5 animate-in slide-in-from-top-2 duration-200 border-t border-white/10">
           <div className="space-y-3">
             {items.length === 0 ? <p className="text-center text-xs text-stone-300 py-4">無紀錄</p> : items.map((item) => (
               <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-white/20 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-white/30 rounded-lg p-2 transition-colors' : ''}`}>
@@ -965,7 +965,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
       <section>
         <div className="flex items-center gap-2 mb-4 px-1 mt-10">
           <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600"><Target className="w-4 h-4" /></div>
-          <div><h2 className="text-lg font-bold text-stone-800 leading-tight">年度預算</h2><p className="text-xs text-stone-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
+          <div><h2 className="text-lg font-bold text-stone-800 leading-tight">年度預算</h2><p className="text-xs text-stone-400 font-bold tracking-wide uppercase">年度支出</p></div>
         </div>
 
         {/* Annual Summary - Same design as monthly */}
@@ -1034,7 +1034,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         onAdd={(type) => { setMortgageExpType(type); setIsAddMortgageExpModalOpen(true); }}
         onEdit={(item) => onEditExp(item)}
         type="down_payment"
-        icon={ClipboardList}
+        icon={Building2}
         totalLabel="總計"
         totalValue={totalDownPaymentExp}
         variant="amber"
