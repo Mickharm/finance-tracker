@@ -1950,6 +1950,9 @@ export default function App() {
 
   const [editingId, setEditingId] = useState(null); // Track ID of item being edited
   const mainRef = useRef(null);
+  // Transaction Data Persistence Refs (Prevent white screen / load race conditions)
+  const transactionSubsRef = useRef({});
+  const transactionDataPartsRef = useRef({});
 
   // Modals
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
@@ -2062,50 +2065,10 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // 1. General Data Listeners (Run once per user)
   useEffect(() => {
     if (!user) return;
-
-    // Data Listeners
     const unsubs = [];
-
-    // specialized Ref-based subscription manager for Transactions
-    const transactionSubs = {}; // year -> unsubscribe
-    const transactionDataParts = {}; // year -> []
-
-    const updateTransactionsState = () => {
-      const all = Object.values(transactionDataParts).flat();
-      // Client-side sort
-      all.sort((a, b) => b.date.localeCompare(a.date));
-      setTransactions(all);
-    };
-
-    const subscribeYear = (year) => {
-      if (transactionSubs[year]) return;
-
-      const start = `${year}-01-01`;
-      const end = `${year}-12-31`;
-
-      const q = query(
-        collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'),
-        where('date', '>=', start),
-        where('date', '<=', end)
-      );
-
-      transactionSubs[year] = onSnapshot(q, (snapshot) => {
-        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        transactionDataParts[year] = docs;
-        updateTransactionsState();
-      });
-      unsubs.push(transactionSubs[year]);
-    };
-
-    // Initial Load
-    subscribeYear(new Date().getFullYear());
-
-    // Hack: Expose to sibling effect
-    window._loadTransactionYear = subscribeYear;
-
-    // Other Collections
     const createSub = (col, setter, order = 'date', dir = 'desc') => {
       const q = query(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col), orderBy(order, dir));
       unsubs.push(onSnapshot(q, (s) => {
@@ -2122,7 +2085,7 @@ export default function App() {
       }, (error) => console.error(`Error fetching ${col}:`, error)));
     };
 
-    // createSub('transactions', setTransactions); // Removed global fetch
+    // createSub('transactions', setTransactions); // Managed separately
     createSub('incomes', setIncomes);
     createSub('salary_history', setSalaryHistory);
     createSub('partner_savings', setPartnerTransactions);
@@ -2134,15 +2097,42 @@ export default function App() {
 
     return () => {
       unsubs.forEach(u => u());
-      delete window._loadTransactionYear;
+      // Cleanup transactions on user switch/unmount
+      Object.values(transactionSubsRef.current).forEach(u => u());
+      transactionSubsRef.current = {};
+      transactionDataPartsRef.current = {};
     };
   }, [user]);
 
-  // Effect to load data when year changes
+  // 2. Transaction Lazy Loader (Run on year change)
   useEffect(() => {
-    if (user && window._loadTransactionYear) {
-      window._loadTransactionYear(selectedDate.getFullYear());
-    }
+    if (!user) return;
+    const year = selectedDate.getFullYear();
+    const currentYear = new Date().getFullYear();
+    // Ensure we load both selected year and current year (for cross-year context if needed)
+    const years = Array.from(new Set([year, currentYear]));
+
+    years.forEach(y => {
+      if (transactionSubsRef.current[y]) return; // Skip if already subscribed
+
+      const start = `${y}-01-01`;
+      const end = `${y}-12-31`;
+      const q = query(
+        collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'),
+        where('date', '>=', start),
+        where('date', '<=', end)
+      );
+
+      transactionSubsRef.current[y] = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        transactionDataPartsRef.current[y] = docs;
+
+        // Merge and Update State
+        const allDocs = Object.values(transactionDataPartsRef.current).flat();
+        allDocs.sort((a, b) => b.date.localeCompare(a.date));
+        setTransactions(allDocs);
+      });
+    });
   }, [user, selectedDate.getFullYear()]);
 
   // Settings listener - depends on year, separate from data listeners
