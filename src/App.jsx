@@ -54,63 +54,68 @@ const LEDGER_ID = 'Mick'; // Hardcoded Shared Ledger ID
 // Primary: 桜鼠 (Sakura-nezumi), 白藤 (Shiro-fuji)
 // Accent: 若竹 (Wakatake), 薄紅 (Usu-kurenai), 藤色 (Fuji-iro)
 // Base: 胡粉 (Gofun), 墨 (Sumi)
-const GLASS_CARD = "bg-white/75 backdrop-blur-xl border border-stone-200/60 shadow-lg shadow-stone-300/30 rounded-3xl";
-const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/60 backdrop-blur-sm border border-stone-200/70 focus:bg-white/90 focus:border-stone-400 transition-all outline-none rounded-2xl text-base p-4 appearance-none";
+// 🎨 Refined Nippon Colors Theme (Cyber-Zen)
+// 青竹 (Aotake): #00896C / #7EBEAB
+// 灰櫻 (Haizakura): #E8D3D1 / #D05A6E
+// 藤鼠 (Fujinezumi): #A5A5C7 / #6E6E91
+// Cyber-Glass: Higher blur, lower opacity, soft glow
+const GLASS_CARD = "bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl relative overflow-hidden group";
+const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/40 backdrop-blur-md border border-white/60 focus:bg-white/70 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-inner shadow-stone-200/20";
 
 const COLOR_VARIANTS = {
-  // 墨鼠 (Sumi-nezumi) - Default neutral
+  // 墨 (Sumi) - Neutral
   slate: {
-    bg: 'bg-stone-100/50', border: 'border-stone-200', text: 'text-stone-600',
-    iconBg: 'bg-stone-100', iconText: 'text-stone-500', bar: 'bg-stone-500',
-    glow: 'border-stone-200/80 shadow-sm shadow-stone-200/50'
+    bg: 'bg-[#EAEAEA]/60', border: 'border-[#D4D4D4]', text: 'text-[#4A4A4A]',
+    iconBg: 'bg-[#F4F4F4]', iconText: 'text-[#6E6E6E]', bar: 'bg-[#4A4A4A]',
+    glow: 'border-[#D4D4D4] shadow-sm'
   },
-  // 銀鼠 (Gin-nezumi) - Secondary neutral  
+  // 銀鼠 (Ginnezumi) - Stone
   stone: {
-    bg: 'bg-stone-50/60', border: 'border-stone-200', text: 'text-stone-600',
-    iconBg: 'bg-stone-100', iconText: 'text-stone-500', bar: 'bg-stone-400',
-    glow: 'border-stone-200/80 shadow-sm shadow-stone-200/50'
+    bg: 'bg-[#F2F0EB]/60', border: 'border-[#E0DCD6]', text: 'text-[#595450]',
+    iconBg: 'bg-[#F2F0EB]', iconText: 'text-[#8C8680]', bar: 'bg-[#8C8680]',
+    glow: 'border-[#E0DCD6] shadow-sm'
   },
-  // 白藤 (Shiro-fuji) - Pale wisteria
+  // 白藤 (Shirofuji) - Pale Lavender
   sky: {
-    bg: 'bg-violet-50/50', border: 'border-violet-100', text: 'text-violet-700',
-    iconBg: 'bg-violet-100', iconText: 'text-violet-500', bar: 'bg-violet-400',
-    glow: 'border-violet-200/80 shadow-lg shadow-violet-100/40'
+    bg: 'bg-[#DBE1F1]/40', border: 'border-[#BDC8E6]', text: 'text-[#4B5E96]',
+    iconBg: 'bg-[#DBE1F1]/60', iconText: 'text-[#6A7DAE]', bar: 'bg-[#6A7DAE]',
+    glow: 'border-[#BDC8E6]/60 shadow-[0_0_20px_rgba(189,200,230,0.3)]'
   },
-  // 藤色 (Fuji-iro) - Wisteria purple
+  // 藤紫 (Fujimurasaki) - Purple
   blue: {
-    bg: 'bg-purple-50/50', border: 'border-purple-100', text: 'text-purple-700',
-    iconBg: 'bg-purple-100', iconText: 'text-purple-500', bar: 'bg-purple-400',
-    glow: 'border-purple-200/80 shadow-lg shadow-purple-100/40'
+    bg: 'bg-[#E0DAE8]/40', border: 'border-[#CBB9D8]', text: 'text-[#705885]',
+    iconBg: 'bg-[#E0DAE8]/60', iconText: 'text-[#8A6FA3]', bar: 'bg-[#8A6FA3]',
+    glow: 'border-[#CBB9D8]/60 shadow-[0_0_20px_rgba(203,185,216,0.3)]'
   },
-  // 薄紅 (Usu-kurenai) - Pale crimson
+  // 灰櫻 (Haizakura) - Muted Pink/Red
   rose: {
-    bg: 'bg-rose-50/50', border: 'border-rose-100', text: 'text-rose-700',
-    iconBg: 'bg-rose-100', iconText: 'text-rose-500', bar: 'bg-rose-400',
-    glow: 'border-rose-200/80 shadow-lg shadow-rose-100/40'
+    bg: 'bg-[#E8D3D1]/40', border: 'border-[#D9B5B2]', text: 'text-[#A65E62]',
+    iconBg: 'bg-[#E8D3D1]/60', iconText: 'text-[#C48286]', bar: 'bg-[#C48286]',
+    glow: 'border-[#D9B5B2]/60 shadow-[0_0_20px_rgba(217,181,178,0.3)]'
   },
-  // 若竹 (Wakatake) - Young bamboo
+  // 青竹 (Aotake) - Muted Teal/Green (Replaces Emerald)
   emerald: {
-    bg: 'bg-emerald-50/50', border: 'border-emerald-100', text: 'text-emerald-700',
-    iconBg: 'bg-emerald-100', iconText: 'text-emerald-500', bar: 'bg-emerald-400',
-    glow: 'border-emerald-200/80 shadow-lg shadow-emerald-100/40'
+    bg: 'bg-[#D1E6E1]/40', border: 'border-[#A3D1C8]', text: 'text-[#2F7567]',
+    iconBg: 'bg-[#D1E6E1]/60', iconText: 'text-[#4DA391]', bar: 'bg-[#4DA391]',
+    glow: 'border-[#A3D1C8]/60 shadow-[0_0_20px_rgba(163,209,200,0.3)]'
   },
-  // 山吹 (Yamabuki) - Golden yellow
+  // 蒸栗 (Mushikuri) - Muted Yellow
   amber: {
-    bg: 'bg-amber-50/50', border: 'border-amber-100', text: 'text-amber-700',
-    iconBg: 'bg-amber-100', iconText: 'text-amber-500', bar: 'bg-amber-400',
-    glow: 'border-amber-200/80 shadow-lg shadow-amber-100/40'
+    bg: 'bg-[#F0EAC2]/40', border: 'border-[#E0D695]', text: 'text-[#8F8335]',
+    iconBg: 'bg-[#F0EAC2]/60', iconText: 'text-[#B8AA54]', bar: 'bg-[#B8AA54]',
+    glow: 'border-[#E0D695]/60 shadow-[0_0_20px_rgba(224,214,149,0.3)]'
   },
-  // 桔梗 (Kikyo) - Bellflower
+  // 桔梗 (Kikyo) - Indigo
   indigo: {
-    bg: 'bg-indigo-50/50', border: 'border-indigo-100', text: 'text-indigo-700',
-    iconBg: 'bg-indigo-100', iconText: 'text-indigo-500', bar: 'bg-indigo-400',
-    glow: 'border-indigo-200/80 shadow-lg shadow-indigo-100/40'
+    bg: 'bg-[#D6DEEB]/40', border: 'border-[#B4C4DE]', text: 'text-[#485A85]',
+    iconBg: 'bg-[#D6DEEB]/60', iconText: 'text-[#6B80AD]', bar: 'bg-[#6B80AD]',
+    glow: 'border-[#B4C4DE]/60 shadow-[0_0_20px_rgba(180,196,222,0.3)]'
   },
-  // 浅蔥 (Asagi) - Pale blue-green
+  // 淺蔥 (Asagi) - Cyan
   cyan: {
-    bg: 'bg-teal-50/50', border: 'border-teal-100', text: 'text-teal-700',
-    iconBg: 'bg-teal-100', iconText: 'text-teal-500', bar: 'bg-teal-400',
-    glow: 'border-teal-200/80 shadow-lg shadow-teal-100/40'
+    bg: 'bg-[#CEE5E6]/40', border: 'border-[#A5D0D1]', text: 'text-[#3B7A7D]',
+    iconBg: 'bg-[#CEE5E6]/60', iconText: 'text-[#5CA6A8]', bar: 'bg-[#5CA6A8]',
+    glow: 'border-[#A5D0D1]/60 shadow-[0_0_20px_rgba(165,208,209,0.3)]'
   },
 };
 
@@ -347,9 +352,9 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
   // < 20%: Rose (Danger)
   let statusColor = theme.bar;
   if (!isOverBudget && total > 0) {
-    if (remainingPercentage < 20) statusColor = 'bg-rose-400';
-    else if (remainingPercentage < 50) statusColor = 'bg-amber-400';
-    else statusColor = 'bg-emerald-400';
+    if (remainingPercentage < 20) statusColor = 'bg-[#C48286]'; // 灰櫻 Haizakura (Rose)
+    else if (remainingPercentage < 50) statusColor = 'bg-[#B8AA54]'; // 蒸栗 Mushikuri (Amber)
+    else statusColor = 'bg-[#4DA391]'; // 青竹 Aotake (Emerald)
   }
 
   return (
@@ -408,9 +413,9 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
 
   let statusBarColor = theme.bar;
   if (!isOverBudget && group.budget > 0) {
-    if (remainingPercentage < 20) statusBarColor = 'bg-rose-400'; // Critical
-    else if (remainingPercentage < 50) statusBarColor = 'bg-amber-400'; // Warn
-    else statusBarColor = 'bg-emerald-400'; // Good
+    if (remainingPercentage < 20) statusBarColor = 'bg-[#C48286]'; // Haizakura
+    else if (remainingPercentage < 50) statusBarColor = 'bg-[#B8AA54]'; // Mushikuri
+    else statusBarColor = 'bg-[#4DA391]'; // Aotake
   }
 
   return (
@@ -443,7 +448,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
             </div>
             <div className={`w-full bg-stone-100/50 rounded-full h-1 overflow-hidden`}>
               <div className={`h-full transition-all duration-500 ${!itemIsOver && item.budget > 0
-                  ? (itemPercent < 20 ? 'bg-rose-400' : itemPercent < 50 ? 'bg-amber-400' : 'bg-emerald-400')
+                  ? (itemPercent < 20 ? 'bg-[#C48286]' : itemPercent < 50 ? 'bg-[#B8AA54]' : 'bg-[#4DA391]')
                   : theme.bar
                 }`} style={{ width: `${itemPercent}%` }} />
             </div>
