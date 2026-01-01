@@ -716,7 +716,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
   return (
     <div className={`${GLASS_CARD} overflow-hidden p-0 mb-6 ${theme.glow}`}>
       <div
-        className={`p-5 flex justify-between items-center ${isCollapsible ? 'cursor-pointer hover:bg-stone-50/50 transition-colors' : ''} ${!isExpanded ? 'border-b-0' : 'border-b border-white/20'}`}
+        className={`p-5 flex justify-between items-center ${isCollapsible ? 'cursor-pointer hover:bg-white/30 transition-colors' : ''} ${!isExpanded ? 'border-b-0' : 'border-b border-white/10'}`}
         onClick={() => isCollapsible && setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
@@ -743,7 +743,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
         <div className="p-5 animate-in slide-in-from-top-2 duration-200">
           <div className="space-y-3">
             {items.length === 0 ? <p className="text-center text-xs text-stone-300 py-4">無紀錄</p> : items.map((item) => (
-              <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-stone-100 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-stone-50/50 rounded-lg p-2 transition-colors' : ''}`}>
+              <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-white/20 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-white/30 rounded-lg p-2 transition-colors' : ''}`}>
                 {itemRenderer(item)}
                 <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-1/2 -transtone-y-1/2 right-2 z-10 p-1.5 rounded-lg text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
                   <X className="w-4 h-4" />
@@ -752,7 +752,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
             ))}
           </div>
           {totalLabel && (
-            <div className="mt-4 pt-3 border-t border-stone-100 flex justify-between items-center">
+            <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center">
               <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">{totalLabel}</span>
               <span className="text-xl font-bold text-stone-800 font-mono">${totalValue.toLocaleString()}</span>
             </div>
