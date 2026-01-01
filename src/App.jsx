@@ -933,7 +933,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
       <div className={`${GLASS_CARD} p-6 border-l-4 ${isOverBudget ? 'border-rose-400' : 'border-emerald-400'}`}>
         <div className="flex items-center gap-3 mb-4">
           <div className={`p-2 rounded-xl ${isOverBudget ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
-            <Target className="w-5 h-5" />
+            <PieChart className="w-5 h-5" />
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest">年度總預算</h2>
@@ -1307,7 +1307,15 @@ const PartnerView = ({ partnerTransactions, onDelete, onAdd, onEdit }) => {
   );
 };
 
-const VisualizationView = ({ transactions, settings }) => {
+const VisualizationView = ({ transactions, settings, onRequestHistory }) => {
+  useEffect(() => {
+    // Auto-load history for comparison (Last 3 years)
+    if (onRequestHistory) {
+      const current = new Date().getFullYear();
+      onRequestHistory(current - 1);
+      onRequestHistory(current - 2);
+    }
+  }, [onRequestHistory]);
   const [baseYear, setBaseYear] = useState(new Date().getFullYear());
   const [compareYear, setCompareYear] = useState(new Date().getFullYear() - 1);
   const [isCompareMode, setIsCompareMode] = useState(false);
@@ -1954,6 +1962,8 @@ export default function App() {
   // Transaction Data Persistence Refs (Prevent white screen / load race conditions)
   const transactionSubsRef = useRef({});
   const transactionDataPartsRef = useRef({});
+  const [extraYears, setExtraYears] = useState([]); // For Analysis View to request historical data
+
 
   // Modals
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
@@ -2105,13 +2115,13 @@ export default function App() {
     };
   }, [user]);
 
-  // 2. Transaction Lazy Loader (Run on year change)
+  // 2. Transaction Lazy Loader (Run on year change OR when extra years requested)
   useEffect(() => {
     if (!user) return;
     const year = selectedDate.getFullYear();
     const currentYear = new Date().getFullYear();
-    // Ensure we load both selected year and current year (for cross-year context if needed)
-    const years = Array.from(new Set([year, currentYear]));
+    // Ensure we load both selected year, current year, and any requested history
+    const years = Array.from(new Set([year, currentYear, ...extraYears]));
 
     years.forEach(y => {
       if (transactionSubsRef.current[y]) return; // Skip if already subscribed
@@ -2147,7 +2157,16 @@ export default function App() {
         }
       });
     });
-  }, [user, selectedDate.getFullYear()]);
+  }, [user, selectedDate.getFullYear(), extraYears]);
+
+  const requestHistory = useCallback((year) => {
+    setExtraYears(prev => {
+      if (prev.includes(year)) return prev;
+      return [...prev, year];
+    });
+  }, []);
+
+
 
   // Settings listener - depends on year, separate from data listeners
   useEffect(() => {
@@ -2467,7 +2486,7 @@ export default function App() {
 
   // --- Main Render ---
   return (
-    <div className="flex flex-col h-screen bg-stone-50 text-stone-800 font-sans overflow-hidden max-w-md mx-auto relative shadow-2xl">
+    <div className="flex flex-col h-screen bg-[#F5F5F4] bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] text-stone-800 font-mono overflow-hidden max-w-md mx-auto relative shadow-2xl">
       {/* Background Blobs - Nippon Colors: 桜鼠 (Sakura-nezumi), 白藤 (Shiro-fuji), 若草 (Wakakusa) */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-violet-200/30 rounded-full blur-[80px] pointer-events-none z-0"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-rose-200/25 rounded-full blur-[80px] pointer-events-none z-0"></div>
@@ -2557,7 +2576,7 @@ export default function App() {
         {currentView === 'principal' && (
           <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
         )}
-        {currentView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} />}
+        {currentView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} />}
         {currentView === 'income' && (
           <IncomeView
             incomes={incomes}
