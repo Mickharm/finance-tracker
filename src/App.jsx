@@ -341,10 +341,16 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
 
   const theme = COLOR_VARIANTS[colorTheme] || COLOR_VARIANTS.slate;
 
-  // Color logic:
-  // If OverBudget: Bar is 0 width (no color visible effectively, but we can set it to transparent or slate).
-  // If Normal: Use theme color.
-  const statusColor = theme.bar;
+  // Color logic: Dynamic warning
+  // > 50%: Theme/Safe
+  // 20% - 50%: Amber (Warning)
+  // < 20%: Rose (Danger)
+  let statusColor = theme.bar;
+  if (!isOverBudget && total > 0) {
+    if (remainingPercentage < 20) statusColor = 'bg-rose-400';
+    else if (remainingPercentage < 50) statusColor = 'bg-amber-400';
+    else statusColor = 'bg-emerald-400';
+  }
 
   return (
     <div className="w-full">
@@ -400,6 +406,13 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
   const remaining = group.budget - group.used;
   const remainingPercentage = group.budget > 0 ? (Math.max(0, remaining) / group.budget) * 100 : 0;
 
+  let statusBarColor = theme.bar;
+  if (!isOverBudget && group.budget > 0) {
+    if (remainingPercentage < 20) statusBarColor = 'bg-rose-400'; // Critical
+    else if (remainingPercentage < 50) statusBarColor = 'bg-amber-400'; // Warn
+    else statusBarColor = 'bg-emerald-400'; // Good
+  }
+
   return (
     <div className={`${GLASS_CARD} p-5 hover:border-stone-300 transition-all duration-300`}>
       <div className="flex flex-col cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
@@ -415,7 +428,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
           </div>
         </div>
         <div className={`w-full bg-stone-100/50 rounded-full h-1.5 overflow-hidden`}>
-          <div className={`h-full transition-all duration-500 ${theme.bar}`} style={{ width: `${remainingPercentage}%` }} />
+          <div className={`h-full transition-all duration-500 ${statusBarColor}`} style={{ width: `${remainingPercentage}%` }} />
         </div>
       </div>
       {isExpanded && (<div className="mt-5 pl-2 space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-stone-100/50 pt-3">{group.items.map((item, idx) => {
@@ -429,7 +442,10 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
               <span className={`font-mono ${itemIsOver ? 'text-rose-500' : 'text-stone-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
             </div>
             <div className={`w-full bg-stone-100/50 rounded-full h-1 overflow-hidden`}>
-              <div className={`h-full transition-all duration-500 ${theme.bar}`} style={{ width: `${itemPercent}%` }} />
+              <div className={`h-full transition-all duration-500 ${!itemIsOver && item.budget > 0
+                  ? (itemPercent < 20 ? 'bg-rose-400' : itemPercent < 50 ? 'bg-amber-400' : 'bg-emerald-400')
+                  : theme.bar
+                }`} style={{ width: `${itemPercent}%` }} />
             </div>
           </div>
         );
@@ -932,31 +948,31 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
 
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
-          <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500"><Calendar className="w-4 h-4" /></div>
+          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"><Calendar className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-stone-800 leading-tight">月度預算</h2><p className="text-xs text-stone-400 font-bold tracking-wide uppercase">經常性支出</p></div>
         </div>
-        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
-          <BudgetProgressBar current={monthlyStats.totalUsed} total={monthlyStats.totalBudget} label="本月總剩餘" colorTheme="slate" />
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-emerald-400`}>
+          <BudgetProgressBar current={monthlyStats.totalUsed} total={monthlyStats.totalBudget} label="本月總剩餘" colorTheme="emerald" />
         </div>
-        <div className="space-y-3">{monthlyStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="slate" />))}</div>
+        <div className="space-y-3">{monthlyStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="emerald" />))}</div>
       </section>
       <section>
         <div className="flex items-center gap-2 mb-4 px-1 mt-10">
-          <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-600"><Target className="w-4 h-4" /></div>
+          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600"><Target className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-stone-800 leading-tight">年度預算</h2><p className="text-xs text-stone-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
         </div>
 
         {/* Annual Summary - Same design as monthly */}
-        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-indigo-400`}>
           <BudgetProgressBar
             key={annualStats.totalBudget}
             current={annualStats.totalUsed}
             total={annualStats.totalBudget}
             label="本年總已用"
-            colorTheme="stone"
+            colorTheme="indigo"
           />
         </div>
-        <div className="space-y-3">{annualStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="stone" />))}</div>
+        <div className="space-y-3">{annualStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="indigo" />))}</div>
       </section>
     </div>
   );
