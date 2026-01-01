@@ -448,8 +448,8 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
             </div>
             <div className={`w-full bg-stone-100/50 rounded-full h-1 overflow-hidden`}>
               <div className={`h-full transition-all duration-500 ${!itemIsOver && item.budget > 0
-                  ? (itemPercent < 20 ? 'bg-[#C48286]' : itemPercent < 50 ? 'bg-[#B8AA54]' : 'bg-[#4DA391]')
-                  : theme.bar
+                ? (itemPercent < 20 ? 'bg-[#C48286]' : itemPercent < 50 ? 'bg-[#B8AA54]' : 'bg-[#4DA391]')
+                : theme.bar
                 }`} style={{ width: `${itemPercent}%` }} />
             </div>
           </div>
@@ -715,7 +715,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
   return (
     <div className={`${GLASS_CARD} overflow-hidden p-0 mb-6 ${theme.glow}`}>
       <div
-        className={`p-5 flex justify-between items-center ${isCollapsible ? 'cursor-pointer hover:bg-stone-50/50 transition-colors' : ''} ${!isExpanded ? 'border-b-0' : 'border-b border-stone-50'}`}
+        className={`p-5 flex justify-between items-center ${isCollapsible ? 'cursor-pointer hover:bg-stone-50/50 transition-colors' : ''} ${!isExpanded ? 'border-b-0' : 'border-b border-white/20'}`}
         onClick={() => isCollapsible && setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
@@ -2065,14 +2065,51 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    // Data Listeners - Only depend on user, NOT selectedDate
-    // This prevents listener recreation on month change which causes stale data issues
+    // Data Listeners
     const unsubs = [];
+
+    // specialized Ref-based subscription manager for Transactions
+    const transactionSubs = {}; // year -> unsubscribe
+    const transactionDataParts = {}; // year -> []
+
+    const updateTransactionsState = () => {
+      const all = Object.values(transactionDataParts).flat();
+      // Client-side sort
+      all.sort((a, b) => b.date.localeCompare(a.date));
+      setTransactions(all);
+    };
+
+    const subscribeYear = (year) => {
+      if (transactionSubs[year]) return;
+
+      const start = `${year}-01-01`;
+      const end = `${year}-12-31`;
+
+      const q = query(
+        collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'),
+        where('date', '>=', start),
+        where('date', '<=', end)
+      );
+
+      transactionSubs[year] = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        transactionDataParts[year] = docs;
+        updateTransactionsState();
+      });
+      unsubs.push(transactionSubs[year]);
+    };
+
+    // Initial Load
+    subscribeYear(new Date().getFullYear());
+
+    // Hack: Expose to sibling effect
+    window._loadTransactionYear = subscribeYear;
+
+    // Other Collections
     const createSub = (col, setter, order = 'date', dir = 'desc') => {
       const q = query(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col), orderBy(order, dir));
       unsubs.push(onSnapshot(q, (s) => {
         const rawData = s.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Robust Deduplication
         const seen = new Set();
         const uniqueData = [];
         rawData.forEach(item => {
@@ -2081,12 +2118,11 @@ export default function App() {
             uniqueData.push(item);
           }
         });
-        // Silent deduplication - log removed
         setter(uniqueData);
       }, (error) => console.error(`Error fetching ${col}:`, error)));
     };
 
-    createSub('transactions', setTransactions);
+    // createSub('transactions', setTransactions); // Removed global fetch
     createSub('incomes', setIncomes);
     createSub('salary_history', setSalaryHistory);
     createSub('partner_savings', setPartnerTransactions);
@@ -2096,8 +2132,18 @@ export default function App() {
     createSub('stock_goals', setStockGoals, 'year', 'desc');
     createSub('usd_exchanges', setUsdExchanges);
 
-    return () => unsubs.forEach(u => u());
-  }, [user]); // Only user dependency - data listeners are stable
+    return () => {
+      unsubs.forEach(u => u());
+      delete window._loadTransactionYear;
+    };
+  }, [user]);
+
+  // Effect to load data when year changes
+  useEffect(() => {
+    if (user && window._loadTransactionYear) {
+      window._loadTransactionYear(selectedDate.getFullYear());
+    }
+  }, [user, selectedDate.getFullYear()]);
 
   // Settings listener - depends on year, separate from data listeners
   useEffect(() => {
