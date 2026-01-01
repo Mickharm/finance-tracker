@@ -19,7 +19,8 @@ import {
   setDoc,
   serverTimestamp,
   updateDoc,
-  getDoc
+  getDoc,
+  where
 } from 'firebase/firestore';
 import {
   Menu, ChevronLeft, ChevronRight, Plus, X, Calendar, DollarSign,
