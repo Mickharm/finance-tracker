@@ -1309,13 +1309,12 @@ const PartnerView = ({ partnerTransactions, onDelete, onAdd, onEdit }) => {
 
 const VisualizationView = ({ transactions, settings, onRequestHistory }) => {
   useEffect(() => {
-    // Auto-load history for comparison (Last 3 years)
+    // Dynamic History Loading: Ensure data for selected years is loaded
     if (onRequestHistory) {
-      const current = new Date().getFullYear();
-      onRequestHistory(current - 1);
-      onRequestHistory(current - 2);
+      onRequestHistory(baseYear);
+      onRequestHistory(compareYear);
     }
-  }, [onRequestHistory]);
+  }, [onRequestHistory, baseYear, compareYear]);
   const [baseYear, setBaseYear] = useState(new Date().getFullYear());
   const [compareYear, setCompareYear] = useState(new Date().getFullYear() - 1);
   const [isCompareMode, setIsCompareMode] = useState(false);
