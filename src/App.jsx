@@ -182,11 +182,11 @@ const ModalWrapper = ({ title, onClose, children }) => (
   </div>
 );
 
-const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, autoFocus = false, children, className = "" }) => (
+const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, autoFocus = false, children, className = "", ...props }) => (
   <div className={`space-y-1.5 w-full ${className}`}>
     {label && <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">{label}</label>}
     <div className="relative w-full min-w-0">
-      <input type={type} value={value} onChange={onChange} placeholder={placeholder} required={required} autoFocus={autoFocus} className={GLASS_INPUT} />
+      <input type={type} value={value} onChange={onChange} placeholder={placeholder} required={required} autoFocus={autoFocus} className={GLASS_INPUT} {...props} />
       {children}
     </div>
   </div>
@@ -521,7 +521,7 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
     <div className="pb-24 space-y-6 animate-in fade-in">
       <div className="flex justify-between items-end mb-2 px-2">
         <div><h2 className="text-xl font-bold text-slate-800">投資名單</h2><p className="text-xs text-slate-400 font-mono mt-1">{lastUpdated ? `最後更新: ${lastUpdated.toLocaleTimeString()}` : '更新中...'}</p></div>
-        <button onClick={() => fetchAllPrices(groups)} className={`p-2 rounded-xl bg-white shadow-sm border border-slate-100 text-indigo-600 ${loading ? 'animate-spin' : ''}`}><RefreshCw className="w-5 h-5" /></button>
+        <button onClick={() => fetchAllPrices(groups)} className={`p-2 rounded-xl bg-white shadow-sm border border-slate-100 text-indigo-600`}><RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
       </div>
       <div className="mb-4">
         {!isAddGroupOpen ? (
@@ -584,7 +584,7 @@ const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete
           <input value={item.name} onChange={(e) => onUpdate(section, groupKey, idx, 'name', e.target.value)} placeholder="項目名稱" className={`${GLASS_INPUT} flex-1 text-base py-2 px-3`} />
           <div className="relative w-28 min-w-0">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
-            <input type="number" value={item.amount} onChange={(e) => onUpdate(section, groupKey, idx, 'amount', e.target.value)} className={`${GLASS_INPUT} w-full text-base py-2 pl-5 pr-2 font-mono text-right text-slate-700 font-bold`} />
+            <input type="text" inputMode="numeric" value={Number(item.amount).toLocaleString()} onChange={(e) => { const v = e.target.value.replace(/,/g, ''); if (!isNaN(v)) onUpdate(section, groupKey, idx, 'amount', v); }} className={`${GLASS_INPUT} w-full text-base py-2 pl-5 pr-2 font-mono text-right text-slate-700 font-bold`} />
           </div>
           <button onClick={() => onDelete(section, groupKey, idx)} className="text-slate-300 hover:text-rose-400"><X className="w-3 h-3" /></button>
         </div>
@@ -698,7 +698,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <GlassButton onClick={(e) => { e.stopPropagation(); onAdd(type); }} className="text-xs px-2 py-1"><Plus className="w-3 h-3" /> 新增</GlassButton>
+          {(!isCollapsible || isExpanded) && <GlassButton onClick={(e) => { e.stopPropagation(); onAdd(type); }} className="text-xs px-2 py-1"><Plus className="w-3 h-3" /> 新增</GlassButton>}
           {isCollapsible && (isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />)}
         </div>
       </div>
@@ -1441,10 +1441,10 @@ const VisualizationView = ({ transactions, settings }) => {
               </div>
 
               {/* Bar */}
-              <div className="w-full max-w-[20px] bg-slate-100 rounded-t-lg relative overflow-visible transition-all duration-500" style={{ height: `${maxVal > 0 ? (val / maxVal) * 100 : 0}%` }}>
+              <div className="w-full max-w-[20px] bg-slate-100 rounded-t-lg relative overflow-visible transition-all duration-500" style={{ height: `${maxVal > 0 ? (Math.max(0, val) / maxVal) * 100 : 0}%` }}>
                 <div className={`absolute inset-x-0 bottom-0 top-0 rounded-t-lg transition-all duration-300 ${!isCompareMode && selectedMonth === idx ? 'bg-slate-800 shadow-lg shadow-slate-300' : 'bg-slate-300 group-hover:bg-slate-400'}`}></div>
                 {isCompareMode && (
-                  <div className="absolute inset-x-0 bottom-0 bg-slate-800/20 rounded-t-lg border-t border-slate-500/30" style={{ height: `${maxVal > 0 ? (compareData[idx] / maxVal) * 100 : 0}%` }}></div>
+                  <div className="absolute inset-x-0 bottom-0 bg-slate-800/20 rounded-t-lg border-t border-slate-500/30" style={{ height: `${maxVal > 0 ? (Math.max(0, compareData[idx]) / maxVal) * 100 : 0}%` }}></div>
                 )}
               </div>
 
@@ -2609,7 +2609,10 @@ export default function App() {
                   <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
                 </div>
                 <div className="w-full relative">
-                  <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." />
+                  <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." onFocus={(e) => {
+                    // Scroll into view logic on mobile
+                    setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+                  }} />
                   <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-300 pointer-events-none z-10" />
                 </div>
               </div>
