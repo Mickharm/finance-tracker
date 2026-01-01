@@ -2124,13 +2124,26 @@ export default function App() {
       );
 
       transactionSubsRef.current[y] = onSnapshot(q, (snapshot) => {
-        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        transactionDataPartsRef.current[y] = docs;
+        try {
+          const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          if (transactionDataPartsRef.current) {
+            transactionDataPartsRef.current[y] = docs;
 
-        // Merge and Update State
-        const allDocs = Object.values(transactionDataPartsRef.current).flat();
-        allDocs.sort((a, b) => b.date.localeCompare(a.date));
-        setTransactions(allDocs);
+            // Merge and Update State
+            const allDocs = Object.values(transactionDataPartsRef.current).flat();
+            // Defensive Sort: Handle potentially numeric, string, or Text dates
+            allDocs.sort((a, b) => {
+              const valA = a.date;
+              const valB = b.date;
+              const strA = (valA && typeof valA === 'object' && valA.toDate) ? valA.toDate().toISOString() : String(valA || '');
+              const strB = (valB && typeof valB === 'object' && valB.toDate) ? valB.toDate().toISOString() : String(valB || '');
+              return strB.localeCompare(strA);
+            });
+            setTransactions(allDocs);
+          }
+        } catch (err) {
+          console.error("SafeSort Crash Prevented:", err);
+        }
       });
     });
   }, [user, selectedDate.getFullYear()]);
