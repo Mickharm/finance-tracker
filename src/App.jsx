@@ -163,16 +163,16 @@ const getFixedDepositAmount = (year) => {
 };
 
 // --- Components ---
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確認", confirmText = "確定", confirmColor = "bg-slate-800" }) => {
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確認", confirmText = "確定", confirmColor = "bg-stone-800" }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
-      <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-stone-900/30 backdrop-blur-sm" onClick={onClose} />
       <div className={`relative ${GLASS_CARD} p-6 w-full max-w-xs animate-in zoom-in-95 duration-200`}>
-        <h3 className="text-lg font-bold text-slate-800 mb-2">{title}</h3>
-        <p className="text-slate-500 text-sm mb-6 leading-relaxed">{message}</p>
+        <h3 className="text-lg font-bold text-stone-800 mb-2">{title}</h3>
+        <p className="text-stone-500 text-sm mb-6 leading-relaxed">{message}</p>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold active:scale-95 transition-transform text-xs">取消</button>
+          <button onClick={onClose} className="flex-1 py-3 bg-stone-100 text-stone-600 rounded-xl font-bold active:scale-95 transition-transform text-xs">取消</button>
           <button onClick={() => { onConfirm(); onClose(); }} className={`flex-1 py-3 text-white rounded-xl font-bold shadow-lg active:scale-95 transition-transform text-xs ${confirmColor}`}>{confirmText}</button>
         </div>
       </div>
@@ -182,11 +182,11 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確�
 
 const ModalWrapper = ({ title, onClose, children }) => (
   <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
-    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
+    <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
     <div className={`relative w-full rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl`}>
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-slate-800 tracking-tight pl-2">{title}</h3>
-        <button type="button" onClick={onClose} className="p-2 bg-slate-100/50 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors z-10 relative">
+        <h3 className="text-xl font-bold text-stone-800 tracking-tight pl-2">{title}</h3>
+        <button type="button" onClick={onClose} className="p-2 bg-stone-100/50 rounded-full text-stone-400 hover:bg-stone-200 hover:text-stone-600 transition-colors z-10 relative">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -197,7 +197,7 @@ const ModalWrapper = ({ title, onClose, children }) => (
 
 const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, autoFocus = false, children, className = "", ...props }) => (
   <div className={`space-y-1.5 w-full ${className}`}>
-    {label && <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">{label}</label>}
+    {label && <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">{label}</label>}
     <div className="relative w-full min-w-0">
       <input type={type} value={value} onChange={onChange} placeholder={placeholder} required={required} autoFocus={autoFocus} className={GLASS_INPUT} {...props} />
       {children}
@@ -288,13 +288,13 @@ const CalculatorInput = ({ value, onChange, label }) => {
 
   return (
     <div className="space-y-3">
-      {label && <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">{label}</label>}
-      <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100">
+      {label && <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">{label}</label>}
+      <div className="bg-stone-50/80 rounded-2xl p-4 border border-stone-100">
         <div className="text-right mb-4 overflow-x-auto scrollbar-hide">
-          <div className="text-3xl font-bold text-slate-800 font-mono tracking-tight whitespace-nowrap">
+          <div className="text-3xl font-bold text-stone-800 font-mono tracking-tight whitespace-nowrap">
             {formatDisplay(displayValue)}
           </div>
-          {expression && <div className="text-xs text-slate-400 font-mono h-4 opacity-0">.</div>}
+          {expression && <div className="text-xs text-stone-400 font-mono h-4 opacity-0">.</div>}
         </div>
         <div className="grid grid-cols-4 gap-2">
           {buttons.flat().map((btn, idx) => (
@@ -305,9 +305,9 @@ const CalculatorInput = ({ value, onChange, label }) => {
               className={`py-3.5 rounded-xl font-bold text-lg transition-all active:scale-95 shadow-sm
                 ${btn === 'AC' ? 'bg-rose-100 text-rose-600' :
                   btn === '⌫' ? 'bg-amber-100 text-amber-600' :
-                    ['÷', '×', '-', '+', '='].includes(btn) ? 'bg-slate-200 text-slate-700' :
-                      btn === '0' ? 'col-span-2 bg-white text-slate-800 border border-slate-200' :
-                        'bg-white text-slate-800 border border-slate-200'
+                    ['÷', '×', '-', '+', '='].includes(btn) ? 'bg-stone-200 text-stone-700' :
+                      btn === '0' ? 'col-span-2 bg-white text-stone-800 border border-stone-200' :
+                        'bg-white text-stone-800 border border-stone-200'
                 }`}
               style={btn === '0' ? { gridColumn: 'span 2' } : {}}
             >
@@ -355,16 +355,16 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
         </span>
         {showDetails && (
           <div className="flex items-baseline gap-1 text-right">
-            <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-rose-400' : 'text-slate-400'}`}>{isOverBudget ? '已超支' : '剩餘'}</span>
-            <span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
+            <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-rose-400' : 'text-stone-400'}`}>{isOverBudget ? '已超支' : '剩餘'}</span>
+            <span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-stone-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         )}
       </div>
-      <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}>
+      <div className={`w-full bg-stone-100/50 rounded-full h-1.5 overflow-hidden`}>
         <div className={`h-full transition-all duration-1000 ease-out ${statusColor}`} style={{ width: `${remainingPercentage}%` }} />
       </div>
       {showDetails && variant === 'main' && (
-        <div className="flex justify-between mt-1.5 text-[10px] text-slate-400 font-medium">
+        <div className="flex justify-between mt-1.5 text-[10px] text-stone-400 font-medium">
           <span className={isOverBudget ? 'text-rose-400' : ''}>{Math.round(remainingPercentage)}% 剩餘</span>
           <span>總額: ${total.toLocaleString()}</span>
         </div>
@@ -377,20 +377,20 @@ const Card = ({ children, className = "", variant = 'slate' }) => { return (<div
 
 const PrincipalTrendChart = ({ history }) => {
   const data = useMemo(() => [...history].reverse().slice(-12), [history]);
-  if (!data || data.length < 2) { return (<div className={`${GLASS_CARD} p-6 mb-6 flex flex-col items-center justify-center h-48`}><PieChart className="w-8 h-8 text-slate-300 mb-2" /><span className="text-xs text-slate-400 font-medium">累積更多紀錄後顯示趨勢圖</span></div>); }
+  if (!data || data.length < 2) { return (<div className={`${GLASS_CARD} p-6 mb-6 flex flex-col items-center justify-center h-48`}><PieChart className="w-8 h-8 text-stone-300 mb-2" /><span className="text-xs text-stone-400 font-medium">累積更多紀錄後顯示趨勢圖</span></div>); }
   const width = 100; const height = 50; const padding = 5;
   const values = data.map(d => d.netPrincipal);
   const minVal = Math.min(...values); const maxVal = Math.max(...values); const range = maxVal - minVal || 1;
   const points = data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return `${x},${y}`; }).join(' ');
   const currentNet = values[values.length - 1]; const prevNet = values.length > 1 ? values[values.length - 2] : currentNet; const growth = currentNet - prevNet;
   return (
-    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">歷史資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-slate-800 font-mono tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><polyline points={points} fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return (<circle key={i} cx={x} cy={y} r={i === data.length - 1 ? 2 : 1} className={i === data.length - 1 ? "fill-slate-800" : "fill-white stroke-slate-400 stroke-[0.5]"} />); })}</svg></div><div className="flex justify-between text-[10px] text-slate-400 font-mono mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
+    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">歷史資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-stone-800 font-mono tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><polyline points={points} fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return (<circle key={i} cx={x} cy={y} r={i === data.length - 1 ? 2 : 1} className={i === data.length - 1 ? "fill-stone-800" : "fill-white stroke-stone-400 stroke-[0.5]"} />); })}</svg></div><div className="flex justify-between text-[10px] text-stone-400 font-mono mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
   );
 };
 
 const CleanSummaryCard = ({ title, value, subValue, icon: Icon, trend, variant = 'slate' }) => {
   const theme = COLOR_VARIANTS[variant] || COLOR_VARIANTS.slate;
-  return (<div className={`${GLASS_CARD} p-6 mb-6 ${theme.glow}`}><div className="flex justify-between items-start mb-2"><div className={`p-2 rounded-xl ${theme.iconBg} ${theme.iconText}`}>{Icon ? <Icon className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}</div>{trend && <span className={`bg-slate-50/50 text-slate-500 text-[10px] px-2 py-1 rounded-full font-bold`}>{trend}</span>}</div><div><h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{title}</h2><div className="text-3xl font-bold text-slate-800 font-mono tracking-tight">${value}</div>{subValue && <div className="text-xs text-slate-400 mt-1">{subValue}</div>}</div></div>);
+  return (<div className={`${GLASS_CARD} p-6 mb-6 ${theme.glow}`}><div className="flex justify-between items-start mb-2"><div className={`p-2 rounded-xl ${theme.iconBg} ${theme.iconText}`}>{Icon ? <Icon className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}</div>{trend && <span className={`bg-stone-50/50 text-stone-500 text-[10px] px-2 py-1 rounded-full font-bold`}>{trend}</span>}</div><div><h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">{title}</h2><div className="text-3xl font-bold text-stone-800 font-mono tracking-tight">${value}</div>{subValue && <div className="text-xs text-stone-400 mt-1">{subValue}</div>}</div></div>);
 };
 
 const GroupCard = ({ group, colorTheme = 'slate' }) => {
@@ -401,34 +401,34 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
   const remainingPercentage = group.budget > 0 ? (Math.max(0, remaining) / group.budget) * 100 : 0;
 
   return (
-    <div className={`${GLASS_CARD} p-5 hover:border-slate-300 transition-all duration-300`}>
+    <div className={`${GLASS_CARD} p-5 hover:border-stone-300 transition-all duration-300`}>
       <div className="flex flex-col cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-3">
             <div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
-            <h3 className="text-sm font-bold text-slate-700 tracking-tight">{group.name}</h3>
+            <h3 className="text-sm font-bold text-stone-700 tracking-tight">{group.name}</h3>
             {isOverBudget && <span className="bg-rose-100 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">已超支</span>}
           </div>
           <div className="text-right flex items-baseline gap-1">
-            <span className="text-[10px] text-slate-400">剩餘</span>
-            <span className={`text-sm font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-slate-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
+            <span className="text-[10px] text-stone-400">剩餘</span>
+            <span className={`text-sm font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-stone-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         </div>
-        <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}>
+        <div className={`w-full bg-stone-100/50 rounded-full h-1.5 overflow-hidden`}>
           <div className={`h-full transition-all duration-500 ${theme.bar}`} style={{ width: `${remainingPercentage}%` }} />
         </div>
       </div>
-      {isExpanded && (<div className="mt-5 pl-2 space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-slate-100/50 pt-3">{group.items.map((item, idx) => {
+      {isExpanded && (<div className="mt-5 pl-2 space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-stone-100/50 pt-3">{group.items.map((item, idx) => {
         const itemRemaining = item.budget - item.used;
         const itemIsOver = itemRemaining < 0;
         const itemPercent = item.budget > 0 ? (Math.max(0, itemRemaining) / item.budget) * 100 : 0;
         return (
           <div key={idx}>
-            <div className="flex justify-between text-xs mb-1.5 font-medium text-slate-500">
+            <div className="flex justify-between text-xs mb-1.5 font-medium text-stone-500">
               <span>{item.name}</span>
-              <span className={`font-mono ${itemIsOver ? 'text-rose-500' : 'text-slate-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
+              <span className={`font-mono ${itemIsOver ? 'text-rose-500' : 'text-stone-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
             </div>
-            <div className={`w-full bg-slate-100/50 rounded-full h-1 overflow-hidden`}>
+            <div className={`w-full bg-stone-100/50 rounded-full h-1 overflow-hidden`}>
               <div className={`h-full transition-all duration-500 ${theme.bar}`} style={{ width: `${itemPercent}%` }} />
             </div>
           </div>
@@ -449,8 +449,8 @@ const WatchlistGroup = ({ group, onUpdateStock, onDeleteStock, onDeleteGroup, on
   const theme = COLOR_VARIANTS.indigo;
   return (
     <div className={`${GLASS_CARD} p-5 hover:border-indigo-300 transition-all duration-300 mb-4 ${theme.glow}`}>
-      <div className="flex justify-between items-center mb-4"><div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}><div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div><div><h3 className="text-sm font-bold text-slate-700 tracking-tight">{group.name}</h3><span className="text-[10px] text-slate-400 font-medium">佔總預算 {groupPercentage.toFixed(1)}%</span></div></div><div className="flex items-center gap-2"><button onClick={(e) => { e.stopPropagation(); onDeleteGroup(); }} className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all"><X className="w-3.5 h-3.5" /></button></div></div>
-      {isExpanded && (<div className="space-y-4 animate-in slide-in-from-top-1 duration-200 border-t border-slate-100/50 pt-3">{group.items.map((stock, idx) => { const priceData = prices[stock.symbol]; const budget = Number(stock.budget) || 0; const price = priceData ? priceData.price : 0; const shares = price > 0 ? Math.floor(budget / price) : 0; const isUp = priceData?.change >= 0; const stockPercentage = groupTotalBudget > 0 ? (budget / groupTotalBudget) * 100 : 0; return (<div key={idx} className="flex flex-col gap-2 border-b border-slate-100/50 last:border-0 pb-3 last:pb-0"><div className="flex justify-between items-center"><div><div className="flex items-center gap-2"><span className="font-bold text-slate-800 text-base">{stock.symbol}</span><span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 rounded">佔比 {stockPercentage.toFixed(1)}%</span>{priceData && (<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${isUp ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>{isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}{priceData.change.toFixed(2)}%</span>)}</div><div className="text-xs text-slate-400 font-mono mt-0.5">現價: ${price > 0 ? price.toFixed(2) : '---'}</div></div><button onClick={() => onDeleteStock(group.id, idx)} className="text-slate-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div><div className="bg-slate-50/50 rounded-xl p-3 flex items-center gap-3"><div className="flex-1"><label className="text-[10px] text-slate-400 font-bold uppercase block mb-1">定投預算 (USD)</label><input type="number" value={stock.budget} onChange={(e) => onUpdateStock(group.id, idx, 'budget', e.target.value)} className="w-full bg-white/50 border border-slate-200 rounded-lg px-2 py-1 text-sm font-bold text-slate-700 outline-none focus:border-indigo-300" placeholder="500" /></div><div className="text-right"><div className="text-[10px] text-slate-400 font-bold uppercase mb-1">可購股數</div><div className="text-xl font-bold text-indigo-600 font-mono">{shares} <span className="text-xs text-slate-400 font-sans">股</span></div></div></div></div>); })}<div className="mt-2 pt-2 border-t border-slate-100/50"><div className="flex gap-2"><input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdd()} placeholder="輸入代碼" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} /><button onClick={handleAdd} className="bg-slate-800 text-white px-4 rounded-xl hover:bg-slate-700 font-bold text-xs shadow-lg"><Plus className="w-4 h-4" /></button></div></div></div>)}
+      <div className="flex justify-between items-center mb-4"><div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}><div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div><div><h3 className="text-sm font-bold text-stone-700 tracking-tight">{group.name}</h3><span className="text-[10px] text-stone-400 font-medium">佔總預算 {groupPercentage.toFixed(1)}%</span></div></div><div className="flex items-center gap-2"><button onClick={(e) => { e.stopPropagation(); onDeleteGroup(); }} className="p-1.5 rounded-lg bg-stone-100 text-stone-400 hover:bg-rose-50 hover:text-rose-500 transition-all"><X className="w-3.5 h-3.5" /></button></div></div>
+      {isExpanded && (<div className="space-y-4 animate-in slide-in-from-top-1 duration-200 border-t border-stone-100/50 pt-3">{group.items.map((stock, idx) => { const priceData = prices[stock.symbol]; const budget = Number(stock.budget) || 0; const price = priceData ? priceData.price : 0; const shares = price > 0 ? Math.floor(budget / price) : 0; const isUp = priceData?.change >= 0; const stockPercentage = groupTotalBudget > 0 ? (budget / groupTotalBudget) * 100 : 0; return (<div key={idx} className="flex flex-col gap-2 border-b border-stone-100/50 last:border-0 pb-3 last:pb-0"><div className="flex justify-between items-center"><div><div className="flex items-center gap-2"><span className="font-bold text-stone-800 text-base">{stock.symbol}</span><span className="text-[10px] text-stone-400 bg-stone-100 px-1.5 rounded">佔比 {stockPercentage.toFixed(1)}%</span>{priceData && (<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${isUp ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>{isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}{priceData.change.toFixed(2)}%</span>)}</div><div className="text-xs text-stone-400 font-mono mt-0.5">現價: ${price > 0 ? price.toFixed(2) : '---'}</div></div><button onClick={() => onDeleteStock(group.id, idx)} className="text-stone-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div><div className="bg-stone-50/50 rounded-xl p-3 flex items-center gap-3"><div className="flex-1"><label className="text-[10px] text-stone-400 font-bold uppercase block mb-1">定投預算 (USD)</label><input type="number" value={stock.budget} onChange={(e) => onUpdateStock(group.id, idx, 'budget', e.target.value)} className="w-full bg-white/50 border border-stone-200 rounded-lg px-2 py-1 text-sm font-bold text-stone-700 outline-none focus:border-indigo-300" placeholder="500" /></div><div className="text-right"><div className="text-[10px] text-stone-400 font-bold uppercase mb-1">可購股數</div><div className="text-xl font-bold text-indigo-600 font-mono">{shares} <span className="text-xs text-stone-400 font-sans">股</span></div></div></div></div>); })}<div className="mt-2 pt-2 border-t border-stone-100/50"><div className="flex gap-2"><input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdd()} placeholder="輸入代碼" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} /><button onClick={handleAdd} className="bg-stone-800 text-white px-4 rounded-xl hover:bg-stone-700 font-bold text-xs shadow-lg"><Plus className="w-4 h-4" /></button></div></div></div>)}
     </div>
   );
 };
@@ -534,14 +534,14 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
   return (
     <div className="pb-24 space-y-6 animate-in fade-in">
       <div className="flex justify-between items-end mb-2 px-2">
-        <div><h2 className="text-xl font-bold text-slate-800">投資名單</h2><p className="text-xs text-slate-400 font-mono mt-1">{lastUpdated ? `最後更新: ${lastUpdated.toLocaleTimeString()}` : '更新中...'}</p></div>
-        <button onClick={() => fetchAllPrices(groups)} className={`p-2 rounded-xl bg-white shadow-sm border border-slate-100 text-indigo-600`}><RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
+        <div><h2 className="text-xl font-bold text-stone-800">投資名單</h2><p className="text-xs text-stone-400 font-mono mt-1">{lastUpdated ? `最後更新: ${lastUpdated.toLocaleTimeString()}` : '更新中...'}</p></div>
+        <button onClick={() => fetchAllPrices(groups)} className={`p-2 rounded-xl bg-white shadow-sm border border-stone-100 text-indigo-600`}><RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
       </div>
       <div className="mb-4">
         {!isAddGroupOpen ? (
-          <button onClick={() => setIsAddGroupOpen(true)} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-sm hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> 新增追蹤清單</button>
+          <button onClick={() => setIsAddGroupOpen(true)} className="w-full py-3 border-2 border-dashed border-stone-200 rounded-2xl text-stone-400 font-bold text-sm hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> 新增追蹤清單</button>
         ) : (
-          <div className={`${GLASS_CARD} p-3 flex gap-2 animate-in slide-in-from-top-2 duration-200`}><input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addGroup()} placeholder="輸入群組名稱" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} autoFocus /><button onClick={addGroup} disabled={isSubmitting} className="bg-indigo-600 text-white px-4 rounded-xl font-bold shadow-md hover:bg-indigo-700"><Check className="w-4 h-4" /></button><button onClick={() => setIsAddGroupOpen(false)} className="bg-slate-100 text-slate-500 px-3 rounded-xl hover:bg-slate-200"><X className="w-4 h-4" /></button></div>
+          <div className={`${GLASS_CARD} p-3 flex gap-2 animate-in slide-in-from-top-2 duration-200`}><input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addGroup()} placeholder="輸入群組名稱" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} autoFocus /><button onClick={addGroup} disabled={isSubmitting} className="bg-indigo-600 text-white px-4 rounded-xl font-bold shadow-md hover:bg-indigo-700"><Check className="w-4 h-4" /></button><button onClick={() => setIsAddGroupOpen(false)} className="bg-stone-100 text-stone-500 px-3 rounded-xl hover:bg-stone-200"><X className="w-4 h-4" /></button></div>
         )}
       </div>
       <div>{groups.map(g => (<WatchlistGroup key={g.id} group={g} totalSystemBudget={totalSystemBudget} prices={prices} onAddStock={addStock} onUpdateStock={updateStock} onDeleteStock={deleteStock} onDeleteGroup={() => deleteGroup(g.id)} />))}</div>
@@ -551,7 +551,7 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
 
 const SalaryHistoryCard = ({ history, owner, onAdd, onDelete, onEdit }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  return (<div className={`${GLASS_CARD} p-5`}><div className="flex justify-between items-center cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}><div className="flex items-center gap-3"><div className="p-2 bg-slate-100 rounded-xl text-slate-500"><Briefcase className="w-4 h-4" /></div><span className="font-bold text-slate-700 text-sm">薪資成長紀錄</span></div><GlassButton onClick={(e) => { e.stopPropagation(); onAdd(owner); }} variant="ghost" className="px-2 py-1 text-xs">+ 調薪</GlassButton></div>{isExpanded && (<div className="mt-4 space-y-3 pt-3 border-t border-slate-100/50">{history.length === 0 ? (<p className="text-xs text-slate-300 text-center py-2">尚無調薪紀錄</p>) : (history.map((rec, idx) => { const prevRec = history[idx + 1]; let percentChange = null; if (prevRec && prevRec.amount > 0) percentChange = ((rec.amount - prevRec.amount) / prevRec.amount) * 100; return (<div key={rec.id} onClick={() => onEdit && onEdit(rec)} className="flex justify-between items-center text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-slate-50 px-1 rounded transition-colors"><div className="flex flex-col"><span className="font-mono font-bold text-slate-700">${Number(rec.amount).toLocaleString()}</span><span className="text-[10px] text-slate-400">{rec.date}</span></div><div className="flex items-center gap-2">{percentChange !== null && (<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${percentChange >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{percentChange >= 0 ? '+' : ''}{percentChange.toFixed(1)}%</span>)}<button onClick={(e) => { e.stopPropagation(); onDelete(rec.id); }} className="text-slate-300 hover:text-rose-400 p-1"><X className="w-3 h-3" /></button></div></div>); }))}</div>)}{!isExpanded && history.length > 0 && <div className="mt-2 text-xs text-slate-400 pl-11">目前: <span className="font-mono text-slate-600 font-bold">${Number(history[0].amount).toLocaleString()}</span></div>}</div>);
+  return (<div className={`${GLASS_CARD} p-5`}><div className="flex justify-between items-center cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}><div className="flex items-center gap-3"><div className="p-2 bg-stone-100 rounded-xl text-stone-500"><Briefcase className="w-4 h-4" /></div><span className="font-bold text-stone-700 text-sm">薪資成長紀錄</span></div><GlassButton onClick={(e) => { e.stopPropagation(); onAdd(owner); }} variant="ghost" className="px-2 py-1 text-xs">+ 調薪</GlassButton></div>{isExpanded && (<div className="mt-4 space-y-3 pt-3 border-t border-stone-100/50">{history.length === 0 ? (<p className="text-xs text-stone-300 text-center py-2">尚無調薪紀錄</p>) : (history.map((rec, idx) => { const prevRec = history[idx + 1]; let percentChange = null; if (prevRec && prevRec.amount > 0) percentChange = ((rec.amount - prevRec.amount) / prevRec.amount) * 100; return (<div key={rec.id} onClick={() => onEdit && onEdit(rec)} className="flex justify-between items-center text-sm border-b border-stone-50 last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-stone-50 px-1 rounded transition-colors"><div className="flex flex-col"><span className="font-mono font-bold text-stone-700">${Number(rec.amount).toLocaleString()}</span><span className="text-[10px] text-stone-400">{rec.date}</span></div><div className="flex items-center gap-2">{percentChange !== null && (<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${percentChange >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{percentChange >= 0 ? '+' : ''}{percentChange.toFixed(1)}%</span>)}<button onClick={(e) => { e.stopPropagation(); onDelete(rec.id); }} className="text-stone-300 hover:text-rose-400 p-1"><X className="w-3 h-3" /></button></div></div>); }))}</div>)}{!isExpanded && history.length > 0 && <div className="mt-2 text-xs text-stone-400 pl-11">目前: <span className="font-mono text-stone-600 font-bold">${Number(history[0].amount).toLocaleString()}</span></div>}</div>);
 };
 
 const PartnerYearGroup = ({ year, transactions, onDelete, onEdit }) => {
@@ -563,20 +563,20 @@ const PartnerYearGroup = ({ year, transactions, onDelete, onEdit }) => {
   }, [transactions]);
   return (
     <div className={`${GLASS_CARD} overflow-hidden mb-3`}>
-      <div onClick={() => setIsExpanded(!isExpanded)} className="bg-slate-50/50 p-4 flex justify-between items-center cursor-pointer transition-colors hover:bg-slate-50/80">
+      <div onClick={() => setIsExpanded(!isExpanded)} className="bg-stone-50/50 p-4 flex justify-between items-center cursor-pointer transition-colors hover:bg-stone-50/80">
         <div className="flex items-center gap-3">
-          <div className={`p-1.5 rounded-lg ${isExpanded ? 'bg-white shadow-sm text-slate-600' : 'text-slate-400'}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
-          <span className="font-bold text-slate-700 text-sm">{year}年度</span>
+          <div className={`p-1.5 rounded-lg ${isExpanded ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
+          <span className="font-bold text-stone-700 text-sm">{year}年度</span>
         </div>
         <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${yearStats.net >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>{yearStats.net > 0 ? '+' : ''}${yearStats.net.toLocaleString()}</span></div>
       </div>
       {isExpanded && (<div className="p-2 space-y-2">{transactions.map(tx => (
-        <div key={tx.id} onClick={() => onEdit(tx)} className="flex justify-between items-center p-3 bg-white/50 rounded-xl border border-slate-100 hover:border-slate-200 transition-all group cursor-pointer">
+        <div key={tx.id} onClick={() => onEdit(tx)} className="flex justify-between items-center p-3 bg-white/50 rounded-xl border border-stone-100 hover:border-stone-200 transition-all group cursor-pointer">
           <div className="flex gap-3 items-center">
             <div className={`p-2 rounded-xl ${tx.type === 'saving' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{tx.type === 'saving' ? <ArrowUpCircle className="w-4 h-4" /> : <ArrowDownCircle className="w-4 h-4" />}</div>
-            <div className="flex flex-col"><span className="font-bold text-slate-700 text-xs">{tx.type === 'saving' ? '存入' : '支出'}</span><span className="text-[10px] text-slate-400 flex items-center gap-1">{tx.date} {tx.note && `• ${tx.note}`}</span></div>
+            <div className="flex flex-col"><span className="font-bold text-stone-700 text-xs">{tx.type === 'saving' ? '存入' : '支出'}</span><span className="text-[10px] text-stone-400 flex items-center gap-1">{tx.date} {tx.note && `• ${tx.note}`}</span></div>
           </div>
-          <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${tx.type === 'saving' ? 'text-emerald-600' : 'text-rose-500'}`}>{tx.type === 'saving' ? '+' : '-'}${Number(tx.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); onDelete(tx.id); }} className="text-slate-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div>
+          <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${tx.type === 'saving' ? 'text-emerald-600' : 'text-rose-500'}`}>{tx.type === 'saving' ? '+' : '-'}${Number(tx.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); onDelete(tx.id); }} className="text-stone-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div>
         </div>
       ))}</div>)}
     </div>
@@ -586,25 +586,25 @@ const PartnerYearGroup = ({ year, transactions, onDelete, onEdit }) => {
 const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete }) => (
   <div className={`${GLASS_CARD} p-4 mb-4`}>
     <div className="flex justify-between items-center mb-3">
-      <h4 className={`font-bold text-slate-700 flex items-center gap-2`}>
-        {section === 'assets' ? <Landmark className="w-4 h-4 text-slate-400" /> : <Building2 className="w-4 h-4 text-slate-400" />}
+      <h4 className={`font-bold text-stone-700 flex items-center gap-2`}>
+        {section === 'assets' ? <Landmark className="w-4 h-4 text-stone-400" /> : <Building2 className="w-4 h-4 text-stone-400" />}
         {title}
       </h4>
-      <button onClick={() => onAdd(section, groupKey)} className="p-1.5 bg-slate-100 rounded-lg text-slate-500 hover:bg-slate-200"><Plus className="w-4 h-4" /></button>
+      <button onClick={() => onAdd(section, groupKey)} className="p-1.5 bg-stone-100 rounded-lg text-stone-500 hover:bg-stone-200"><Plus className="w-4 h-4" /></button>
     </div>
     <div className="space-y-3">
       {(items || []).map((item, idx) => (
         <div key={idx} className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-200 min-w-0">
           <input value={item.name} onChange={(e) => onUpdate(section, groupKey, idx, 'name', e.target.value)} placeholder="項目名稱" className={`${GLASS_INPUT} flex-1 text-base py-2 px-3`} />
           <div className="relative w-28 min-w-0">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
-            <input type="text" inputMode="numeric" value={Number(item.amount).toLocaleString()} onChange={(e) => { const v = e.target.value.replace(/,/g, ''); if (!isNaN(v)) onUpdate(section, groupKey, idx, 'amount', v); }} className={`${GLASS_INPUT} w-full text-base py-2 pl-5 pr-2 font-mono text-right text-slate-700 font-bold`} />
+            <span className="absolute left-2 top-1/2 -transtone-y-1/2 text-stone-400 text-xs">$</span>
+            <input type="text" inputMode="numeric" value={Number(item.amount).toLocaleString()} onChange={(e) => { const v = e.target.value.replace(/,/g, ''); if (!isNaN(v)) onUpdate(section, groupKey, idx, 'amount', v); }} className={`${GLASS_INPUT} w-full text-base py-2 pl-5 pr-2 font-mono text-right text-stone-700 font-bold`} />
           </div>
-          <button onClick={() => onDelete(section, groupKey, idx)} className="text-slate-300 hover:text-rose-400"><X className="w-3 h-3" /></button>
+          <button onClick={() => onDelete(section, groupKey, idx)} className="text-stone-300 hover:text-rose-400"><X className="w-3 h-3" /></button>
         </div>
       ))}
     </div>
-    <div className="mt-3 pt-2 border-t border-slate-100/50 flex justify-between text-xs font-bold text-slate-600">
+    <div className="mt-3 pt-2 border-t border-stone-100/50 flex justify-between text-xs font-bold text-stone-600">
       <span>小計</span>
       <span>${(items || []).reduce((sum, i) => sum + (Number(i.amount) || 0), 0).toLocaleString()}</span>
     </div>
@@ -625,38 +625,38 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
 
   return (
     <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden`}>
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${isAchieved ? 'bg-emerald-400' : (yearData.year < new Date().getFullYear() ? 'bg-rose-500' : 'bg-slate-300')}`}></div>
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${isAchieved ? 'bg-emerald-400' : (yearData.year < new Date().getFullYear() ? 'bg-rose-500' : 'bg-stone-300')}`}></div>
       <div className="flex justify-between items-start mb-4 pl-3">
         <div>
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-stone-800 flex items-center gap-2">
             {yearData.year}年
             {isAchieved ? (
               <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold">達成</span>
             ) : (yearData.year < new Date().getFullYear()) ? (
               <span className="text-xs bg-rose-50 text-rose-500 px-2 py-0.5 rounded-full font-bold">未達成</span>
             ) : (
-              <span className="text-xs bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full font-bold">進行中</span>
+              <span className="text-xs bg-stone-100 text-stone-400 px-2 py-0.5 rounded-full font-bold">進行中</span>
             )}
             {currentWithdrawal > 0 && <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">含提領</span>}
           </h3>
-          <div className="text-xs text-slate-400 mt-1">固定存入: <span className="font-bold text-slate-600">${fixedDeposit.toLocaleString()}</span> (美金)</div>
+          <div className="text-xs text-stone-400 mt-1">固定存入: <span className="font-bold text-stone-600">${fixedDeposit.toLocaleString()}</span> (美金)</div>
         </div>
         <div className="text-right">
-          <div className="text-xs text-slate-400">年化目標</div>
+          <div className="text-xs text-stone-400">年化目標</div>
           <div className="flex items-center justify-end gap-1">
-            <input type="number" value={yearData.roi} onChange={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-slate-800 border-b border-slate-200 focus:border-slate-500 outline-none bg-transparent" />
-            <span className="text-sm font-bold text-slate-600">%</span>
+            <input type="number" value={yearData.roi} onChange={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-stone-800 border-b border-stone-200 focus:border-stone-500 outline-none bg-transparent" />
+            <span className="text-sm font-bold text-stone-600">%</span>
           </div>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4 mb-4 pl-3">
-        <div><label className="text-[10px] text-slate-400 uppercase font-bold">Firstrade (美金)</label><input type="number" value={yearData.firstrade} onChange={(e) => onUpdate(yearData.id, 'firstrade', e.target.value)} className="w-full font-mono font-bold text-slate-700 border-b border-slate-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
-        <div><label className="text-[10px] text-slate-400 uppercase font-bold">IB (美金)</label><input type="number" value={yearData.ib} onChange={(e) => onUpdate(yearData.id, 'ib', e.target.value)} className="w-full font-mono font-bold text-slate-700 border-b border-slate-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
-        <div className="col-span-2 relative"><label className="text-[10px] text-amber-400 uppercase font-bold">提領/調節 (美金)</label><input type="number" value={yearData.withdrawal} onChange={(e) => onUpdate(yearData.id, 'withdrawal', e.target.value)} className="w-full font-mono font-bold text-slate-700 border-b border-amber-100 focus:border-amber-400 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div><label className="text-[10px] text-stone-400 uppercase font-bold">Firstrade (美金)</label><input type="number" value={yearData.firstrade} onChange={(e) => onUpdate(yearData.id, 'firstrade', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div><label className="text-[10px] text-stone-400 uppercase font-bold">IB (美金)</label><input type="number" value={yearData.ib} onChange={(e) => onUpdate(yearData.id, 'ib', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div className="col-span-2 relative"><label className="text-[10px] text-amber-400 uppercase font-bold">提領/調節 (美金)</label><input type="number" value={yearData.withdrawal} onChange={(e) => onUpdate(yearData.id, 'withdrawal', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-amber-100 focus:border-amber-400 outline-none py-1 bg-transparent" placeholder="0" /></div>
       </div>
-      <div className="bg-slate-50/50 rounded-xl p-3 pl-4 flex justify-between items-center">
-        <div><div className="text-[10px] text-slate-400 mb-0.5 font-bold uppercase">目標金額</div><div className="font-bold text-slate-500 text-sm font-mono">${Math.round(targetAmount).toLocaleString()}</div></div>
-        <div className="text-right"><div className="text-[10px] text-slate-400 mb-0.5 font-bold uppercase">實際總資產</div><div className={`font-bold text-lg font-mono ${isAchieved ? 'text-emerald-600' : 'text-slate-700'}`}>${Math.round(currentTotal).toLocaleString()}</div><div className={`text-[10px] font-medium ${isAchieved ? 'text-emerald-500' : 'text-slate-400'}`}>誤差: {diff > 0 ? '+' : ''}{Math.round(diff).toLocaleString()} ({errorPercent.toFixed(2)}%)</div></div>
+      <div className="bg-stone-50/50 rounded-xl p-3 pl-4 flex justify-between items-center">
+        <div><div className="text-[10px] text-stone-400 mb-0.5 font-bold uppercase">目標金額</div><div className="font-bold text-stone-500 text-sm font-mono">${Math.round(targetAmount).toLocaleString()}</div></div>
+        <div className="text-right"><div className="text-[10px] text-stone-400 mb-0.5 font-bold uppercase">實際總資產</div><div className={`font-bold text-lg font-mono ${isAchieved ? 'text-emerald-600' : 'text-stone-700'}`}>${Math.round(currentTotal).toLocaleString()}</div><div className={`text-[10px] font-medium ${isAchieved ? 'text-emerald-500' : 'text-stone-400'}`}>誤差: {diff > 0 ? '+' : ''}{Math.round(diff).toLocaleString()} ({errorPercent.toFixed(2)}%)</div></div>
       </div>
     </div >
   );
@@ -665,23 +665,23 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
 const ExchangeItem = ({ item, onDelete }) => (
   <div className={`${GLASS_CARD} p-4 flex justify-between items-center group`}>
     <div className="flex items-center gap-3">
-      <div className={`p-2 rounded-lg font-bold text-xs bg-slate-50 text-slate-600`}>
+      <div className={`p-2 rounded-lg font-bold text-xs bg-stone-50 text-stone-600`}>
         {item.account === 'FT' ? 'FT' : 'IB'}
       </div>
       <div>
-        <div className="text-sm font-bold text-slate-700">
+        <div className="text-sm font-bold text-stone-700">
           買入 ${Number(item.usdAmount).toLocaleString()}
         </div>
-        <div className="text-[10px] text-slate-400">
+        <div className="text-[10px] text-stone-400">
           {formatDetailedDate(item.date)} @ {item.rate}
         </div>
       </div>
     </div>
     <div className="flex items-center gap-3">
       <div className="text-right">
-        <div className="text-xs font-mono text-slate-500">NT$ {Math.round(item.usdAmount * item.rate).toLocaleString()}</div>
+        <div className="text-xs font-mono text-stone-500">NT$ {Math.round(item.usdAmount * item.rate).toLocaleString()}</div>
       </div>
-      <button onClick={() => onDelete(item.id)} className="text-slate-300 hover:text-rose-400 transition-all"><X className="w-4 h-4" /></button>
+      <button onClick={() => onDelete(item.id)} className="text-stone-300 hover:text-rose-400 transition-all"><X className="w-4 h-4" /></button>
     </div>
   </div>
 );
@@ -694,7 +694,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
   return (
     <div className={`${GLASS_CARD} overflow-hidden p-0 mb-6 ${theme.glow}`}>
       <div
-        className={`p-5 flex justify-between items-center ${isCollapsible ? 'cursor-pointer hover:bg-slate-50/50 transition-colors' : ''} ${!isExpanded ? 'border-b-0' : 'border-b border-slate-50'}`}
+        className={`p-5 flex justify-between items-center ${isCollapsible ? 'cursor-pointer hover:bg-stone-50/50 transition-colors' : ''} ${!isExpanded ? 'border-b-0' : 'border-b border-stone-50'}`}
         onClick={() => isCollapsible && setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
@@ -702,37 +702,37 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
             <Icon className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-700">{title}</h3>
+            <h3 className="font-bold text-stone-700">{title}</h3>
             {!isExpanded && totalLabel && (
-              <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+              <div className="text-xs text-stone-400 flex items-center gap-2 mt-0.5">
                 <span>{totalLabel}: </span>
-                <span className="font-mono font-bold text-slate-600">${totalValue.toLocaleString()}</span>
+                <span className="font-mono font-bold text-stone-600">${totalValue.toLocaleString()}</span>
               </div>
             )}
           </div>
         </div>
         <div className="flex items-center gap-3">
           {(!isCollapsible || isExpanded) && <GlassButton onClick={(e) => { e.stopPropagation(); onAdd(type); }} className="text-xs px-2 py-1"><Plus className="w-3 h-3" /> 新增</GlassButton>}
-          {isCollapsible && (isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />)}
+          {isCollapsible && (isExpanded ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />)}
         </div>
       </div>
 
       {isExpanded && (
         <div className="p-5 animate-in slide-in-from-top-2 duration-200">
           <div className="space-y-3">
-            {items.length === 0 ? <p className="text-center text-xs text-slate-300 py-4">無紀錄</p> : items.map((item) => (
-              <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-slate-100 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-slate-50/50 rounded-lg p-2 transition-colors' : ''}`}>
+            {items.length === 0 ? <p className="text-center text-xs text-stone-300 py-4">無紀錄</p> : items.map((item) => (
+              <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-stone-100 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-stone-50/50 rounded-lg p-2 transition-colors' : ''}`}>
                 {itemRenderer(item)}
-                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-1/2 -translate-y-1/2 right-2 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
+                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-1/2 -transtone-y-1/2 right-2 z-10 p-1.5 rounded-lg text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
                   <X className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
           {totalLabel && (
-            <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{totalLabel}</span>
-              <span className="text-xl font-bold text-slate-800 font-mono">${totalValue.toLocaleString()}</span>
+            <div className="mt-4 pt-3 border-t border-stone-100 flex justify-between items-center">
+              <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">{totalLabel}</span>
+              <span className="text-xl font-bold text-stone-800 font-mono">${totalValue.toLocaleString()}</span>
             </div>
           )}
         </div>
@@ -777,25 +777,25 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
   return (
     <div className={`${GLASS_CARD} p-5 mb-6 ${theme.glow}`}>
       <div onClick={() => setExpandedYear(expandedYear ? null : 'overview')} className="flex justify-between items-center mb-4 cursor-pointer">
-        <h3 className="font-bold text-slate-700 flex items-center gap-2">
+        <h3 className="font-bold text-stone-700 flex items-center gap-2">
           <div className="p-2 rounded-lg bg-cyan-100 text-cyan-600">
             <Clock className="w-4 h-4" />
           </div>
           房貸還款計劃 (40年)
         </h3>
-        {expandedYear ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        {expandedYear ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
       </div>
 
       {expandedYear && (
         <div className="grid grid-cols-2 gap-3 mb-4 animate-in slide-in-from-top-2 duration-200">
-          <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
-            <div className="text-xs text-slate-400 mb-1">下期 ({currentStatus?.id}期)</div>
-            <div className="text-lg font-bold text-slate-800 font-mono">${currentStatus?.amount.toLocaleString()}</div>
-            <div className="text-[10px] text-slate-400">利率 {currentStatus?.rate}%</div>
+          <div className="bg-stone-50/80 p-3 rounded-xl border border-stone-100">
+            <div className="text-xs text-stone-400 mb-1">下期 ({currentStatus?.id}期)</div>
+            <div className="text-lg font-bold text-stone-800 font-mono">${currentStatus?.amount.toLocaleString()}</div>
+            <div className="text-[10px] text-stone-400">利率 {currentStatus?.rate}%</div>
           </div>
-          <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
-            <div className="text-xs text-slate-400 mb-1">累計已還款</div>
-            <div className="text-lg font-bold text-slate-800 font-mono">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</div>
+          <div className="bg-stone-50/80 p-3 rounded-xl border border-stone-100">
+            <div className="text-xs text-stone-400 mb-1">累計已還款</div>
+            <div className="text-lg font-bold text-stone-800 font-mono">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</div>
           </div>
         </div>
       )}
@@ -803,12 +803,12 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
       {!expandedYear && (
         <div className="flex justify-between items-center px-2 pb-2">
           <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 uppercase font-bold">下期金額</span>
-            <span className="font-mono font-bold text-slate-600 text-sm">${currentStatus?.amount.toLocaleString()}</span>
+            <span className="text-[10px] text-stone-400 uppercase font-bold">下期金額</span>
+            <span className="font-mono font-bold text-stone-600 text-sm">${currentStatus?.amount.toLocaleString()}</span>
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-[10px] text-slate-400 uppercase font-bold">累計已還</span>
-            <span className="font-mono font-bold text-slate-600 text-sm">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</span>
+            <span className="text-[10px] text-stone-400 uppercase font-bold">累計已還</span>
+            <span className="font-mono font-bold text-stone-600 text-sm">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</span>
           </div>
         </div>
       )}
@@ -816,23 +816,23 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
       {expandedYear && (
         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 scrollbar-hide animate-in slide-in-from-top-4 duration-300">
           {Object.entries(yearlyGroups).map(([year, rows]) => (
-            <div key={year} className="border border-slate-100 rounded-xl overflow-hidden">
-              <div onClick={(e) => { e.stopPropagation(); setExpandedYear(Number(year) === expandedYear ? 'overview' : Number(year)); }} className="bg-white/80 p-3 flex justify-between items-center text-xs font-bold text-slate-600 cursor-pointer hover:bg-slate-50">
+            <div key={year} className="border border-stone-100 rounded-xl overflow-hidden">
+              <div onClick={(e) => { e.stopPropagation(); setExpandedYear(Number(year) === expandedYear ? 'overview' : Number(year)); }} className="bg-white/80 p-3 flex justify-between items-center text-xs font-bold text-stone-600 cursor-pointer hover:bg-stone-50">
                 <span>{year}年度 ({rows.length}期)</span>
                 {Number(year) === expandedYear ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               </div>
               {Number(year) === expandedYear && (
                 <div className="bg-white/50 backdrop-blur-sm">
-                  <div className="grid grid-cols-5 text-[10px] text-slate-400 px-3 py-2 border-b border-slate-100 bg-slate-50/50">
+                  <div className="grid grid-cols-5 text-[10px] text-stone-400 px-3 py-2 border-b border-stone-100 bg-stone-50/50">
                     <span>狀態</span><span>日期</span><span className="text-center">期數</span><span className="text-right">金額</span><span className="text-right">利率</span>
                   </div>
                   {rows.map(row => (
-                    <div key={row.id} className={`grid grid-cols-5 text-xs px-3 py-2 border-b border-slate-100 last:border-0 items-center ${row.isPaid ? 'bg-emerald-50/30' : 'hover:bg-slate-50/30'}`}>
-                      <span>{row.isPaid ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <span className="w-3 h-3 rounded-full border border-slate-200 block"></span>}</span>
-                      <span className={`font-mono ${row.isPaid ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>{row.date.getMonth() + 1}月</span>
-                      <span className="text-center text-slate-400">#{row.id}</span>
-                      <span className="text-right font-bold font-mono ${row.isPaid ? 'text-emerald-700' : 'text-slate-700'}">${row.amount.toLocaleString()}</span>
-                      <span className="text-right text-slate-400">{row.rate}%</span>
+                    <div key={row.id} className={`grid grid-cols-5 text-xs px-3 py-2 border-b border-stone-100 last:border-0 items-center ${row.isPaid ? 'bg-emerald-50/30' : 'hover:bg-stone-50/30'}`}>
+                      <span>{row.isPaid ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <span className="w-3 h-3 rounded-full border border-stone-200 block"></span>}</span>
+                      <span className={`font-mono ${row.isPaid ? 'text-emerald-700 font-bold' : 'text-stone-500'}`}>{row.date.getMonth() + 1}月</span>
+                      <span className="text-center text-stone-400">#{row.id}</span>
+                      <span className="text-right font-bold font-mono ${row.isPaid ? 'text-emerald-700' : 'text-stone-700'}">${row.amount.toLocaleString()}</span>
+                      <span className="text-right text-stone-400">{row.rate}%</span>
                     </div>
                   ))}
                 </div>
@@ -856,37 +856,37 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
             <div className={`p-2.5 rounded-xl ${theme.iconBg} ${theme.iconText}`}>
               <Icon className="w-5 h-5" />
             </div>
-            <span className="font-bold text-slate-700">{name}</span>
+            <span className="font-bold text-stone-700">{name}</span>
           </div>
         </div>
-        <div className="text-2xl font-bold text-slate-800 tracking-tight font-mono mb-1 relative z-10">${total.toLocaleString()}</div>
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider relative z-10">年度累計收入</div>
+        <div className="text-2xl font-bold text-stone-800 tracking-tight font-mono mb-1 relative z-10">${total.toLocaleString()}</div>
+        <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider relative z-10">年度累計收入</div>
       </div>
       <SalaryHistoryCard history={history} owner={owner} onAdd={onAddSalary} onDelete={onDeleteSalary} onEdit={onEditSalary} />
       <div className={`${GLASS_CARD} p-5`}>
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-sm font-bold text-slate-700">收入明細 </h4>
+          <h4 className="text-sm font-bold text-stone-700">收入明細 </h4>
           <GlassButton onClick={() => onAddIncome(owner)} className="px-2 py-1 text-xs" variant="ghost">新增</GlassButton>
         </div>
         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-hide">
           {incomes.map(inc => (
-            <div key={inc.id} onClick={() => onAddIncome(owner, inc)} className="flex justify-between items-center p-3 bg-slate-50/50 rounded-xl group border border-transparent hover:border-slate-200 transition-all cursor-pointer">
+            <div key={inc.id} onClick={() => onAddIncome(owner, inc)} className="flex justify-between items-center p-3 bg-stone-50/50 rounded-xl group border border-transparent hover:border-stone-200 transition-all cursor-pointer">
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-700">{inc.category}</span>
-                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                <span className="text-sm font-bold text-stone-700">{inc.category}</span>
+                <span className="text-[10px] text-stone-400 flex items-center gap-1">
                   {inc.date}
-                  {inc.note && <span className="text-slate-500">• {inc.note}</span>}
+                  {inc.note && <span className="text-stone-500">• {inc.note}</span>}
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-mono font-bold text-emerald-600">+${Number(inc.amount).toLocaleString()}</span>
-                <button onClick={(e) => { e.stopPropagation(); onDeleteIncome(inc.id); }} className="text-slate-300 hover:text-rose-400 p-1">
+                <button onClick={(e) => { e.stopPropagation(); onDeleteIncome(inc.id); }} className="text-stone-300 hover:text-rose-400 p-1">
                   <X className="w-3 h-3" />
                 </button>
               </div>
             </div>
           ))}
-          {incomes.length === 0 && <div className="text-center text-xs text-slate-300 py-4">尚無收入紀錄</div>}
+          {incomes.length === 0 && <div className="text-center text-xs text-stone-300 py-4">尚無收入紀錄</div>}
         </div>
       </div>
     </div>
@@ -914,14 +914,14 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
             <Target className="w-5 h-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">年度總預算</h2>
-            <div className="text-xl sm:text-2xl font-bold text-slate-800 font-mono break-all line-clamp-1">${totalAnnualBudget.toLocaleString()}</div>
+            <h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest">年度總預算</h2>
+            <div className="text-xl sm:text-2xl font-bold text-stone-800 font-mono break-all line-clamp-1">${totalAnnualBudget.toLocaleString()}</div>
           </div>
         </div>
         <div className="flex flex-row gap-4 w-full">
-          <div className="bg-slate-50/50 rounded-xl p-3 flex-1 overflow-hidden">
-            <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">已花費</div>
-            <div className="text-base sm:text-lg font-bold text-slate-700 font-mono truncate">${totalAnnualUsed.toLocaleString()}</div>
+          <div className="bg-stone-50/50 rounded-xl p-3 flex-1 overflow-hidden">
+            <div className="text-[10px] text-stone-400 font-bold uppercase mb-1">已花費</div>
+            <div className="text-base sm:text-lg font-bold text-stone-700 font-mono truncate">${totalAnnualUsed.toLocaleString()}</div>
           </div>
           <div className={`rounded-xl p-3 flex-1 overflow-hidden ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
             <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-rose-400' : 'text-emerald-400'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
@@ -932,10 +932,10 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
 
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
-          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"><Calendar className="w-4 h-4" /></div>
-          <div><h2 className="text-lg font-bold text-slate-800 leading-tight">月度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">經常性支出</p></div>
+          <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500"><Calendar className="w-4 h-4" /></div>
+          <div><h2 className="text-lg font-bold text-stone-800 leading-tight">月度預算</h2><p className="text-xs text-stone-400 font-bold tracking-wide uppercase">經常性支出</p></div>
         </div>
-        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-slate-400`}>
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-stone-400`}>
           <BudgetProgressBar current={monthlyStats.totalUsed} total={monthlyStats.totalBudget} label="本月總剩餘" colorTheme="slate" />
         </div>
         <div className="space-y-3">{monthlyStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="slate" />))}</div>
@@ -943,7 +943,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
       <section>
         <div className="flex items-center gap-2 mb-4 px-1 mt-10">
           <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-600"><Target className="w-4 h-4" /></div>
-          <div><h2 className="text-lg font-bold text-slate-800 leading-tight">年度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
+          <div><h2 className="text-lg font-bold text-stone-800 leading-tight">年度預算</h2><p className="text-xs text-stone-400 font-bold tracking-wide uppercase">年度特別支出</p></div>
         </div>
 
         {/* Annual Summary - Same design as monthly */}
@@ -1021,13 +1021,13 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         itemRenderer={(item) => (
           <div className="flex justify-between items-start">
             <div>
-              <span className="font-bold text-slate-700 text-sm block">{item.name}</span>
-              <span className="text-[10px] text-slate-400">{formatDetailedDate(item.date)}</span>
-              {item.note && <span className="text-xs text-slate-500 block mt-1">{item.note}</span>}
-              {item.brand && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded mt-1 inline-block">{item.brand}</span>}
+              <span className="font-bold text-stone-700 text-sm block">{item.name}</span>
+              <span className="text-[10px] text-stone-400">{formatDetailedDate(item.date)}</span>
+              {item.note && <span className="text-xs text-stone-500 block mt-1">{item.note}</span>}
+              {item.brand && <span className="text-[10px] bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded mt-1 inline-block">{item.brand}</span>}
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-slate-700">${Number(item.amount).toLocaleString()}</span>
+              <span className="font-mono font-bold text-stone-700">${Number(item.amount).toLocaleString()}</span>
             </div>
           </div>
         )}
@@ -1047,8 +1047,8 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         defaultExpanded={false}
         itemRenderer={(item) => (
           <div className="flex justify-between items-center py-1">
-            <span className="text-sm text-slate-600 font-medium">{item.name}</span>
-            <span className="font-mono font-bold text-slate-800">${Number(item.amount).toLocaleString()}</span>
+            <span className="text-sm text-stone-600 font-medium">{item.name}</span>
+            <span className="font-mono font-bold text-stone-800">${Number(item.amount).toLocaleString()}</span>
           </div>
         )}
       />
@@ -1085,13 +1085,13 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
           return (
             <div>
               <div className="flex justify-between mb-1">
-                <span className="font-bold text-slate-700 text-sm">
+                <span className="font-bold text-stone-700 text-sm">
                   {item.source || '資金來源'}
                   {item.symbol && <span className="ml-1 text-[10px] bg-indigo-100 text-indigo-600 px-1 rounded">{item.symbol}</span>}
                 </span>
                 <span className="font-mono font-bold text-emerald-600">${itemTotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-xs text-slate-400">
+              <div className="flex justify-between text-xs text-stone-400">
                 <span>{hasShares ? `${Number(item.shares).toLocaleString()}股 x $${Number(item.amount).toLocaleString()}` : `$${Number(item.amount).toLocaleString()}`}{rate !== 1 && ` (匯率 ${rate})`}</span>
                 <span>{formatDetailedDate(item.date)}</span>
               </div>
@@ -1124,12 +1124,12 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         itemRenderer={(item) => (
           <div className="flex justify-between items-center">
             <div>
-              <span className="font-bold text-slate-700 text-sm block">{item.name}</span>
-              <span className="text-[10px] text-slate-400">{formatDetailedDate(item.date)} {item.brand && `• ${item.brand}`}</span>
-              {item.note && <span className="text-xs text-slate-500 block mt-1">{item.note}</span>}
+              <span className="font-bold text-stone-700 text-sm block">{item.name}</span>
+              <span className="text-[10px] text-stone-400">{formatDetailedDate(item.date)} {item.brand && `• ${item.brand}`}</span>
+              {item.note && <span className="text-xs text-stone-500 block mt-1">{item.note}</span>}
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-slate-700">${Number(item.amount).toLocaleString()}</span>
+              <span className="font-mono font-bold text-stone-700">${Number(item.amount).toLocaleString()}</span>
             </div>
           </div>
         )}
@@ -1156,7 +1156,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
   const daysInMonth = getDaysInMonth(viewDate);
   const startDay = getFirstDayOfMonth(viewDate);
   const calendarCells = [];
-  for (let i = 0; i < startDay; i++) calendarCells.push(<div key={`pad-${i}`} className="h-24 bg-slate-50/20"></div>);
+  for (let i = 0; i < startDay; i++) calendarCells.push(<div key={`pad-${i}`} className="h-24 bg-stone-50/20"></div>);
   for (let day = 1; day <= daysInMonth; day++) {
     const currentDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
     const dateStr = toLocalISOString(currentDate);
@@ -1165,10 +1165,10 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
     const isSelected = selectedDay === day;
     const isToday = getTodayString() === dateStr;
     calendarCells.push(
-      <div key={day} onClick={() => setSelectedDay(day)} className={`h-24 border-t border-r border-slate-100/50 p-1 flex flex-col justify-between transition-colors cursor-pointer relative ${isSelected ? 'bg-slate-50/50 shadow-inner' : 'bg-white/30'} ${day % 7 === 0 ? 'border-r-0' : ''}`}>
-        <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>{day}</span>
-        {dayTotal > 0 && (<div className="mb-1 flex flex-col items-end px-1 w-full"><span className="text-[10px] text-slate-400 font-medium">總計</span><span className={`text-[10px] font-bold truncate w-full text-right ${dayTrans.some(t => t.type === 'annual') ? 'text-amber-600' : 'text-slate-600'}`}>${dayTotal.toLocaleString()}</span></div>)}
-        {isSelected && <div className="absolute inset-1 border-2 border-slate-400/50 rounded-lg pointer-events-none"></div>}
+      <div key={day} onClick={() => setSelectedDay(day)} className={`h-24 border-t border-r border-stone-100/50 p-1 flex flex-col justify-between transition-colors cursor-pointer relative ${isSelected ? 'bg-stone-50/50 shadow-inner' : 'bg-white/30'} ${day % 7 === 0 ? 'border-r-0' : ''}`}>
+        <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-stone-800 text-white' : 'text-stone-400'}`}>{day}</span>
+        {dayTotal > 0 && (<div className="mb-1 flex flex-col items-end px-1 w-full"><span className="text-[10px] text-stone-400 font-medium">總計</span><span className={`text-[10px] font-bold truncate w-full text-right ${dayTrans.some(t => t.type === 'annual') ? 'text-amber-600' : 'text-stone-600'}`}>${dayTotal.toLocaleString()}</span></div>)}
+        {isSelected && <div className="absolute inset-1 border-2 border-stone-400/50 rounded-lg pointer-events-none"></div>}
       </div>
     );
   }
@@ -1176,9 +1176,9 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
   const selectedTrans = selectedDateStr ? transactions.filter(t => t.date === selectedDateStr) : [];
   return (
     <div className="pb-24 animate-in fade-in duration-300 relative">
-      <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-slate-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600"><ChevronRight className="w-5 h-5" /></button></div></div>
-      <div className={`${GLASS_CARD} p-0 border border-slate-100`}>
-        <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">{d}</div>))}</div>
+      <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-stone-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronRight className="w-5 h-5" /></button></div></div>
+      <div className={`${GLASS_CARD} p-0 border border-stone-100`}>
+        <div className="grid grid-cols-7 bg-stone-50/50 border-b border-stone-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-stone-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
       </div>
       {/* Redesigned Daily Detail Panel */}
@@ -1187,46 +1187,46 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
           <div className={`${GLASS_CARD} p-4`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-sm">
+                <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-600 font-bold text-sm">
                   {selectedDay}
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-slate-700">{selectedTrans.length} 筆消費</div>
+                  <div className="text-sm font-bold text-stone-700">{selectedTrans.length} 筆消費</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold font-mono text-slate-800">${selectedTrans.reduce((s, t) => s + Number(t.amount), 0).toLocaleString()}</div>
+                <div className="text-lg font-bold font-mono text-stone-800">${selectedTrans.reduce((s, t) => s + Number(t.amount), 0).toLocaleString()}</div>
               </div>
             </div>
             {selectedTrans.length === 0 ? (
-              <div className="text-center py-6 text-slate-400 text-sm">當日無消費紀錄</div>
+              <div className="text-center py-6 text-stone-400 text-sm">當日無消費紀錄</div>
             ) : (
               <div className="space-y-2">
                 {selectedTrans.map(t => (
                   <div
                     key={t.id}
                     onClick={() => onEdit && onEdit(t)}
-                    className="flex items-center justify-between p-2 bg-slate-50/50 rounded-xl hover:bg-slate-100/50 transition-colors cursor-pointer group"
+                    className="flex items-center justify-between p-2 bg-stone-50/50 rounded-xl hover:bg-stone-100/50 transition-colors cursor-pointer group"
                   >
                     <div className="flex flex-col min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-slate-400'}`}></span>
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-stone-400'}`}></span>
                         <div className="flex flex-col">
                           <div className="flex items-center gap-1.5 align-baseline">
-                            <span className="text-sm font-bold text-slate-700 leading-tight">{t.note || t.category}</span>
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${t.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>
+                            <span className="text-sm font-bold text-stone-700 leading-tight">{t.note || t.category}</span>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${t.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-stone-100 text-stone-500'}`}>
                               {t.payer === 'partner' ? '佳欣' : '士程'}
                             </span>
                           </div>
-                          <span className="text-xs font-medium text-slate-400 mt-0.5">{t.group} / {t.category}</span>
+                          <span className="text-xs font-medium text-stone-400 mt-0.5">{t.group} / {t.category}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-sm font-mono font-medium text-slate-600">-${Number(t.amount).toLocaleString()}</span>
+                      <span className="text-sm font-mono font-medium text-stone-600">-${Number(t.amount).toLocaleString()}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }}
-                        className="p-1 text-slate-300 hover:text-rose-500 transition-colors"
+                        className="p-1 text-stone-300 hover:text-rose-500 transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -1240,7 +1240,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
       )}
       {/* Add expense FAB */}
       {/* Add expense FAB - Fixed position */}
-      {onAddExpense && <button onClick={onAddExpense} className="fixed bottom-6 right-6 w-14 h-14 bg-slate-800 rounded-full shadow-2xl shadow-slate-400/50 flex items-center justify-center text-white hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-50"><Plus className="w-6 h-6" /></button>}
+      {onAddExpense && <button onClick={onAddExpense} className="fixed bottom-6 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-50"><Plus className="w-6 h-6" /></button>}
     </div>
   );
 };
@@ -1275,11 +1275,11 @@ const PartnerView = ({ partnerTransactions, onDelete, onAdd, onEdit }) => {
     <div className="space-y-6 pb-24 animate-in fade-in">
       <CleanSummaryCard title="佳欣儲蓄總覽" value={balance.toLocaleString()} subValue={`投入 $${totalSavings.toLocaleString()} - 支出 $${totalExpenses.toLocaleString()}`} icon={PiggyBank} trend={balance > 0 ? '正成長' : '負成長'} variant="emerald" />
       <div className="flex flex-col gap-4">
-        <div onClick={() => setIsHistoryOpen(!isHistoryOpen)} className="flex justify-between items-center px-1 cursor-pointer select-none hover:bg-slate-50/50 p-2 rounded-xl transition-colors">
-          <h3 className="font-bold text-slate-700 flex items-center gap-2"><Wallet className="w-4 h-4" /> 資金變動紀錄 {isHistoryOpen ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}</h3>
+        <div onClick={() => setIsHistoryOpen(!isHistoryOpen)} className="flex justify-between items-center px-1 cursor-pointer select-none hover:bg-stone-50/50 p-2 rounded-xl transition-colors">
+          <h3 className="font-bold text-stone-700 flex items-center gap-2"><Wallet className="w-4 h-4" /> 資金變動紀錄 {isHistoryOpen ? <ChevronUp className="w-3 h-3 text-stone-400" /> : <ChevronDown className="w-3 h-3 text-stone-400" />}</h3>
           <GlassButton onClick={(e) => { e.stopPropagation(); onAdd({}); }}><Plus className="w-3 h-3" /> 新增紀錄</GlassButton>
         </div>
-        {isHistoryOpen && (partnerTransactions.length === 0 ? (<div className={`${GLASS_CARD} flex flex-col items-center justify-center h-48 text-slate-300 border-dashed`}><PiggyBank className="w-12 h-12 mb-2 opacity-20" /><p className="text-sm">尚無儲蓄紀錄</p></div>) : (groupedTransactions.map(([year, txs]) => (<PartnerYearGroup key={year} year={year} transactions={txs} onDelete={onDelete} onEdit={onEdit} />))))}
+        {isHistoryOpen && (partnerTransactions.length === 0 ? (<div className={`${GLASS_CARD} flex flex-col items-center justify-center h-48 text-stone-300 border-dashed`}><PiggyBank className="w-12 h-12 mb-2 opacity-20" /><p className="text-sm">尚無儲蓄紀錄</p></div>) : (groupedTransactions.map(([year, txs]) => (<PartnerYearGroup key={year} year={year} transactions={txs} onDelete={onDelete} onEdit={onEdit} />))))}
       </div>
     </div>
   );
@@ -1404,17 +1404,17 @@ const VisualizationView = ({ transactions, settings }) => {
     <div className="space-y-6 pb-24 animate-in fade-in">
       <Card>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-slate-800">{isCompareMode ? '年度支出比較' : '年度支出分析'}</h2>
+          <h2 className="text-lg font-bold text-stone-800">{isCompareMode ? '年度支出比較' : '年度支出分析'}</h2>
           <div className="flex items-center gap-2">
             {!isCompareMode && (
               <button
                 onClick={() => { setSortMode(prev => prev === 'amount' ? 'budget' : 'amount'); setSelectedFilter(null); }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${sortMode === 'budget' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${sortMode === 'budget' ? 'bg-indigo-100 text-indigo-600' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}
               >
                 {sortMode === 'budget' ? '排序: 預算' : '排序: 金額'}
               </button>
             )}
-            <button onClick={() => { setIsCompareMode(!isCompareMode); setSelectedMonth(null); }} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isCompareMode ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'}`}>
+            <button onClick={() => { setIsCompareMode(!isCompareMode); setSelectedMonth(null); }} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isCompareMode ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600'}`}>
               {isCompareMode ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />} 比較模式
             </button>
           </div>
@@ -1422,19 +1422,19 @@ const VisualizationView = ({ transactions, settings }) => {
 
         <div className="flex gap-4 mb-6">
           <div className="flex-1">
-            <label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">{isCompareMode ? '主年份' : '選擇年份'}</label>
-            <select value={baseYear} onChange={(e) => { setBaseYear(Number(e.target.value)); setSelectedMonth(null); setSelectedFilter(null); }} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-700`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select>
+            <label className="text-[10px] text-stone-400 font-bold uppercase mb-1 block">{isCompareMode ? '主年份' : '選擇年份'}</label>
+            <select value={baseYear} onChange={(e) => { setBaseYear(Number(e.target.value)); setSelectedMonth(null); setSelectedFilter(null); }} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-stone-700`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select>
           </div>
-          {isCompareMode && (<div className="flex-1 animate-in slide-in-from-right-2 duration-200"><label className="text-[10px] text-slate-400 font-bold uppercase mb-1 block">對比年份</label><select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-slate-500`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select></div>)}
+          {isCompareMode && (<div className="flex-1 animate-in slide-in-from-right-2 duration-200"><label className="text-[10px] text-stone-400 font-bold uppercase mb-1 block">對比年份</label><select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className={`w-full ${GLASS_INPUT} px-3 py-2 font-bold text-stone-500`}>{availableYears.map(y => (<option key={y} value={y}>{y}</option>))}</select></div>)}
         </div>
 
         <div className="h-64 flex items-end justify-between gap-0.5 mt-4 relative overflow-x-auto">
           {/* Background Grid */}
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-            <div className="border-t border-dashed border-slate-100 w-full h-px"></div>
-            <div className="border-t border-dashed border-slate-100 w-full h-px"></div>
-            <div className="border-t border-dashed border-slate-100 w-full h-px"></div>
-            <div className="border-t border-slate-200 w-full h-px"></div>
+            <div className="border-t border-dashed border-stone-100 w-full h-px"></div>
+            <div className="border-t border-dashed border-stone-100 w-full h-px"></div>
+            <div className="border-t border-dashed border-stone-100 w-full h-px"></div>
+            <div className="border-t border-stone-200 w-full h-px"></div>
           </div>
 
           {baseData.map((val, idx) => (
@@ -1444,7 +1444,7 @@ const VisualizationView = ({ transactions, settings }) => {
               className={`flex-1 flex flex-col justify-end items-center h-full z-10 group relative ${!isCompareMode ? 'cursor-pointer' : ''}`}
             >
               {/* Value Label moved above the bar */}
-              <div className="mb-2 text-[10px] font-bold text-slate-500 transition-all group-hover:scale-110 group-hover:text-slate-800">
+              <div className="mb-2 text-[10px] font-bold text-stone-500 transition-all group-hover:scale-110 group-hover:text-stone-800">
                 {isCompareMode ? (monthlyDiffs[idx]?.diff !== 0 && (
                   <span className={`flex items-center gap-0.5 ${monthlyDiffs[idx]?.diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
                     {monthlyDiffs[idx]?.diff > 0 ? '+' : ''}{Math.round(monthlyDiffs[idx]?.diff / 1000)}k
@@ -1455,15 +1455,15 @@ const VisualizationView = ({ transactions, settings }) => {
               </div>
 
               {/* Bar */}
-              <div className="w-full max-w-[20px] bg-slate-100 rounded-t-lg relative overflow-visible transition-all duration-500" style={{ height: `${maxVal > 0 ? (Math.max(0, val) / maxVal) * 100 : 0}%` }}>
-                <div className={`absolute inset-x-0 bottom-0 top-0 rounded-t-lg transition-all duration-300 ${!isCompareMode && selectedMonth === idx ? 'bg-slate-800 shadow-lg shadow-slate-300' : 'bg-slate-300 group-hover:bg-slate-400'}`}></div>
+              <div className="w-full max-w-[20px] bg-stone-100 rounded-t-lg relative overflow-visible transition-all duration-500" style={{ height: `${maxVal > 0 ? (Math.max(0, val) / maxVal) * 100 : 0}%` }}>
+                <div className={`absolute inset-x-0 bottom-0 top-0 rounded-t-lg transition-all duration-300 ${!isCompareMode && selectedMonth === idx ? 'bg-stone-800 shadow-lg shadow-stone-300' : 'bg-stone-300 group-hover:bg-stone-400'}`}></div>
                 {isCompareMode && (
-                  <div className="absolute inset-x-0 bottom-0 bg-slate-800/20 rounded-t-lg border-t border-slate-500/30" style={{ height: `${maxVal > 0 ? (Math.max(0, compareData[idx]) / maxVal) * 100 : 0}%` }}></div>
+                  <div className="absolute inset-x-0 bottom-0 bg-stone-800/20 rounded-t-lg border-t border-stone-500/30" style={{ height: `${maxVal > 0 ? (Math.max(0, compareData[idx]) / maxVal) * 100 : 0}%` }}></div>
                 )}
               </div>
 
               {/* X Axis Label */}
-              <div className={`mt-2 text-[9px] font-bold transition-colors whitespace-nowrap ${selectedMonth === idx ? 'text-slate-800 scale-110' : 'text-slate-400 group-hover:text-slate-600'}`}>{idx + 1}</div>
+              <div className={`mt-2 text-[9px] font-bold transition-colors whitespace-nowrap ${selectedMonth === idx ? 'text-stone-800 scale-110' : 'text-stone-400 group-hover:text-stone-600'}`}>{idx + 1}</div>
             </div>
           ))}
         </div>
@@ -1471,11 +1471,11 @@ const VisualizationView = ({ transactions, settings }) => {
 
       {isCompareMode ? (
         <Card>
-          <h3 className="text-sm font-bold text-slate-700 mb-4">每月差異分析 ({baseYear} vs {compareYear})</h3>
+          <h3 className="text-sm font-bold text-stone-700 mb-4">每月差異分析 ({baseYear} vs {compareYear})</h3>
           <div className="space-y-3">
             {monthlyDiffs.map((item) => (
-              <div key={item.month} className="flex justify-between items-center text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0">
-                <span className="text-slate-500 w-8">{item.month}月</span>
+              <div key={item.month} className="flex justify-between items-center text-sm border-b border-stone-50 last:border-0 pb-2 last:pb-0">
+                <span className="text-stone-500 w-8">{item.month}月</span>
                 <div className="flex-1 px-4 text-xs text-gray-400 text-center">${item.base.toLocaleString()} vs ${item.compare.toLocaleString()}</div>
                 <span className={`font-mono font-bold ${item.diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{item.diff > 0 ? '+' : ''}{item.diff.toLocaleString()}</span>
               </div>
@@ -1488,12 +1488,12 @@ const VisualizationView = ({ transactions, settings }) => {
             <div className="mb-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-bold text-slate-500 text-xs flex items-center gap-2 mb-1">
-                    <div className="p-1 bg-slate-100 rounded-lg"><PieChart className="w-3 h-3 text-slate-500" /></div>
+                  <h3 className="font-bold text-stone-500 text-xs flex items-center gap-2 mb-1">
+                    <div className="p-1 bg-stone-100 rounded-lg"><PieChart className="w-3 h-3 text-stone-500" /></div>
                     {selectedMonth !== null ? `${baseYear}年 ${selectedMonth + 1}月` : `${baseYear} 年度`} 支出組成
-                    {(selectedMonth !== null || selectedFilter !== null) && <button onClick={(e) => { e.stopPropagation(); setSelectedMonth(null); setSelectedFilter(null); }} className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 hover:bg-slate-200 ml-2">重設篩選</button>}
+                    {(selectedMonth !== null || selectedFilter !== null) && <button onClick={(e) => { e.stopPropagation(); setSelectedMonth(null); setSelectedFilter(null); }} className="text-[10px] bg-stone-100 px-2 py-0.5 rounded-full text-stone-500 hover:bg-stone-200 ml-2">重設篩選</button>}
                   </h3>
-                  <div className="text-3xl font-bold text-slate-800 tracking-tight">
+                  <div className="text-3xl font-bold text-stone-800 tracking-tight">
                     ${(selectedMonth !== null ? baseData[selectedMonth] : baseData.reduce((a, b) => a + b, 0)).toLocaleString()}
                   </div>
                 </div>
@@ -1504,20 +1504,20 @@ const VisualizationView = ({ transactions, settings }) => {
                 sortMode === 'amount' ? (
                   /* Flat Amount List */
                   breakdownData.map((item) => (
-                    <div key={item.name} onClick={() => setSelectedFilter(selectedFilter?.value === item.name ? null : { type: 'category', value: item.name })} className={`cursor-pointer transition-all hover:bg-slate-50 p-2 rounded-xl border border-transparent ${selectedFilter?.value === item.name ? 'bg-slate-50 border-slate-200' : ''}`}>
+                    <div key={item.name} onClick={() => setSelectedFilter(selectedFilter?.value === item.name ? null : { type: 'category', value: item.name })} className={`cursor-pointer transition-all hover:bg-stone-50 p-2 rounded-xl border border-transparent ${selectedFilter?.value === item.name ? 'bg-stone-50 border-stone-200' : ''}`}>
                       <div className="flex justify-between items-end mb-1 text-sm">
-                        <span className="text-slate-600 font-medium">{item.name}</span>
-                        <span className="font-bold text-slate-800">${item.value.toLocaleString()} <span className="text-xs text-slate-400 font-normal">({item.percent.toFixed(1)}%)</span></span>
+                        <span className="text-stone-600 font-medium">{item.name}</span>
+                        <span className="font-bold text-stone-800">${item.value.toLocaleString()} <span className="text-xs text-stone-400 font-normal">({item.percent.toFixed(1)}%)</span></span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div className="h-full bg-slate-700 rounded-full transition-all duration-500" style={{ width: `${item.percent}%` }}></div>
+                      <div className="w-full bg-stone-100 rounded-full h-2 overflow-hidden">
+                        <div className="h-full bg-stone-700 rounded-full transition-all duration-500" style={{ width: `${item.percent}%` }}></div>
                       </div>
                     </div>
                   ))
                 ) : (
                   /* Budget Sort: Collapsible Groups */
                   breakdownData.map((group) => (
-                    <div key={group.name} className={`rounded-xl border transition-all overflow-hidden ${selectedFilter?.value === group.name ? 'border-indigo-200 bg-indigo-50/30' : 'border-slate-100 bg-white'}`}>
+                    <div key={group.name} className={`rounded-xl border transition-all overflow-hidden ${selectedFilter?.value === group.name ? 'border-indigo-200 bg-indigo-50/30' : 'border-stone-100 bg-white'}`}>
                       <div
                         onClick={() => {
                           // Toggle Expand
@@ -1525,35 +1525,35 @@ const VisualizationView = ({ transactions, settings }) => {
                           // Also select for analysis
                           setSelectedFilter({ type: 'group', value: group.name });
                         }}
-                        className="p-3 cursor-pointer flex justify-between items-center hover:bg-slate-50 transition-colors"
+                        className="p-3 cursor-pointer flex justify-between items-center hover:bg-stone-50 transition-colors"
                       >
                         <div className="flex-1 min-w-0 pr-4">
                           <div className="flex justify-between items-end mb-1 text-sm">
-                            <span className="font-bold text-slate-700 flex items-center gap-2">
+                            <span className="font-bold text-stone-700 flex items-center gap-2">
                               {group.name}
-                              {expandedGroups[group.name] ? <ChevronUp className="w-3 h-3 text-slate-400" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
+                              {expandedGroups[group.name] ? <ChevronUp className="w-3 h-3 text-stone-400" /> : <ChevronDown className="w-3 h-3 text-stone-400" />}
                             </span>
-                            <span className="font-bold text-slate-800">${group.value.toLocaleString()} <span className="text-xs text-slate-400 font-normal">({group.percent.toFixed(1)}%)</span></span>
+                            <span className="font-bold text-stone-800">${group.value.toLocaleString()} <span className="text-xs text-stone-400 font-normal">({group.percent.toFixed(1)}%)</span></span>
                           </div>
-                          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                            <div className="h-full bg-slate-600 rounded-full transition-all duration-500" style={{ width: `${group.percent}%` }}></div>
+                          <div className="w-full bg-stone-100 rounded-full h-1.5 overflow-hidden">
+                            <div className="h-full bg-stone-600 rounded-full transition-all duration-500" style={{ width: `${group.percent}%` }}></div>
                           </div>
                         </div>
                       </div>
 
                       {/* Expanded Items */}
                       {expandedGroups[group.name] && (
-                        <div className="bg-slate-50/50 p-2 space-y-1 border-t border-slate-100 animate-in slide-in-from-top-1">
+                        <div className="bg-stone-50/50 p-2 space-y-1 border-t border-stone-100 animate-in slide-in-from-top-1">
                           {group.items.map(item => (
                             <div
                               key={item.name}
                               onClick={(e) => { e.stopPropagation(); setSelectedFilter({ type: 'category', value: item.name }); }}
                               className={`flex justify-between items-center text-xs p-2 rounded-lg cursor-pointer hover:bg-white transition-colors ${selectedFilter?.value === item.name ? 'bg-white shadow-sm ring-1 ring-indigo-100' : ''}`}
                             >
-                              <span className="text-slate-600 font-medium">{item.name}</span>
+                              <span className="text-stone-600 font-medium">{item.name}</span>
                               <div className="flex items-center gap-2">
-                                <div className="w-16 bg-slate-200 rounded-full h-1 overflow-hidden"><div className="h-full bg-slate-400 rounded-full" style={{ width: `${item.percent}%` }} /></div>
-                                <span className="font-mono text-slate-600 w-12 text-right">${item.value.toLocaleString()}</span>
+                                <div className="w-16 bg-stone-200 rounded-full h-1 overflow-hidden"><div className="h-full bg-stone-400 rounded-full" style={{ width: `${item.percent}%` }} /></div>
+                                <span className="font-mono text-stone-600 w-12 text-right">${item.value.toLocaleString()}</span>
                               </div>
                             </div>
                           ))}
@@ -1563,23 +1563,23 @@ const VisualizationView = ({ transactions, settings }) => {
                   ))
                 )
               ) : (
-                <div className="text-center text-slate-400 py-6 text-sm">該時段尚無支出資料</div>
+                <div className="text-center text-stone-400 py-6 text-sm">該時段尚無支出資料</div>
               )}
             </div>
           </Card>
 
           {(selectedMonth !== null || selectedFilter !== null) && (
             <div className="animate-in slide-in-from-bottom-4 duration-500">
-              <h3 className="text-sm font-bold text-slate-500 mb-3 px-2">詳細明細 </h3>
+              <h3 className="text-sm font-bold text-stone-500 mb-3 px-2">詳細明細 </h3>
               <div className="space-y-3">
                 {detailedTransactions.map(t => (
                   <div key={t.id} onClick={() => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} className={`${GLASS_CARD} p-4 flex justify-between items-center cursor-pointer hover:bg-white/60 transition-colors`}>
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-slate-700">{t.category}</span>
-                      <span className="text-xs text-slate-400">{formatDetailedDate(t.date)} {t.note && `• ${t.note}`}</span>
+                      <span className="text-sm font-bold text-stone-700">{t.category}</span>
+                      <span className="text-xs text-stone-400">{formatDetailedDate(t.date)} {t.note && `• ${t.note}`}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-mono font-bold text-slate-800">${Number(t.amount).toLocaleString()}</span>
+                      <span className="font-mono font-bold text-stone-800">${Number(t.amount).toLocaleString()}</span>
                       {/* Delete removed in Analysis View */}
                     </div>
                   </div>
@@ -1593,7 +1593,7 @@ const VisualizationView = ({ transactions, settings }) => {
   );
 };
 
-const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) => { const [config, setConfig] = useState(DEFAULT_PRINCIPAL_CONFIG); const [history, setHistory] = useState([]); const [loading, setLoading] = useState(true); const [snapshotDate, setSnapshotDate] = useState(getTodayString()); useEffect(() => { if (!user) return; const configRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'); onSnapshot(configRef, (s) => s.exists() ? setConfig(s.data()) : setDoc(configRef, DEFAULT_PRINCIPAL_CONFIG)); const historyRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'); const q = query(historyRef, orderBy('date', 'desc')); onSnapshot(q, (s) => { setHistory(s.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); }); }, [user]); const updateItem = (section, group, idx, field, val) => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group][idx][field] = field === 'amount' ? Number(val) : val; setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const addItem = (section, group) => { const newConfig = JSON.parse(JSON.stringify(config)); if (!newConfig[section][group]) newConfig[section][group] = []; newConfig[section][group].push({ name: '', amount: 0 }); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const deleteItem = (section, group, idx) => { requestConfirmation({ message: '確定移除此項目？', onConfirm: () => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group] = newConfig[section][group].filter((_, i) => i !== idx); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); } }); }; const handleAddSnapshot = () => { requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => { const ta = (config.assets.bank || []).reduce((s, i) => s + Number(i.amount), 0) + (config.assets.invest || []).reduce((s, i) => s + Number(i.amount), 0); const tl = (config.liabilities.encumbrance || []).reduce((s, i) => s + Number(i.amount), 0); await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), { date: new Date(snapshotDate).toISOString(), netPrincipal: ta - tl, details: config, createdAt: serverTimestamp() }); } }); }; const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history', id))); return (<div className="pb-24 space-y-6 animate-in fade-in"><PrincipalTrendChart history={history} /><div className="flex flex-col gap-4"><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">存款組成 (Assets)</h3><AssetGroup title="銀行帳戶" items={config.assets.bank} section="assets" groupKey="bank" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /><AssetGroup title="投資項目" items={config.assets.invest} section="assets" groupKey="invest" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">負債組成 (Liabilities)</h3><AssetGroup title="房價圈存" items={config.liabilities.encumbrance} section="liabilities" groupKey="encumbrance" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div></div><div className={`${GLASS_CARD} p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end`}><InputField label="結算日期" type="date" value={snapshotDate} onChange={(e) => setSnapshotDate(e.target.value)} className="w-full sm:flex-1" /><GlassButton onClick={handleAddSnapshot} className="w-full sm:flex-1 py-4 rounded-xl sm:h-[58px]"><Save className="w-5 h-5" /> 結算本期金額</GlassButton></div><div><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> 歷次結算紀錄</h3><div className="space-y-3">{history.map(rec => (<div key={rec.id} className="bg-white/60 p-4 rounded-xl border border-slate-100 flex justify-between items-center backdrop-blur-sm"><div><div className="font-bold text-slate-800">${rec.netPrincipal.toLocaleString()}</div><div className="text-[10px] text-slate-400">{new Date(rec.date).toLocaleDateString()}</div></div><button onClick={() => handleDeleteHistory(rec.id)}><X className="w-4 h-4 text-slate-300 hover:text-rose-400" /></button></div>))}</div></div></div>); };
+const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) => { const [config, setConfig] = useState(DEFAULT_PRINCIPAL_CONFIG); const [history, setHistory] = useState([]); const [loading, setLoading] = useState(true); const [snapshotDate, setSnapshotDate] = useState(getTodayString()); useEffect(() => { if (!user) return; const configRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'); onSnapshot(configRef, (s) => s.exists() ? setConfig(s.data()) : setDoc(configRef, DEFAULT_PRINCIPAL_CONFIG)); const historyRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'); const q = query(historyRef, orderBy('date', 'desc')); onSnapshot(q, (s) => { setHistory(s.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); }); }, [user]); const updateItem = (section, group, idx, field, val) => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group][idx][field] = field === 'amount' ? Number(val) : val; setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const addItem = (section, group) => { const newConfig = JSON.parse(JSON.stringify(config)); if (!newConfig[section][group]) newConfig[section][group] = []; newConfig[section][group].push({ name: '', amount: 0 }); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const deleteItem = (section, group, idx) => { requestConfirmation({ message: '確定移除此項目？', onConfirm: () => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group] = newConfig[section][group].filter((_, i) => i !== idx); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); } }); }; const handleAddSnapshot = () => { requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => { const ta = (config.assets.bank || []).reduce((s, i) => s + Number(i.amount), 0) + (config.assets.invest || []).reduce((s, i) => s + Number(i.amount), 0); const tl = (config.liabilities.encumbrance || []).reduce((s, i) => s + Number(i.amount), 0); await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), { date: new Date(snapshotDate).toISOString(), netPrincipal: ta - tl, details: config, createdAt: serverTimestamp() }); } }); }; const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history', id))); return (<div className="pb-24 space-y-6 animate-in fade-in"><PrincipalTrendChart history={history} /><div className="flex flex-col gap-4"><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">存款組成 (Assets)</h3><AssetGroup title="銀行帳戶" items={config.assets.bank} section="assets" groupKey="bank" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /><AssetGroup title="投資項目" items={config.assets.invest} section="assets" groupKey="invest" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">負債組成 (Liabilities)</h3><AssetGroup title="房價圈存" items={config.liabilities.encumbrance} section="liabilities" groupKey="encumbrance" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div></div><div className={`${GLASS_CARD} p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end`}><InputField label="結算日期" type="date" value={snapshotDate} onChange={(e) => setSnapshotDate(e.target.value)} className="w-full sm:flex-1" /><GlassButton onClick={handleAddSnapshot} className="w-full sm:flex-1 py-4 rounded-xl sm:h-[58px]"><Save className="w-5 h-5" /> 結算本期金額</GlassButton></div><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> 歷次結算紀錄</h3><div className="space-y-3">{history.map(rec => (<div key={rec.id} className="bg-white/60 p-4 rounded-xl border border-stone-100 flex justify-between items-center backdrop-blur-sm"><div><div className="font-bold text-stone-800">${rec.netPrincipal.toLocaleString()}</div><div className="text-[10px] text-stone-400">{new Date(rec.date).toLocaleDateString()}</div></div><button onClick={() => handleDeleteHistory(rec.id)}><X className="w-4 h-4 text-stone-300 hover:text-rose-400" /></button></div>))}</div></div></div>); };
 
 const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange, onAddExchangeClick }) => {
   const [activeTab, setActiveTab] = useState('goals');
@@ -1611,24 +1611,24 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange
 
   return (
     <div className="pb-24 animate-in fade-in">
-      <div className="flex bg-slate-100 p-1 rounded-xl mb-6">
-        <button onClick={() => setActiveTab('goals')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'goals' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>目標規劃</button>
-        <button onClick={() => setActiveTab('exchange')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'exchange' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>換匯紀錄</button>
+      <div className="flex bg-stone-100 p-1 rounded-xl mb-6">
+        <button onClick={() => setActiveTab('goals')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'goals' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-400'}`}>目標規劃</button>
+        <button onClick={() => setActiveTab('exchange')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'exchange' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-400'}`}>換匯紀錄</button>
       </div>
       {activeTab === 'goals' ? (
         <div className="space-y-4 animate-in slide-in-from-left-4 duration-300">
           <div className="flex justify-end mb-2"><GlassButton onClick={onAddYear}><Plus className="w-3 h-3" /> 新增年份</GlassButton></div>
-          {sortedGoals.length === 0 ? <div className="text-center text-slate-400 py-10">尚無資料 (從2022開始)</div> : sortedGoals.map((goal, index) => { const prevGoal = sortedGoals[index + 1]; const prevTotal = prevGoal ? getActualTotal(prevGoal) : 0; return <StockGoalCard key={goal.id} yearData={goal} prevYearTotal={prevTotal} onUpdate={onUpdate} />; })}
+          {sortedGoals.length === 0 ? <div className="text-center text-stone-400 py-10">尚無資料 (從2022開始)</div> : sortedGoals.map((goal, index) => { const prevGoal = sortedGoals[index + 1]; const prevTotal = prevGoal ? getActualTotal(prevGoal) : 0; return <StockGoalCard key={goal.id} yearData={goal} prevYearTotal={prevTotal} onUpdate={onUpdate} />; })}
         </div>
       ) : (
         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
           <CleanSummaryCard title="累計買入美金" value={totalUSD.toLocaleString()} subValue={`平均匯率: ${avgRate.toFixed(4)}`} icon={ArrowRightLeft} />
           <div className="flex justify-between items-center px-1 mb-2">
-            <h3 className="text-sm font-bold text-slate-500 flex items-center gap-2"><ArrowRightLeft className="w-4 h-4" /> 交易明細</h3>
+            <h3 className="text-sm font-bold text-stone-500 flex items-center gap-2"><ArrowRightLeft className="w-4 h-4" /> 交易明細</h3>
             <GlassButton onClick={onAddExchangeClick}><Plus className="w-3 h-3" /> 新增換匯</GlassButton>
           </div>
           <div className="space-y-2">
-            {exchanges.length === 0 ? <div className="text-center text-slate-400 py-10">尚無換匯紀錄</div> : exchanges.map(item => (<ExchangeItem key={item.id} item={item} onDelete={onDeleteExchange} />))}
+            {exchanges.length === 0 ? <div className="text-center text-stone-400 py-10">尚無換匯紀錄</div> : exchanges.map(item => (<ExchangeItem key={item.id} item={item} onDelete={onDeleteExchange} />))}
           </div>
         </div>
       )}
@@ -1697,31 +1697,31 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
 
   return (
     <div className="mb-10 animate-in fade-in">
-      <div className="flex justify-between items-end mb-4 border-b border-slate-100 pb-2">
-        <h3 className="text-lg font-bold text-slate-700">{title}</h3>
-        <button onClick={handleSaveWrapper} className={`text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 font-bold ${isSaving ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-800 text-white hover:bg-slate-700'}`}>{isSaving ? <><Check className="w-3 h-3" /> 已儲存</> : '儲存變更'}</button>
+      <div className="flex justify-between items-end mb-4 border-b border-stone-100 pb-2">
+        <h3 className="text-lg font-bold text-stone-700">{title}</h3>
+        <button onClick={handleSaveWrapper} className={`text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 font-bold ${isSaving ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-800 text-white hover:bg-stone-700'}`}>{isSaving ? <><Check className="w-3 h-3" /> 已儲存</> : '儲存變更'}</button>
       </div>
       <div className="space-y-4">
         {localGroups.map((group, gIdx) => (
           <div key={gIdx} className={`${GLASS_CARD} overflow-hidden p-0`}>
-            <div className="bg-slate-50/50 p-4 flex justify-between items-center border-b border-slate-100">
-              <span className="font-bold text-slate-600 text-sm flex items-center gap-2"><FolderOpen className="w-4 h-4 text-slate-400" /> {group.name}</span>
-              <button onClick={() => deleteGroup(gIdx)} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
+            <div className="bg-stone-50/50 p-4 flex justify-between items-center border-b border-stone-100">
+              <span className="font-bold text-stone-600 text-sm flex items-center gap-2"><FolderOpen className="w-4 h-4 text-stone-400" /> {group.name}</span>
+              <button onClick={() => deleteGroup(gIdx)} className="text-stone-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-4 space-y-3">
               {group.items.map((item, iIdx) => (
-                <div key={iIdx} onClick={() => handleEditItem(gIdx, iIdx)} className={`flex justify-between items-center text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-slate-50 p-2 rounded transition-colors ${editingSelection?.gIdx === gIdx && editingSelection?.iIdx === iIdx ? 'bg-blue-50 ring-1 ring-blue-100' : ''}`}>
-                  <span className="text-slate-500 font-medium">{item.name}</span>
+                <div key={iIdx} onClick={() => handleEditItem(gIdx, iIdx)} className={`flex justify-between items-center text-sm border-b border-stone-50 last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-stone-50 p-2 rounded transition-colors ${editingSelection?.gIdx === gIdx && editingSelection?.iIdx === iIdx ? 'bg-blue-50 ring-1 ring-blue-100' : ''}`}>
+                  <span className="text-stone-500 font-medium">{item.name}</span>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-slate-700 font-bold bg-slate-100 px-2 py-0.5 rounded-md">${Number(item.budget).toLocaleString()}</span>
-                    <button onClick={(e) => { e.stopPropagation(); delItem(gIdx, iIdx); }} className="text-slate-200 hover:text-rose-400"><X className="w-3 h-3" /></button>
+                    <span className="font-mono text-stone-700 font-bold bg-stone-100 px-2 py-0.5 rounded-md">${Number(item.budget).toLocaleString()}</span>
+                    <button onClick={(e) => { e.stopPropagation(); delItem(gIdx, iIdx); }} className="text-stone-200 hover:text-rose-400"><X className="w-3 h-3" /></button>
                   </div>
                 </div>
               ))}
               <div className="flex gap-2 mt-3 pt-2">
                 <input id={`${idPrefix}-n-${gIdx}`} placeholder="項目名稱" className={`${GLASS_INPUT} w-full text-xs py-2 px-3`} />
                 <input id={`${idPrefix}-b-${gIdx}`} placeholder="$" type="number" className={`${GLASS_INPUT} w-20 text-xs py-2 px-3`} />
-                <button onClick={() => handleItemSubmit(gIdx)} className={`text-white px-3 rounded-lg transition-colors ${editingSelection?.gIdx === gIdx ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-800 hover:bg-slate-700'}`}>
+                <button onClick={() => handleItemSubmit(gIdx)} className={`text-white px-3 rounded-lg transition-colors ${editingSelection?.gIdx === gIdx ? 'bg-blue-600 hover:bg-blue-700' : 'bg-stone-800 hover:bg-stone-700'}`}>
                   {editingSelection?.gIdx === gIdx ? <RefreshCw className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
                 </button>
               </div>
@@ -1731,7 +1731,7 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
       </div>
       <div className="flex gap-2 mt-4">
         <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} placeholder="新增群組名稱..." className={`${GLASS_INPUT} flex-1 text-sm shadow-sm`} />
-        <button onClick={addGroup} className="bg-white border border-slate-200 text-slate-600 px-5 rounded-xl shadow-sm hover:bg-slate-50 font-bold"><Plus className="w-4 h-4" /></button>
+        <button onClick={addGroup} className="bg-white border border-stone-200 text-stone-600 px-5 rounded-xl shadow-sm hover:bg-stone-50 font-bold"><Plus className="w-4 h-4" /></button>
       </div>
     </div>
   );
@@ -1797,52 +1797,52 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
         {!isAdding && (
           <div className="space-y-2 max-h-[40vh] overflow-y-auto">
             {localItems.map(item => (
-              <div key={item.id} onClick={() => handleEditClick(item)} className={`relative flex items-center justify-between p-3 rounded-xl border cursor-pointer hover:border-indigo-300 transition-colors ${item.active ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+              <div key={item.id} onClick={() => handleEditClick(item)} className={`relative flex items-center justify-between p-3 rounded-xl border cursor-pointer hover:border-indigo-300 transition-colors ${item.active ? 'bg-white border-stone-200' : 'bg-stone-50 border-stone-100 opacity-60'}`}>
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <button onClick={(e) => { e.stopPropagation(); handleToggle(item.id); }} className={`p-1.5 rounded-full ${item.active ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+                  <button onClick={(e) => { e.stopPropagation(); handleToggle(item.id); }} className={`p-1.5 rounded-full ${item.active ? 'bg-emerald-100 text-emerald-600' : 'bg-stone-200 text-stone-400'}`}>
                     <CheckCircle2 className="w-4 h-4" />
                   </button>
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-700 truncate">{item.name}</span>
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${item.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-slate-100 text-slate-500'}`}>{item.payer === 'partner' ? '佳欣' : '士程'}</span>
+                      <span className="font-bold text-stone-700 truncate">{item.name}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${item.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-stone-100 text-stone-500'}`}>{item.payer === 'partner' ? '佳欣' : '士程'}</span>
                     </div>
-                    <span className="text-xs text-slate-400">每月 {item.day || 1} 日 • ${Number(item.amount).toLocaleString()} • {item.group}-{item.category}</span>
+                    <span className="text-xs text-stone-400">每月 {item.day || 1} 日 • ${Number(item.amount).toLocaleString()} • {item.group}-{item.category}</span>
                   </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} className="p-2 text-stone-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
               </div>
             ))}
-            {localItems.length === 0 && <div className="text-center py-8 text-slate-400 text-sm">尚無設定項目</div>}
+            {localItems.length === 0 && <div className="text-center py-8 text-stone-400 text-sm">尚無設定項目</div>}
           </div>
         )}
 
-        <div className="pt-4 border-t border-slate-100 space-y-3">
+        <div className="pt-4 border-t border-stone-100 space-y-3">
           {!isAdding ? (
-            <button onClick={() => setIsAdding(true)} className="w-full py-3 bg-slate-50 text-slate-500 font-bold rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors flex items-center justify-center gap-2">
+            <button onClick={() => setIsAdding(true)} className="w-full py-3 bg-stone-50 text-stone-500 font-bold rounded-xl border border-stone-200 hover:bg-stone-100 transition-colors flex items-center justify-center gap-2">
               <Plus className="w-4 h-4" /> 新增項目
             </button>
           ) : (
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-3 animate-in slide-in-from-top-2">
+            <div className="bg-stone-50 p-3 rounded-xl border border-stone-100 space-y-3 animate-in slide-in-from-top-2">
               <div className="flex justify-between items-center mb-1">
-                <h4 className="text-xs font-bold text-slate-400 uppercase">{editingId ? '編輯項目' : '新增項目'}</h4>
-                <button onClick={handleCancelEdit} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+                <h4 className="text-xs font-bold text-stone-400 uppercase">{editingId ? '編輯項目' : '新增項目'}</h4>
+                <button onClick={handleCancelEdit} className="text-stone-400 hover:text-stone-600"><X className="w-4 h-4" /></button>
               </div>
 
               <div className="grid grid-cols-6 gap-2">
                 <input placeholder="名稱" value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-4`} />
-                <div className="col-span-2 flex items-center bg-white/50 rounded-xl border border-slate-200 px-2 focus-within:ring-2 focus-within:ring-slate-400 focus-within:border-transparent transition-all">
-                  <span className="text-xs text-slate-500 shrink-0 font-bold">每月</span>
+                <div className="col-span-2 flex items-center bg-white/50 rounded-xl border border-stone-200 px-2 focus-within:ring-2 focus-within:ring-stone-400 focus-within:border-transparent transition-all">
+                  <span className="text-xs text-stone-500 shrink-0 font-bold">每月</span>
                   <input
                     type="number"
                     min="1"
                     max="31"
                     value={newItem.day}
                     onChange={e => setNewItem({ ...newItem, day: e.target.value })}
-                    className="w-full bg-transparent text-center font-bold text-slate-700 outline-none py-2 text-sm"
+                    className="w-full bg-transparent text-center font-bold text-stone-700 outline-none py-2 text-sm"
                     placeholder="1"
                   />
-                  <span className="text-xs text-slate-500 shrink-0 font-bold">日</span>
+                  <span className="text-xs text-stone-500 shrink-0 font-bold">日</span>
                 </div>
                 <input type="number" placeholder="金額" value={newItem.amount} onChange={e => setNewItem({ ...newItem, amount: e.target.value })} className={`${GLASS_INPUT} px-3 py-2 text-sm col-span-6`} />
 
@@ -1853,21 +1853,21 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
                   }} className={`${GLASS_INPUT} w-full px-3 py-2 text-sm appearance-none`}>
                     {(groups || []).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-2 top-1/2 -transtone-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" />
                 </div>
                 <div className="relative col-span-3">
                   <select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })} className={`${GLASS_INPUT} w-full px-3 py-2 text-sm appearance-none`}>
                     {(groups || []).find(g => g.name === newItem.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-2 top-1/2 -transtone-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" />
                 </div>
 
                 <div className="col-span-6 flex gap-2 pt-1">
-                  <button onClick={() => setNewItem({ ...newItem, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${newItem.payer === 'myself' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-400'}`}>士程</button>
-                  <button onClick={() => setNewItem({ ...newItem, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${newItem.payer === 'partner' ? 'bg-rose-50 border-rose-200 text-rose-500' : 'bg-white border-slate-200 text-slate-400'}`}>佳欣</button>
+                  <button onClick={() => setNewItem({ ...newItem, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${newItem.payer === 'myself' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-stone-200 text-stone-400'}`}>士程</button>
+                  <button onClick={() => setNewItem({ ...newItem, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${newItem.payer === 'partner' ? 'bg-rose-50 border-rose-200 text-rose-500' : 'bg-white border-stone-200 text-stone-400'}`}>佳欣</button>
                 </div>
 
-                <button onClick={handleSaveItem} disabled={!newItem.name || !newItem.amount} className="col-span-6 bg-slate-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-50 mt-2">
+                <button onClick={handleSaveItem} disabled={!newItem.name || !newItem.amount} className="col-span-6 bg-stone-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-50 mt-2">
                   {editingId ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                   {editingId ? '確認修改' : '確認新增'}
                 </button>
@@ -1875,7 +1875,7 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
             </div>
           )}
         </div>
-        {!isAdding && <button onClick={handleSave} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg mt-4">儲存設定</button>}
+        {!isAdding && <button onClick={handleSave} className="w-full bg-stone-800 text-white py-3 rounded-xl font-bold shadow-lg mt-4">儲存設定</button>}
       </div>
     </ModalWrapper>
   );
@@ -1890,26 +1890,26 @@ const RecurringConfirmModal = ({ isOpen, onClose, items, onConfirm, onSkip }) =>
     <ModalWrapper title="本月固定支出確認" onClose={onClose}>
       <div className="space-y-4">
         <div className="text-center py-4">
-          <div className="text-sm text-slate-500 mb-1">檢測到新的月份，是否加入以下固定支出？</div>
-          <div className="text-2xl font-bold text-slate-800 font-mono">${total.toLocaleString()}</div>
+          <div className="text-sm text-stone-500 mb-1">檢測到新的月份，是否加入以下固定支出？</div>
+          <div className="text-2xl font-bold text-stone-800 font-mono">${total.toLocaleString()}</div>
         </div>
-        <div className="space-y-2 bg-slate-50 p-3 rounded-xl max-h-[40vh] overflow-y-auto">
+        <div className="space-y-2 bg-stone-50 p-3 rounded-xl max-h-[40vh] overflow-y-auto">
           {items.map(item => (
-            <div key={item.id} className="flex justify-between items-center text-sm border-b border-slate-100 last:border-0 pb-2 last:pb-0">
-              <span className="text-slate-600 font-medium">{item.name}</span>
-              <span className="font-mono font-bold text-slate-700">${Number(item.amount).toLocaleString()}</span>
+            <div key={item.id} className="flex justify-between items-center text-sm border-b border-stone-100 last:border-0 pb-2 last:pb-0">
+              <span className="text-stone-600 font-medium">{item.name}</span>
+              <span className="font-mono font-bold text-stone-700">${Number(item.amount).toLocaleString()}</span>
             </div>
           ))}
         </div>
         <div className="grid grid-cols-1 gap-3 pt-2">
-          <button onClick={onConfirm} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
+          <button onClick={onConfirm} className="w-full bg-stone-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
             <CheckCircle2 className="w-4 h-4" /> 確認入帳
           </button>
           <div className="grid grid-cols-2 gap-3">
-            <button onClick={onClose} className="bg-white border border-slate-200 text-slate-600 py-3 rounded-xl font-bold">
+            <button onClick={onClose} className="bg-white border border-stone-200 text-stone-600 py-3 rounded-xl font-bold">
               稍後提醒
             </button>
-            <button onClick={onSkip} className="bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-xs">
+            <button onClick={onSkip} className="bg-stone-100 text-stone-500 py-3 rounded-xl font-bold text-xs">
               本月不入帳
             </button>
           </div>
@@ -1943,7 +1943,7 @@ export default function App() {
   const [isAddMortgageFundingModalOpen, setIsAddMortgageFundingModalOpen] = useState(false);
   const [isAddExchangeModalOpen, setIsAddExchangeModalOpen] = useState(false);
 
-  const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', title: '確認', confirmText: '確定', confirmColor: 'bg-slate-800', onConfirm: () => { } });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', title: '確認', confirmText: '確定', confirmColor: 'bg-stone-800', onConfirm: () => { } });
 
   const [currentView, setCurrentView] = useState('home');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -2254,7 +2254,7 @@ export default function App() {
     try { await action(); } catch (e) { console.error(e); alert('發生錯誤: ' + e.message); } finally { setIsSubmitting(false); }
   };
 
-  const requestConfirmation = ({ message, title = '確認', confirmText = '確定', confirmColor = 'bg-slate-800', onConfirm }) => {
+  const requestConfirmation = ({ message, title = '確認', confirmText = '確定', confirmColor = 'bg-stone-800', onConfirm }) => {
     setConfirmModal({ isOpen: true, message, title, confirmText, confirmColor, onConfirm });
   };
   const requestDelete = (message, action) => requestConfirmation({ message, title: '確認刪除', confirmText: '刪除', confirmColor: 'bg-rose-500', onConfirm: action });
@@ -2415,10 +2415,10 @@ export default function App() {
             <div className="space-y-6">
               {MENU_SECTIONS.map(section => (
                 <div key={section.title}>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">{section.title}</h3>
+                  <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 px-2">{section.title}</h3>
                   <div className="space-y-1">
                     {section.items.map(item => (
-                      <button key={item.id} onClick={() => handleViewChange(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all ${currentView === item.id ? 'bg-slate-800 text-white shadow-lg shadow-slate-300/50' : 'text-slate-500 hover:bg-slate-100'}`}>
+                      <button key={item.id} onClick={() => handleViewChange(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all ${currentView === item.id ? 'bg-stone-800 text-white shadow-lg shadow-stone-300/50' : 'text-stone-500 hover:bg-stone-100'}`}>
                         <item.icon className={`w-4 h-4 ${currentView === item.id ? 'text-indigo-300' : ''}`} />
                         {item.label}
                       </button>
@@ -2428,21 +2428,21 @@ export default function App() {
               ))}
             </div>
           </div>
-          <div className="flex-1 bg-slate-900/20 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
+          <div className="flex-1 bg-stone-900/20 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
         </div>
       )}
 
       <header className="bg-white/60 backdrop-blur-md px-4 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20">
-        <button onClick={() => setIsMenuOpen(true)} className="p-2 -ml-2 rounded-xl hover:bg-white/50 text-slate-600 transition-colors"><Menu className="w-6 h-6" /></button>
+        <button onClick={() => setIsMenuOpen(true)} className="p-2 -ml-2 rounded-xl hover:bg-white/50 text-stone-600 transition-colors"><Menu className="w-6 h-6" /></button>
         <div className="flex-1 flex justify-center">
           {(currentView === 'home' || currentView === 'income') ? (
             <div className="flex items-center gap-3 bg-white/50 rounded-full px-1 py-1 border border-white/40 shadow-sm backdrop-blur-sm">
-              <button onClick={() => handleDateNavigate(-1)} className="p-1.5 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition-all"><ChevronLeft className="w-4 h-4" /></button>
-              <span className="text-sm font-bold text-slate-700 min-w-[5rem] text-center select-none">{currentView === 'home' ? selectedDate.toLocaleString('zh-TW', { year: 'numeric', month: 'long' }) : `${selectedDate.getFullYear()}年`}</span>
-              <button onClick={() => handleDateNavigate(1)} className="p-1.5 rounded-full hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-600 transition-all"><ChevronRight className="w-4 h-4" /></button>
+              <button onClick={() => handleDateNavigate(-1)} className="p-1.5 rounded-full hover:bg-white hover:shadow-sm text-stone-400 hover:text-stone-600 transition-all"><ChevronLeft className="w-4 h-4" /></button>
+              <span className="text-sm font-bold text-stone-700 min-w-[5rem] text-center select-none">{currentView === 'home' ? selectedDate.toLocaleString('zh-TW', { year: 'numeric', month: 'long' }) : `${selectedDate.getFullYear()}年`}</span>
+              <button onClick={() => handleDateNavigate(1)} className="p-1.5 rounded-full hover:bg-white hover:shadow-sm text-stone-400 hover:text-stone-600 transition-all"><ChevronRight className="w-4 h-4" /></button>
             </div>
           ) : (
-            <span className="text-sm font-bold text-slate-700 tracking-wide">{MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label}</span>
+            <span className="text-sm font-bold text-stone-700 tracking-wide">{MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label}</span>
           )}
         </div>
         <div className="w-8"></div>
@@ -2566,7 +2566,7 @@ export default function App() {
         )}
       </main>
 
-      {currentView === 'home' && (<button onClick={() => setIsAddTxModalOpen(true)} className="absolute bottom-8 right-6 w-14 h-14 bg-slate-800 rounded-full shadow-2xl shadow-slate-400/50 flex items-center justify-center text-white hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>)}
+      {currentView === 'home' && (<button onClick={() => setIsAddTxModalOpen(true)} className="absolute bottom-8 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>)}
 
 
 
@@ -2576,13 +2576,13 @@ export default function App() {
           {/* 檢查是否有設定預算群組，若無則提示 */}
           {(settings.monthlyGroups.length === 0 && settings.annualGroups.length === 0) ? (
             <div className="text-center py-10">
-              <p className="text-slate-500 mb-4">請先設定預算分類</p>
+              <p className="text-stone-500 mb-4">請先設定預算分類</p>
               <GlassButton onClick={() => { setIsAddTxModalOpen(false); setCurrentView('settings'); }}>前往設定</GlassButton>
             </div>
           ) : (
             <form onSubmit={handleAddTransaction} className="space-y-4">
               <div className="flex justify-end">
-                <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-slate-500 underline flex items-center gap-1 hover:text-slate-800"><SettingsIcon className="w-3 h-3" />管理固定支出</button>
+                <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-500 underline flex items-center gap-1 hover:text-stone-800"><SettingsIcon className="w-3 h-3" />管理固定支出</button>
               </div>
               <CalculatorInput
                 value={newTrans.amount}
@@ -2591,30 +2591,30 @@ export default function App() {
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-100/50 p-1 rounded-2xl flex">
-                  <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'monthly', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'monthly' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'}`}>月度</button>
-                  <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'annual', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'annual' ? 'bg-white shadow-sm text-stone-600' : 'text-slate-400'}`}>年度</button>
+                <div className="bg-stone-100/50 p-1 rounded-2xl flex">
+                  <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'monthly', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'monthly' ? 'bg-white shadow-sm text-stone-800' : 'text-stone-400'}`}>月度</button>
+                  <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'annual', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'annual' ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>年度</button>
                 </div>
-                <div className="bg-slate-100/50 p-1 rounded-2xl flex">
-                  <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400'}`}>士程</button>
-                  <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-slate-400'}`}>佳欣</button>
+                <div className="bg-stone-100/50 p-1 rounded-2xl flex">
+                  <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
+                  <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="relative">
-                  <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-slate-700 font-medium appearance-none`}>
+                  <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
                     {(newTrans.type === 'monthly' ? settings.monthlyGroups : settings.annualGroups).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
                   </select>
-                  <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" />
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none z-10" />
+                  <FolderOpen className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
+                  <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
                 </div>
                 <div className="relative">
-                  <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-slate-700 font-medium appearance-none`}>
+                  <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
                     {(newTrans.type === 'monthly' ? settings.monthlyGroups : settings.annualGroups).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
                   </select>
-                  <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" />
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none z-10" />
+                  <Hash className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
+                  <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
                 </div>
               </div>
 
@@ -2627,11 +2627,11 @@ export default function App() {
                     // Scroll into view logic on mobile
                     setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
                   }} />
-                  <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-300 pointer-events-none z-10" />
+                  <PenTool className="absolute right-4 top-1/2 -transtone-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
                 </div>
               </div>
 
-              <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-slate-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+              <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
             </form>
           )}
         </ModalWrapper>
@@ -2682,7 +2682,7 @@ export default function App() {
         <ModalWrapper title={editingId ? "編輯收入" : "新增收入"} onClose={() => { setIsAddIncomeModalOpen(false); setEditingId(null); setNewIncome({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' }); }}>
           <form onSubmit={handleAddIncome} className="space-y-6">
             <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
-            <div className="space-y-1.5"><label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-slate-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
+            <div className="space-y-1.5"><label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
             <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
             <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
             <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認入帳'}</GlassButton>
@@ -2698,9 +2698,9 @@ export default function App() {
               <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'expense' })} variant={newPartnerTx.type === 'expense' ? 'danger' : 'ghost'} className="flex-1">支出/提領</GlassButton>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1 mb-1">金額</label>
-              <div className="relative"><input type="number" value={newPartnerTx.amount} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, amount: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-slate-800 font-medium outline-none text-sm`} placeholder="0" autoFocus required /></div>
-              <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">{[10000, 25000, 30000, 50000].map(amt => (<button key={amt} type="button" onClick={() => setNewPartnerTx({ ...newPartnerTx, amount: amt })} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-slate-600 whitespace-nowrap transition-colors">${amt.toLocaleString()}</button>))}</div>
+              <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1 mb-1">金額</label>
+              <div className="relative"><input type="number" value={newPartnerTx.amount} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, amount: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none text-sm`} placeholder="0" autoFocus required /></div>
+              <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">{[10000, 25000, 30000, 50000].map(amt => (<button key={amt} type="button" onClick={() => setNewPartnerTx({ ...newPartnerTx, amount: amt })} className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg text-xs font-bold text-stone-600 whitespace-nowrap transition-colors">${amt.toLocaleString()}</button>))}</div>
             </div>
             <InputField label="日期" type="date" value={newPartnerTx.date} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, date: e.target.value })} required />
             <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
