@@ -2847,6 +2847,7 @@ export default function App() {
               </div>
 
               <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+              <div className="h-[40vh] w-full pointer-events-none" aria-hidden="true"></div>
             </form>
           )}
         </ModalWrapper>
@@ -2862,6 +2863,7 @@ export default function App() {
             {mortgageExpType === 'misc_appliances' && (<InputField label="品牌" value={newMortgageExp.brand} onChange={e => setNewMortgageExp({ ...newMortgageExp, brand: e.target.value })} placeholder="品牌" />)}
             <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} />
             <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
+            <div className="h-[40vh] w-full pointer-events-none" aria-hidden="true"></div>
           </form>
         </ModalWrapper>
       )}
@@ -2920,6 +2922,7 @@ export default function App() {
             <InputField label="日期" type="date" value={newPartnerTx.date} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, date: e.target.value })} required />
             <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
             <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+            <div className="h-[40vh] w-full pointer-events-none" aria-hidden="true"></div>
           </form>
         </ModalWrapper>
       )}
