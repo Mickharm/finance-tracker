@@ -755,7 +755,7 @@ const ExchangeItem = ({ item, onDelete, onEdit }) => {
           <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isSell ? 'bg-[#E8D3D1]/60 text-[#A65E62]' : 'bg-[#D1E6E1]/60 text-[#2F7567]'}`}>{isSell ? '賣出' : '買入'}</span>
           <span className="text-base font-bold text-stone-800 font-mono">${Number(item.usdAmount).toLocaleString()}</span>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="text-stone-300 hover:text-rose-400 transition-all opacity-0 group-hover:opacity-100 p-1"><X className="w-4 h-4" /></button>
+        <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="text-stone-300 hover:text-rose-400 transition-all p-1"><X className="w-4 h-4" /></button>
       </div>
       {/* Row 2: Date + Rate */}
       <div className="text-xs text-stone-400 mt-1">
