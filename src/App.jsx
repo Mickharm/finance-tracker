@@ -743,24 +743,27 @@ const ExchangeItem = ({ item, onDelete, onEdit }) => {
   const isFT = item.account === 'FT';
   const twdAmount = Math.round(Number(item.usdAmount) * Number(item.rate));
   const accountTheme = isFT
-    ? { bg: 'bg-[#D6DEEB]/60', text: 'text-[#485A85]', border: 'border-[#B4C4DE]' }  // 桔梗 (Indigo)
-    : { bg: 'bg-[#F0EAC2]/60', text: 'text-[#8F8335]', border: 'border-[#E0D695]' }; // 蒸栗 (Amber)
+    ? { bg: 'bg-[#D6DEEB]/60', text: 'text-[#485A85]', border: 'border-[#B4C4DE]' }
+    : { bg: 'bg-[#F0EAC2]/60', text: 'text-[#8F8335]', border: 'border-[#E0D695]' };
 
   return (
     <div onClick={() => onEdit && onEdit(item)} className={`${GLASS_CARD} p-4 group border-l-4 ${isSell ? 'border-[#C48286]' : 'border-[#4DA391]'} ${onEdit ? 'cursor-pointer hover:bg-white/60' : ''} transition-all`}>
-      <div className="flex justify-between items-center mb-2">
+      {/* Row 1: Account + Type + Amount + Delete */}
+      <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className={`px-2 py-1 rounded-lg font-bold text-xs ${accountTheme.bg} ${accountTheme.text} border ${accountTheme.border}`}>{isFT ? 'Firstrade' : 'IB'}</div>
           <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isSell ? 'bg-[#E8D3D1]/60 text-[#A65E62]' : 'bg-[#D1E6E1]/60 text-[#2F7567]'}`}>{isSell ? '賣出' : '買入'}</span>
+          <span className="text-base font-bold text-stone-800 font-mono">${Number(item.usdAmount).toLocaleString()}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-base font-bold text-stone-800 font-mono">${Number(item.usdAmount).toLocaleString()} USD</span>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="text-stone-300 hover:text-rose-400 transition-all opacity-0 group-hover:opacity-100 p-1"><X className="w-4 h-4" /></button>
-        </div>
+        <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="text-stone-300 hover:text-rose-400 transition-all opacity-0 group-hover:opacity-100 p-1"><X className="w-4 h-4" /></button>
       </div>
-      <div className="flex justify-between items-center text-xs">
-        <span className="text-stone-400">{formatDetailedDate(item.date)} @ 匯率 {Number(item.rate).toFixed(2)}</span>
-        <span className={`font-mono font-bold ${isSell ? 'text-[#A65E62]' : 'text-[#2F7567]'}`}>{isSell ? '+' : '-'}NT$ {twdAmount.toLocaleString()}</span>
+      {/* Row 2: Date + Rate */}
+      <div className="text-xs text-stone-400 mt-1">
+        {formatDetailedDate(item.date)} • 匯率 {Number(item.rate).toFixed(2)}
+      </div>
+      {/* Row 3: TWD Amount */}
+      <div className={`text-sm font-mono font-bold mt-1 ${isSell ? 'text-[#A65E62]' : 'text-[#2F7567]'}`}>
+        {isSell ? '+' : '-'} NT$ {twdAmount.toLocaleString()}
       </div>
     </div>
   );
@@ -1764,43 +1767,9 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange
         </div>
       ) : (
         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-          {/* Enhanced Summary Cards */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className={`${GLASS_CARD} p-4 border-l-4 border-emerald-400`}>
-              <div className="text-[10px] text-stone-400 uppercase font-bold mb-1">累計買入</div>
-              <div className="text-lg font-bold text-emerald-600 font-mono">${(() => {
-                const buyRecords = exchanges.filter(e => e.type !== 'sell');
-                return buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
-              })()} USD</div>
-              <div className="text-[10px] text-stone-400 mt-1">
-                平均買入匯率: {(() => {
-                  const buyRecords = exchanges.filter(e => e.type !== 'sell');
-                  const totalUSD = buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0);
-                  const totalTWD = buyRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
-                  return totalUSD > 0 ? (totalTWD / totalUSD).toFixed(2) : '0';
-                })()}
-              </div>
-            </div>
-            <div className={`${GLASS_CARD} p-4 border-l-4 border-rose-400`}>
-              <div className="text-[10px] text-stone-400 uppercase font-bold mb-1">累計賣出</div>
-              <div className="text-lg font-bold text-rose-500 font-mono">${(() => {
-                const sellRecords = exchanges.filter(e => e.type === 'sell');
-                return sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
-              })()} USD</div>
-              <div className="text-[10px] text-stone-400 mt-1">
-                平均賣出匯率: {(() => {
-                  const sellRecords = exchanges.filter(e => e.type === 'sell');
-                  const totalUSD = sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0);
-                  const totalTWD = sellRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
-                  return totalUSD > 0 ? (totalTWD / totalUSD).toFixed(2) : '0';
-                })()}
-              </div>
-            </div>
-          </div>
-
-          {/* Net Position Card */}
+          {/* Net Position Card - TOP */}
           <div className={`${GLASS_CARD} p-5 relative overflow-hidden`}>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200 rounded-full -mr-10 -mt-10 blur-xl opacity-40"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#B4C4DE] rounded-full -mr-10 -mt-10 blur-xl opacity-40"></div>
             <div className="relative z-10">
               <div className="text-xs text-stone-400 uppercase font-bold mb-1">淨持有美金</div>
               <div className="text-2xl font-bold text-stone-800 font-mono">
@@ -1808,23 +1777,36 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange
                   const buyTotal = exchanges.filter(e => e.type !== 'sell').reduce((sum, e) => sum + Number(e.usdAmount), 0);
                   const sellTotal = exchanges.filter(e => e.type === 'sell').reduce((sum, e) => sum + Number(e.usdAmount), 0);
                   return (buyTotal - sellTotal).toLocaleString();
-                })()} USD
+                })()}
               </div>
-              {(() => {
+            </div>
+          </div>
+
+          {/* Buy/Sell Summary Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className={`${GLASS_CARD} p-4 border-l-4 border-[#4DA391]`}>
+              <div className="text-lg font-bold text-[#2F7567] font-mono">${(() => {
                 const buyRecords = exchanges.filter(e => e.type !== 'sell');
+                return buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
+              })()}</div>
+              <div className="text-[10px] text-stone-400 uppercase font-bold">累計買入 @ {(() => {
+                const buyRecords = exchanges.filter(e => e.type !== 'sell');
+                const totalUSD = buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0);
+                const totalTWD = buyRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
+                return totalUSD > 0 ? (totalTWD / totalUSD).toFixed(2) : '0';
+              })()}</div>
+            </div>
+            <div className={`${GLASS_CARD} p-4 border-l-4 border-[#C48286]`}>
+              <div className="text-lg font-bold text-[#A65E62] font-mono">${(() => {
                 const sellRecords = exchanges.filter(e => e.type === 'sell');
-                const buyTWD = buyRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
-                const sellTWD = sellRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
-                const profit = sellTWD - (sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0) * (buyRecords.length > 0 ? buyTWD / buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0) : 0));
-                if (sellRecords.length > 0) {
-                  return (
-                    <div className={`text-xs mt-2 font-bold ${profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                      匯差損益: {profit >= 0 ? '+' : ''}${Math.round(profit).toLocaleString()} TWD
-                    </div>
-                  );
-                }
-                return null;
-              })()}
+                return sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
+              })()}</div>
+              <div className="text-[10px] text-stone-400 uppercase font-bold">累計賣出 @ {(() => {
+                const sellRecords = exchanges.filter(e => e.type === 'sell');
+                const totalUSD = sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0);
+                const totalTWD = sellRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
+                return totalUSD > 0 ? (totalTWD / totalUSD).toFixed(2) : '0';
+              })()}</div>
             </div>
           </div>
 
