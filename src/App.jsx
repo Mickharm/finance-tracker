@@ -738,37 +738,29 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
   );
 };
 
-const ExchangeItem = ({ item, onDelete }) => {
+const ExchangeItem = ({ item, onDelete, onEdit }) => {
   const isSell = item.type === 'sell';
+  const isFT = item.account === 'FT';
   const twdAmount = Math.round(Number(item.usdAmount) * Number(item.rate));
+  const accountTheme = isFT
+    ? { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' }
+    : { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' };
 
   return (
-    <div className={`${GLASS_CARD} p-4 flex justify-between items-center group border-l-4 ${isSell ? 'border-rose-400' : 'border-emerald-400'}`}>
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg font-bold text-xs ${isSell ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-          {item.account === 'FT' ? 'FT' : 'IB'}
+    <div onClick={() => onEdit && onEdit(item)} className={`${GLASS_CARD} p-4 group border-l-4 ${isSell ? 'border-rose-400' : 'border-emerald-400'} ${onEdit ? 'cursor-pointer hover:bg-white/60' : ''} transition-all`}>
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center gap-2">
+          <div className={`px-2 py-1 rounded-lg font-bold text-xs ${accountTheme.bg} ${accountTheme.text} border ${accountTheme.border}`}>{isFT ? 'Firstrade' : 'IB'}</div>
+          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isSell ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>{isSell ? '賣出' : '買入'}</span>
         </div>
-        <div>
-          <div className="text-sm font-bold text-stone-700 flex items-center gap-2">
-            <span className={`text-xs px-1.5 py-0.5 rounded ${isSell ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
-              {isSell ? '賣出' : '買入'}
-            </span>
-            ${Number(item.usdAmount).toLocaleString()} USD
-          </div>
-          <div className="text-[10px] text-stone-400">
-            {formatDetailedDate(item.date)} @ {item.rate}
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="text-base font-bold text-stone-800 font-mono">${Number(item.usdAmount).toLocaleString()} USD</span>
+          <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="text-stone-300 hover:text-rose-400 transition-all opacity-0 group-hover:opacity-100 p-1"><X className="w-4 h-4" /></button>
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="text-right">
-          <div className={`text-xs font-mono ${isSell ? 'text-rose-500' : 'text-emerald-600'}`}>
-            {isSell ? '+' : '-'}NT$ {twdAmount.toLocaleString()}
-          </div>
-        </div>
-        <button onClick={() => onDelete(item.id)} className="text-stone-300 hover:text-rose-400 transition-all opacity-0 group-hover:opacity-100">
-          <X className="w-4 h-4" />
-        </button>
+      <div className="flex justify-between items-center text-xs">
+        <span className="text-stone-400">{formatDetailedDate(item.date)} @ 匯率 {Number(item.rate).toFixed(2)}</span>
+        <span className={`font-mono font-bold ${isSell ? 'text-rose-500' : 'text-emerald-600'}`}>{isSell ? '+' : '-'}NT$ {twdAmount.toLocaleString()}</span>
       </div>
     </div>
   );
@@ -1753,7 +1745,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory }) => {
 
 const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) => { const [config, setConfig] = useState(DEFAULT_PRINCIPAL_CONFIG); const [history, setHistory] = useState([]); const [loading, setLoading] = useState(true); const [snapshotDate, setSnapshotDate] = useState(getTodayString()); useEffect(() => { if (!user) return; const configRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'); onSnapshot(configRef, (s) => s.exists() ? setConfig(s.data()) : setDoc(configRef, DEFAULT_PRINCIPAL_CONFIG)); const historyRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'); const q = query(historyRef, orderBy('date', 'desc')); onSnapshot(q, (s) => { setHistory(s.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); }); }, [user]); const updateItem = (section, group, idx, field, val) => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group][idx][field] = field === 'amount' ? Number(val) : val; setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const addItem = (section, group) => { const newConfig = JSON.parse(JSON.stringify(config)); if (!newConfig[section][group]) newConfig[section][group] = []; newConfig[section][group].push({ name: '', amount: 0 }); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const deleteItem = (section, group, idx) => { requestConfirmation({ message: '確定移除此項目？', onConfirm: () => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group] = newConfig[section][group].filter((_, i) => i !== idx); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); } }); }; const handleAddSnapshot = () => { requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => { const ta = (config.assets.bank || []).reduce((s, i) => s + Number(i.amount), 0) + (config.assets.invest || []).reduce((s, i) => s + Number(i.amount), 0); const tl = (config.liabilities.encumbrance || []).reduce((s, i) => s + Number(i.amount), 0); await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), { date: new Date(snapshotDate).toISOString(), netPrincipal: ta - tl, details: config, createdAt: serverTimestamp() }); } }); }; const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history', id))); return (<div className="pb-24 space-y-6 animate-in fade-in"><PrincipalTrendChart history={history} /><div className="flex flex-col gap-4"><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">存款組成 (Assets)</h3><AssetGroup title="銀行帳戶" items={config.assets.bank} section="assets" groupKey="bank" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /><AssetGroup title="投資項目" items={config.assets.invest} section="assets" groupKey="invest" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">負債組成 (Liabilities)</h3><AssetGroup title="房價圈存" items={config.liabilities.encumbrance} section="liabilities" groupKey="encumbrance" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div></div><div className={`${GLASS_CARD} p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end`}><InputField label="結算日期" type="date" value={snapshotDate} onChange={(e) => setSnapshotDate(e.target.value)} className="w-full sm:flex-1" /><GlassButton onClick={handleAddSnapshot} className="w-full sm:flex-1 py-4 rounded-xl sm:h-[58px]"><Save className="w-5 h-5" /> 結算本期金額</GlassButton></div><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> 歷次結算紀錄</h3><div className="space-y-3">{history.map(rec => (<div key={rec.id} className="bg-white/60 p-4 rounded-xl border border-stone-100 flex justify-between items-center backdrop-blur-sm"><div><div className="font-bold text-stone-800">${rec.netPrincipal.toLocaleString()}</div><div className="text-[10px] text-stone-400">{new Date(rec.date).toLocaleDateString()}</div></div><button onClick={() => handleDeleteHistory(rec.id)}><X className="w-4 h-4 text-stone-300 hover:text-rose-400" /></button></div>))}</div></div></div>); };
 
-const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange, onAddExchangeClick }) => {
+const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange, onAddExchangeClick, onEditExchange }) => {
   const [activeTab, setActiveTab] = useState('goals');
   const sortedGoals = [...goals].sort((a, b) => b.year - a.year);
   const getEffectiveTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0) + (Number(g?.withdrawal) || 0);
@@ -1841,7 +1833,7 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange
             <GlassButton onClick={onAddExchangeClick}><Plus className="w-3 h-3" /> 新增換匯</GlassButton>
           </div>
           <div className="space-y-2">
-            {exchanges.length === 0 ? <div className="text-center text-stone-400 py-10">尚無換匯紀錄</div> : exchanges.map(item => (<ExchangeItem key={item.id} item={item} onDelete={onDeleteExchange} />))}
+            {exchanges.length === 0 ? <div className="text-center text-stone-400 py-10">尚無換匯紀錄</div> : exchanges.map(item => (<ExchangeItem key={item.id} item={item} onDelete={onDeleteExchange} onEdit={onEditExchange} />))}
           </div>
         </div>
       )}
@@ -2652,7 +2644,18 @@ export default function App() {
   };
   const handleUpdateStockGoal = async (id, field, value) => { await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id), { [field]: Number(value) }, { merge: true }); };
 
-  const handleAddExchange = (e) => { e.preventDefault(); withSubmission(async () => { await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges'), { ...newExchange, createdAt: serverTimestamp() }); setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT' }); setIsAddExchangeModalOpen(false); }); };
+  const handleAddExchange = (e) => {
+    e.preventDefault(); withSubmission(async () => {
+      if (editingId) {
+        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges', editingId), { ...newExchange, updatedAt: serverTimestamp() }, { merge: true });
+      } else {
+        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges'), { ...newExchange, createdAt: serverTimestamp() });
+      }
+      setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' });
+      setEditingId(null);
+      setIsAddExchangeModalOpen(false);
+    });
+  };
   const handleDeleteExchange = (id) => requestDelete('刪除此換匯紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges', id)));
 
   const updateSettings = async (newGroups, type) => {
@@ -2734,7 +2737,7 @@ export default function App() {
         {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} yearlyTotalStats={yearlyTotalStats} />}
         {/* 新增: Investment Watchlist */}
         {currentView === 'watchlist' && <WatchlistView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
-        {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} />}
+        {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
         {currentView === 'mortgage' && (
           <MortgageView
             mortgageExpenses={mortgageExpenses}
@@ -2999,7 +3002,7 @@ export default function App() {
       )}
 
       {isAddExchangeModalOpen && (
-        <ModalWrapper title="新增換匯紀錄" onClose={() => setIsAddExchangeModalOpen(false)}>
+        <ModalWrapper title={editingId ? "編輯換匯紀錄" : "新增換匯紀錄"} onClose={() => { setIsAddExchangeModalOpen(false); setEditingId(null); setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' }); }}>
           <form onSubmit={handleAddExchange} className="space-y-4">
             {/* Buy/Sell Toggle */}
             <div className="flex gap-2">
