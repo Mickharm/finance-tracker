@@ -189,7 +189,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確�
 const ModalWrapper = ({ title, onClose, children }) => (
   <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
     <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
-    <div className={`relative w-full rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl`}>
+    <div className={`relative w-full rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl scroll-pb-40`}>
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold text-stone-800 tracking-tight pl-2">{title}</h3>
         <button type="button" onClick={onClose} className="p-2 bg-stone-100/50 rounded-full text-stone-400 hover:bg-stone-200 hover:text-stone-600 transition-colors z-10 relative">
@@ -2094,19 +2094,6 @@ export default function App() {
   const [isAddMortgageFundingModalOpen, setIsAddMortgageFundingModalOpen] = useState(false);
   const [isAddExchangeModalOpen, setIsAddExchangeModalOpen] = useState(false);
 
-  // Mobile Keyboard UX State
-  const [isKeyboardSpacerOpen, setIsKeyboardSpacerOpen] = useState(false);
-  const handleInputFocus = (e) => {
-    setIsKeyboardSpacerOpen(true);
-    // Wait for spacer to render, then scroll
-    setTimeout(() => {
-      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 500); // Increased delay slightly
-  };
-  const handleInputBlur = () => {
-    setIsKeyboardSpacerOpen(false);
-  };
-
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', title: '確認', confirmText: '確定', confirmColor: 'bg-stone-800', onConfirm: () => { } });
 
   const [currentView, setCurrentView] = useState('home');
@@ -2851,13 +2838,12 @@ export default function App() {
                   <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
                 </div>
                 <div className="w-full relative">
-                  <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." onFocus={handleInputFocus} onBlur={handleInputBlur} />
-                  <PenTool className="absolute right-4 top-1/2 -transtone-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
+                  <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." />
+                  <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
                 </div>
               </div>
 
               <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
-              {isKeyboardSpacerOpen && <div className="h-[45vh] w-full pointer-events-none transition-all duration-300" aria-hidden="true"></div>}
             </form>
           )}
         </ModalWrapper>
@@ -2871,10 +2857,8 @@ export default function App() {
             <InputField label="金額" type="number" value={newMortgageExp.amount} onChange={e => setNewMortgageExp({ ...newMortgageExp, amount: e.target.value })} required />
             <InputField label="日期" type="date" value={newMortgageExp.date} onChange={e => setNewMortgageExp({ ...newMortgageExp, date: e.target.value })} required />
             {mortgageExpType === 'misc_appliances' && (<InputField label="品牌" value={newMortgageExp.brand} onChange={e => setNewMortgageExp({ ...newMortgageExp, brand: e.target.value })} placeholder="品牌" />)}
-            {mortgageExpType === 'misc_appliances' && (<InputField label="品牌" value={newMortgageExp.brand} onChange={e => setNewMortgageExp({ ...newMortgageExp, brand: e.target.value })} placeholder="品牌" />)}
-            <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} onFocus={handleInputFocus} onBlur={handleInputBlur} />
+            <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} />
             <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-            {isKeyboardSpacerOpen && <div className="h-[45vh] w-full pointer-events-none" aria-hidden="true"></div>}
           </form>
         </ModalWrapper>
       )}
@@ -2912,9 +2896,8 @@ export default function App() {
             <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
             <div className="space-y-1.5"><label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
             <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
-            <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." onFocus={handleInputFocus} onBlur={handleInputBlur} />
+            <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
             <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認入帳'}</GlassButton>
-            {isKeyboardSpacerOpen && <div className="h-[45vh] w-full pointer-events-none" aria-hidden="true"></div>}
           </form>
         </ModalWrapper>
       )}
@@ -2932,9 +2915,8 @@ export default function App() {
               <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">{[10000, 25000, 30000, 50000].map(amt => (<button key={amt} type="button" onClick={() => setNewPartnerTx({ ...newPartnerTx, amount: amt })} className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg text-xs font-bold text-stone-600 whitespace-nowrap transition-colors">${amt.toLocaleString()}</button>))}</div>
             </div>
             <InputField label="日期" type="date" value={newPartnerTx.date} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, date: e.target.value })} required />
-            <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." onFocus={handleInputFocus} onBlur={handleInputBlur} />
+            <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
             <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
-            {isKeyboardSpacerOpen && <div className="h-[45vh] w-full pointer-events-none" aria-hidden="true"></div>}
           </form>
         </ModalWrapper>
       )}
