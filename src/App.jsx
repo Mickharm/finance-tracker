@@ -2538,11 +2538,11 @@ export default function App() {
             {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label}
           </h1>
         </div>
-        <div className="w-9 flex justify-end z-20">
+        <div className="w-auto min-w-[36px] flex justify-end z-20">
           {(currentView === 'home' || currentView === 'income' || currentView === 'settings') ? (
             <div className="flex items-center bg-white/40 backdrop-blur-md rounded-full px-1 py-0.5 border border-white/20 shadow-sm">
               <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-white/50 rounded-full transition-colors"><ChevronLeft className="w-3 h-3 text-stone-600" /></button>
-              <span className="text-xs font-bold text-stone-700 mx-1 font-mono">{currentView === 'home' ? `${selectedDate.getMonth() + 1}月` : `${selectedDate.getFullYear()}年`}</span>
+              <span className="text-xs font-bold text-stone-700 mx-1 font-mono whitespace-nowrap">{currentView === 'home' ? `${selectedDate.getMonth() + 1}月` : `${selectedDate.getFullYear()}年`}</span>
               {/* Note: Settings usually annual? If monthly, show month? Settings is 'Annual Configuration' mostly? Assumed Year. Home is Month? */}
               {/* Original logic: if income -> Year, else -> Month. Home shows Month. Settings should probably be Year? */}
               {/* But settings has config_2025. So Year makes sense. */}
