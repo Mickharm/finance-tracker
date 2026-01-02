@@ -738,29 +738,41 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
   );
 };
 
-const ExchangeItem = ({ item, onDelete }) => (
-  <div className={`${GLASS_CARD} p-4 flex justify-between items-center group`}>
-    <div className="flex items-center gap-3">
-      <div className={`p-2 rounded-lg font-bold text-xs bg-stone-50 text-stone-600`}>
-        {item.account === 'FT' ? 'FT' : 'IB'}
+const ExchangeItem = ({ item, onDelete }) => {
+  const isSell = item.type === 'sell';
+  const twdAmount = Math.round(Number(item.usdAmount) * Number(item.rate));
+
+  return (
+    <div className={`${GLASS_CARD} p-4 flex justify-between items-center group border-l-4 ${isSell ? 'border-rose-400' : 'border-emerald-400'}`}>
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-lg font-bold text-xs ${isSell ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+          {item.account === 'FT' ? 'FT' : 'IB'}
+        </div>
+        <div>
+          <div className="text-sm font-bold text-stone-700 flex items-center gap-2">
+            <span className={`text-xs px-1.5 py-0.5 rounded ${isSell ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
+              {isSell ? '賣出' : '買入'}
+            </span>
+            ${Number(item.usdAmount).toLocaleString()} USD
+          </div>
+          <div className="text-[10px] text-stone-400">
+            {formatDetailedDate(item.date)} @ {item.rate}
+          </div>
+        </div>
       </div>
-      <div>
-        <div className="text-sm font-bold text-stone-700">
-          買入 ${Number(item.usdAmount).toLocaleString()}
+      <div className="flex items-center gap-3">
+        <div className="text-right">
+          <div className={`text-xs font-mono ${isSell ? 'text-rose-500' : 'text-emerald-600'}`}>
+            {isSell ? '+' : '-'}NT$ {twdAmount.toLocaleString()}
+          </div>
         </div>
-        <div className="text-[10px] text-stone-400">
-          {formatDetailedDate(item.date)} @ {item.rate}
-        </div>
+        <button onClick={() => onDelete(item.id)} className="text-stone-300 hover:text-rose-400 transition-all opacity-0 group-hover:opacity-100">
+          <X className="w-4 h-4" />
+        </button>
       </div>
     </div>
-    <div className="flex items-center gap-3">
-      <div className="text-right">
-        <div className="text-xs font-mono text-stone-500">NT$ {Math.round(item.usdAmount * item.rate).toLocaleString()}</div>
-      </div>
-      <button onClick={() => onDelete(item.id)} className="text-stone-300 hover:text-rose-400 transition-all"><X className="w-4 h-4" /></button>
-    </div>
-  </div>
-);
+  );
+};
 
 // 統一的列表元件
 const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type, totalLabel, totalValue, itemRenderer, variant = 'slate', isCollapsible = false, defaultExpanded = true }) => {
@@ -1747,14 +1759,6 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange
   const getEffectiveTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0) + (Number(g?.withdrawal) || 0);
   const getActualTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0);
 
-  // 計算換匯總結
-  const { totalUSD, totalTWD } = exchanges.reduce((acc, curr) => {
-    const usd = Number(curr.usdAmount);
-    const rate = Number(curr.rate);
-    return { totalUSD: acc.totalUSD + usd, totalTWD: acc.totalTWD + (usd * rate) };
-  }, { totalUSD: 0, totalTWD: 0 });
-  const avgRate = totalUSD > 0 ? (totalTWD / totalUSD) : 0;
-
   return (
     <div className="pb-24 animate-in fade-in">
       <div className="flex bg-stone-100 p-1 rounded-xl mb-6">
@@ -1768,7 +1772,70 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange
         </div>
       ) : (
         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-          <CleanSummaryCard title="累計買入美金" value={totalUSD.toLocaleString()} subValue={`平均匯率: ${avgRate.toFixed(4)}`} icon={ArrowRightLeft} />
+          {/* Enhanced Summary Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className={`${GLASS_CARD} p-4 border-l-4 border-emerald-400`}>
+              <div className="text-[10px] text-stone-400 uppercase font-bold mb-1">累計買入</div>
+              <div className="text-lg font-bold text-emerald-600 font-mono">${(() => {
+                const buyRecords = exchanges.filter(e => e.type !== 'sell');
+                return buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
+              })()} USD</div>
+              <div className="text-[10px] text-stone-400 mt-1">
+                平均買入匯率: {(() => {
+                  const buyRecords = exchanges.filter(e => e.type !== 'sell');
+                  const totalUSD = buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0);
+                  const totalTWD = buyRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
+                  return totalUSD > 0 ? (totalTWD / totalUSD).toFixed(2) : '0';
+                })()}
+              </div>
+            </div>
+            <div className={`${GLASS_CARD} p-4 border-l-4 border-rose-400`}>
+              <div className="text-[10px] text-stone-400 uppercase font-bold mb-1">累計賣出</div>
+              <div className="text-lg font-bold text-rose-500 font-mono">${(() => {
+                const sellRecords = exchanges.filter(e => e.type === 'sell');
+                return sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
+              })()} USD</div>
+              <div className="text-[10px] text-stone-400 mt-1">
+                平均賣出匯率: {(() => {
+                  const sellRecords = exchanges.filter(e => e.type === 'sell');
+                  const totalUSD = sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0);
+                  const totalTWD = sellRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
+                  return totalUSD > 0 ? (totalTWD / totalUSD).toFixed(2) : '0';
+                })()}
+              </div>
+            </div>
+          </div>
+
+          {/* Net Position Card */}
+          <div className={`${GLASS_CARD} p-5 relative overflow-hidden`}>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200 rounded-full -mr-10 -mt-10 blur-xl opacity-40"></div>
+            <div className="relative z-10">
+              <div className="text-xs text-stone-400 uppercase font-bold mb-1">淨持有美金</div>
+              <div className="text-2xl font-bold text-stone-800 font-mono">
+                ${(() => {
+                  const buyTotal = exchanges.filter(e => e.type !== 'sell').reduce((sum, e) => sum + Number(e.usdAmount), 0);
+                  const sellTotal = exchanges.filter(e => e.type === 'sell').reduce((sum, e) => sum + Number(e.usdAmount), 0);
+                  return (buyTotal - sellTotal).toLocaleString();
+                })()} USD
+              </div>
+              {(() => {
+                const buyRecords = exchanges.filter(e => e.type !== 'sell');
+                const sellRecords = exchanges.filter(e => e.type === 'sell');
+                const buyTWD = buyRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
+                const sellTWD = sellRecords.reduce((sum, e) => sum + Number(e.usdAmount) * Number(e.rate), 0);
+                const profit = sellTWD - (sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0) * (buyRecords.length > 0 ? buyTWD / buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0) : 0));
+                if (sellRecords.length > 0) {
+                  return (
+                    <div className={`text-xs mt-2 font-bold ${profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      匯差損益: {profit >= 0 ? '+' : ''}${Math.round(profit).toLocaleString()} TWD
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+          </div>
+
           <div className="flex justify-between items-center px-1 mb-2">
             <h3 className="text-sm font-bold text-stone-500 flex items-center gap-2"><ArrowRightLeft className="w-4 h-4" /> 交易明細</h3>
             <GlassButton onClick={onAddExchangeClick}><Plus className="w-3 h-3" /> 新增換匯</GlassButton>
@@ -2157,7 +2224,7 @@ export default function App() {
   const [newMortgageExp, setNewMortgageExp] = useState({ name: '', amount: '', date: getTodayString(), note: '', brand: '', type: 'down_payment' });
   const [newMortgageAnalysis, setNewMortgageAnalysis] = useState({ name: '', amount: '' });
   const [newMortgageFunding, setNewMortgageFunding] = useState({ source: '', amount: '', symbol: '', shares: '', rate: '', date: getTodayString(), note: '' }); // Added symbol
-  const [newExchange, setNewExchange] = useState({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT' });
+  const [newExchange, setNewExchange] = useState({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' });
 
   // --- Auth & Firestore ---
   // --- Auth & Firestore ---
@@ -2934,11 +3001,17 @@ export default function App() {
       {isAddExchangeModalOpen && (
         <ModalWrapper title="新增換匯紀錄" onClose={() => setIsAddExchangeModalOpen(false)}>
           <form onSubmit={handleAddExchange} className="space-y-4">
+            {/* Buy/Sell Toggle */}
             <div className="flex gap-2">
-              <GlassButton onClick={() => setNewExchange({ ...newExchange, account: 'FT' })} variant={newExchange.account === 'FT' ? 'primary' : 'ghost'} className="flex-1">Firstrade</GlassButton>
-              <GlassButton onClick={() => setNewExchange({ ...newExchange, account: 'IB' })} variant={newExchange.account === 'IB' ? 'primary' : 'ghost'} className="flex-1">IB</GlassButton>
+              <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'buy' })} variant={newExchange.type === 'buy' ? 'success' : 'ghost'} className="flex-1">買入美金</GlassButton>
+              <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'sell' })} variant={newExchange.type === 'sell' ? 'danger' : 'ghost'} className="flex-1">賣出美金</GlassButton>
             </div>
-            <InputField label="換入美金 (USD)" type="number" value={newExchange.usdAmount} onChange={e => setNewExchange({ ...newExchange, usdAmount: e.target.value })} autoFocus required />
+            {/* Account Toggle */}
+            <div className="flex gap-2">
+              <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'FT' })} variant={newExchange.account === 'FT' ? 'primary' : 'ghost'} className="flex-1">Firstrade</GlassButton>
+              <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'IB' })} variant={newExchange.account === 'IB' ? 'primary' : 'ghost'} className="flex-1">IB</GlassButton>
+            </div>
+            <InputField label={newExchange.type === 'sell' ? "賣出美金 (USD)" : "買入美金 (USD)"} type="number" value={newExchange.usdAmount} onChange={e => setNewExchange({ ...newExchange, usdAmount: e.target.value })} autoFocus required />
             <InputField label="匯率 (TWD/USD)" type="number" value={newExchange.rate} onChange={e => setNewExchange({ ...newExchange, rate: e.target.value })} required />
             <InputField label="日期" type="date" value={newExchange.date} onChange={e => setNewExchange({ ...newExchange, date: e.target.value })} required />
             <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認紀錄'}</GlassButton>
