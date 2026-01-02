@@ -745,7 +745,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
             {items.length === 0 ? <p className="text-center text-xs text-stone-300 py-4">無紀錄</p> : items.map((item) => (
               <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-white/20 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-white/30 rounded-lg p-2 transition-colors' : ''}`}>
                 {itemRenderer(item)}
-                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-1/2 -transtone-y-1/2 right-2 z-10 p-1.5 rounded-lg text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
+                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-1/2 -translate-y-1/2 right-2 z-10 p-1.5 rounded-lg text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -887,28 +887,34 @@ const PersonColumn = ({ name, owner, incomes, total, history, icon: Icon, onAddS
       <SalaryHistoryCard history={history} owner={owner} onAdd={onAddSalary} onDelete={onDeleteSalary} onEdit={onEditSalary} />
       <div className={`${GLASS_CARD} p-5`}>
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-sm font-bold text-stone-700">收入明細 </h4>
+          <h4 className="text-sm font-bold text-stone-700 flex items-center gap-2">
+            <div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}><Coins className="w-3.5 h-3.5" /></div>
+            收入明細
+          </h4>
           <GlassButton onClick={() => onAddIncome(owner)} className="px-2 py-1 text-xs" variant="ghost">新增</GlassButton>
         </div>
         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-hide">
           {incomes.map(inc => (
-            <div key={inc.id} onClick={() => onAddIncome(owner, inc)} className="flex justify-between items-center p-3 bg-stone-50/50 rounded-xl group border border-transparent hover:border-stone-200 transition-all cursor-pointer">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-stone-700">{inc.category}</span>
-                <span className="text-[10px] text-stone-400 flex items-center gap-1">
-                  {inc.date}
-                  {inc.note && <span className="text-stone-500">• {inc.note}</span>}
-                </span>
+            <div key={inc.id} onClick={() => onAddIncome(owner, inc)} className="group relative flex justify-between items-center p-3 rounded-xl border border-stone-100 bg-white/40 hover:bg-white/60 hover:shadow-sm transition-all cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className={`w-1 h-8 rounded-full ${theme.bg}`}></div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-stone-700">{inc.category}</span>
+                  <span className="text-[10px] text-stone-400 flex items-center gap-1">
+                    {inc.date}
+                    {inc.note && <span className="text-stone-500">• {inc.note}</span>}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm font-mono font-bold text-emerald-600">+${Number(inc.amount).toLocaleString()}</span>
-                <button onClick={(e) => { e.stopPropagation(); onDeleteIncome(inc.id); }} className="text-stone-300 hover:text-rose-400 p-1">
+                <span className={`text-sm font-mono font-bold ${theme.text}`}>+${Number(inc.amount).toLocaleString()}</span>
+                <button onClick={(e) => { e.stopPropagation(); onDeleteIncome(inc.id); }} className="text-stone-300 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <X className="w-3 h-3" />
                 </button>
               </div>
             </div>
           ))}
-          {incomes.length === 0 && <div className="text-center text-xs text-stone-300 py-4">尚無收入紀錄</div>}
+          {incomes.length === 0 && <div className="text-center text-xs text-stone-300 py-4 flex flex-col items-center gap-2"><div className="p-2 rounded-full bg-stone-50"><Coins className="w-4 h-4 text-stone-200" /></div>尚無收入紀錄</div>}
         </div>
       </div>
     </div>
@@ -1308,13 +1314,6 @@ const PartnerView = ({ partnerTransactions, onDelete, onAdd, onEdit }) => {
 };
 
 const VisualizationView = ({ transactions, settings, onRequestHistory }) => {
-  useEffect(() => {
-    // Dynamic History Loading: Ensure data for selected years is loaded
-    if (onRequestHistory) {
-      onRequestHistory(baseYear);
-      onRequestHistory(compareYear);
-    }
-  }, [onRequestHistory, baseYear, compareYear]);
   const [baseYear, setBaseYear] = useState(new Date().getFullYear());
   const [compareYear, setCompareYear] = useState(new Date().getFullYear() - 1);
   const [isCompareMode, setIsCompareMode] = useState(false);
@@ -1323,6 +1322,14 @@ const VisualizationView = ({ transactions, settings, onRequestHistory }) => {
   const [selectedFilter, setSelectedFilter] = useState(null); // { type: 'group'|'category', value: string }
   const [sortMode, setSortMode] = useState('amount'); // 'amount' | 'budget'
   const [expandedGroups, setExpandedGroups] = useState({}); // { groupName: boolean }
+
+  useEffect(() => {
+    // Dynamic History Loading: Ensure data for selected years is loaded
+    if (onRequestHistory) {
+      onRequestHistory(baseYear);
+      onRequestHistory(compareYear);
+    }
+  }, [onRequestHistory, baseYear, compareYear]);
 
   const generateYearOptions = () => { const currentY = new Date().getFullYear(); const startY = 2020; const years = []; for (let y = currentY + 1; y >= startY; y--) { years.push(y); } return years; };
   const availableYears = useMemo(() => generateYearOptions(), []);
@@ -2522,19 +2529,28 @@ export default function App() {
       )}
 
       <header className="bg-white/60 backdrop-blur-md px-4 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20">
-        <button onClick={() => setIsMenuOpen(true)} className="p-2 -ml-2 rounded-xl hover:bg-white/50 text-stone-600 transition-colors"><Menu className="w-6 h-6" /></button>
-        <div className="flex-1 flex justify-center">
-          {(currentView === 'home' || currentView === 'income') ? (
-            <div className="flex items-center gap-3 bg-white/50 rounded-full px-1 py-1 border border-white/40 shadow-sm backdrop-blur-sm">
-              <button onClick={() => handleDateNavigate(-1)} className="p-1.5 rounded-full hover:bg-white hover:shadow-sm text-stone-400 hover:text-stone-600 transition-all"><ChevronLeft className="w-4 h-4" /></button>
-              <span className="text-sm font-bold text-stone-700 min-w-[5rem] text-center select-none">{currentView === 'home' ? selectedDate.toLocaleString('zh-TW', { year: 'numeric', month: 'long' }) : `${selectedDate.getFullYear()}年`}</span>
-              <button onClick={() => handleDateNavigate(1)} className="p-1.5 rounded-full hover:bg-white hover:shadow-sm text-stone-400 hover:text-stone-600 transition-all"><ChevronRight className="w-4 h-4" /></button>
-            </div>
-          ) : (
-            <span className="text-sm font-bold text-stone-700 tracking-wide">{MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label}</span>
-          )}
+        <div onClick={() => setIsMenuOpen(true)} className="p-2 glass-button rounded-xl cursor-pointer hover:bg-white/20 transition-all active:scale-95 z-20">
+          <Menu className="w-5 h-5 text-stone-600" />
         </div>
-        <div className="w-8"></div>
+        <div className="flex-1 flex justify-center z-10">
+          <h1 className="text-base font-bold text-stone-700 tracking-wide flex items-center gap-2">
+            {MENU_SECTIONS.flatMap(s => s.items).find(i => i.id === currentView)?.icon && React.createElement(MENU_SECTIONS.flatMap(s => s.items).find(i => i.id === currentView).icon, { className: "w-4 h-4 text-stone-500" })}
+            {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label}
+          </h1>
+        </div>
+        <div className="w-9 flex justify-end z-20">
+          {(currentView === 'home' || currentView === 'income' || currentView === 'settings') ? (
+            <div className="flex items-center bg-white/40 backdrop-blur-md rounded-full px-1 py-0.5 border border-white/20 shadow-sm">
+              <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-white/50 rounded-full transition-colors"><ChevronLeft className="w-3 h-3 text-stone-600" /></button>
+              <span className="text-xs font-bold text-stone-700 mx-1 font-mono">{currentView === 'income' ? selectedDate.getFullYear() : (currentView === 'settings' ? selectedDate.getFullYear() : selectedDate.getMonth() + 1)}</span>
+              {/* Note: Settings usually annual? If monthly, show month? Settings is 'Annual Configuration' mostly? Assumed Year. Home is Month? */}
+              {/* Original logic: if income -> Year, else -> Month. Home shows Month. Settings should probably be Year? */}
+              {/* But settings has config_2025. So Year makes sense. */}
+              {/* Correct Logic: if (income OR settings) -> Year Navigator. if (home) -> Month Navigator. */}
+              <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-white/50 rounded-full transition-colors"><ChevronRight className="w-3 h-3 text-stone-600" /></button>
+            </div>
+          ) : null}
+        </div>
       </header>
 
       <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10">
