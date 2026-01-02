@@ -743,15 +743,15 @@ const ExchangeItem = ({ item, onDelete, onEdit }) => {
   const isFT = item.account === 'FT';
   const twdAmount = Math.round(Number(item.usdAmount) * Number(item.rate));
   const accountTheme = isFT
-    ? { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' }
-    : { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' };
+    ? { bg: 'bg-[#D6DEEB]/60', text: 'text-[#485A85]', border: 'border-[#B4C4DE]' }  // 桔梗 (Indigo)
+    : { bg: 'bg-[#F0EAC2]/60', text: 'text-[#8F8335]', border: 'border-[#E0D695]' }; // 蒸栗 (Amber)
 
   return (
-    <div onClick={() => onEdit && onEdit(item)} className={`${GLASS_CARD} p-4 group border-l-4 ${isSell ? 'border-rose-400' : 'border-emerald-400'} ${onEdit ? 'cursor-pointer hover:bg-white/60' : ''} transition-all`}>
+    <div onClick={() => onEdit && onEdit(item)} className={`${GLASS_CARD} p-4 group border-l-4 ${isSell ? 'border-[#C48286]' : 'border-[#4DA391]'} ${onEdit ? 'cursor-pointer hover:bg-white/60' : ''} transition-all`}>
       <div className="flex justify-between items-center mb-2">
         <div className="flex items-center gap-2">
           <div className={`px-2 py-1 rounded-lg font-bold text-xs ${accountTheme.bg} ${accountTheme.text} border ${accountTheme.border}`}>{isFT ? 'Firstrade' : 'IB'}</div>
-          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isSell ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>{isSell ? '賣出' : '買入'}</span>
+          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isSell ? 'bg-[#E8D3D1]/60 text-[#A65E62]' : 'bg-[#D1E6E1]/60 text-[#2F7567]'}`}>{isSell ? '賣出' : '買入'}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-base font-bold text-stone-800 font-mono">${Number(item.usdAmount).toLocaleString()} USD</span>
@@ -760,7 +760,7 @@ const ExchangeItem = ({ item, onDelete, onEdit }) => {
       </div>
       <div className="flex justify-between items-center text-xs">
         <span className="text-stone-400">{formatDetailedDate(item.date)} @ 匯率 {Number(item.rate).toFixed(2)}</span>
-        <span className={`font-mono font-bold ${isSell ? 'text-rose-500' : 'text-emerald-600'}`}>{isSell ? '+' : '-'}NT$ {twdAmount.toLocaleString()}</span>
+        <span className={`font-mono font-bold ${isSell ? 'text-[#A65E62]' : 'text-[#2F7567]'}`}>{isSell ? '+' : '-'}NT$ {twdAmount.toLocaleString()}</span>
       </div>
     </div>
   );
