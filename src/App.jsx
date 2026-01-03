@@ -2428,7 +2428,7 @@ export default function App() {
 
   // Form Defaults Logic
   useEffect(() => {
-    const groups = newTrans.type === 'monthly' ? settings.monthlyGroups : settings.annualGroups;
+    const groups = newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || []);
     if (groups && groups.length > 0) {
       const currentGroupValid = groups.find(g => g.name === newTrans.group);
       if (!newTrans.group || !currentGroupValid) {
@@ -2453,7 +2453,7 @@ export default function App() {
 
   // --- Stats Calculations ---
   const calculateStats = (type) => {
-    const groupsConfig = type === 'monthly' ? settings.monthlyGroups : settings.annualGroups;
+    const groupsConfig = type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || []);
     const year = selectedDate.getFullYear();
     const month = selectedDate.getMonth();
     const relevantTrans = transactions.filter(t => {
@@ -3031,9 +3031,9 @@ export default function App() {
       <RecurringManagerModal
         isOpen={isRecurringManagerOpen}
         onClose={() => setIsRecurringManagerOpen(false)}
-        items={settings.recurringItems}
+        items={settings.recurringItems || []}
         onSave={handleSaveRecurring}
-        groups={settings.monthlyGroups}
+        groups={settings.monthlyGroups || []}
       />
       <RecurringConfirmModal
         isOpen={isRecurringConfirmOpen}
