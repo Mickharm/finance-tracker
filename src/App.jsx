@@ -2491,8 +2491,8 @@ export default function App() {
     const totalUsed = yearlyTrans.reduce((sum, t) => sum + Number(t.amount), 0);
 
     // Calculate total budget = (Sum of all monthly group budgets * 12) + Sum of all annual group budgets
-    const monthlyTotalBudget = settings.monthlyGroups.reduce((acc, g) => acc + g.items.reduce((s, i) => s + Number(i.budget), 0), 0);
-    const annualTotalBudget = settings.annualGroups.reduce((acc, g) => acc + g.items.reduce((s, i) => s + Number(i.budget), 0), 0);
+    const monthlyTotalBudget = (settings.monthlyGroups || []).reduce((acc, g) => acc + g.items.reduce((s, i) => s + Number(i.budget), 0), 0);
+    const annualTotalBudget = (settings.annualGroups || []).reduce((acc, g) => acc + g.items.reduce((s, i) => s + Number(i.budget), 0), 0);
     const totalBudget = (monthlyTotalBudget * 12) + annualTotalBudget;
 
     return { totalBudget, totalUsed };
@@ -2832,8 +2832,8 @@ export default function App() {
                 <p className="text-xs text-amber-600 mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
               </div>
             </div>
-            <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度預算配置`} groups={settings.monthlyGroups} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
-            <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度預算配置`} groups={settings.annualGroups} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
+            <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度預算配置`} groups={settings.monthlyGroups || []} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
+            <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度預算配置`} groups={settings.annualGroups || []} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
           </div>
         )}
       </main>
@@ -2846,7 +2846,7 @@ export default function App() {
       {isAddTxModalOpen && (
         <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
           {/* 檢查是否有設定預算群組，若無則提示 */}
-          {(settings.monthlyGroups.length === 0 && settings.annualGroups.length === 0) ? (
+          {((settings.monthlyGroups || []).length === 0 && (settings.annualGroups || []).length === 0) ? (
             <div className="text-center py-10">
               <p className="text-stone-500 mb-4">請先設定預算分類</p>
               <GlassButton onClick={() => { setIsAddTxModalOpen(false); setCurrentView('settings'); }}>前往設定</GlassButton>
@@ -2876,14 +2876,14 @@ export default function App() {
               <div className="space-y-3">
                 <div className="relative">
                   <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                    {(newTrans.type === 'monthly' ? settings.monthlyGroups : settings.annualGroups).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
+                    {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
                   </select>
                   <FolderOpen className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
                   <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
                 </div>
                 <div className="relative">
                   <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                    {(newTrans.type === 'monthly' ? settings.monthlyGroups : settings.annualGroups).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
+                    {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
                   </select>
                   <Hash className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
                   <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
