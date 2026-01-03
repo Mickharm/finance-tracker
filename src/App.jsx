@@ -806,7 +806,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
             {items.length === 0 ? <p className="text-center text-xs text-stone-300 py-4">無紀錄</p> : items.map((item) => (
               <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-white/20 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-white/30 rounded-lg p-2 transition-colors' : ''}`}>
                 {itemRenderer(item)}
-                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-1/2 -translate-y-1/2 right-2 z-10 p-1.5 rounded-lg text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
+                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-2 right-2 z-10 p-1.5 rounded-lg text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -1283,7 +1283,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
   );
 };
 
-const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit, onAddExpense }) => {
+const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
   const [viewDate, setViewDate] = useState(selectedDate);
   const [selectedDay, setSelectedDay] = useState(null);
   useEffect(() => setViewDate(selectedDate), [selectedDate]);
@@ -1294,6 +1294,10 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
     newDate.setMonth(viewDate.getMonth() + direction);
     setViewDate(newDate);
     setSelectedDay(null); // Reset selection when changing months
+    // Request historical data for the new year if needed
+    if (onRequestHistory) {
+      onRequestHistory(newDate.getFullYear());
+    }
   };
 
   const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -2650,7 +2654,7 @@ export default function App() {
     await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${viewYear}`), newSettings);
   };
 
-  const handleDateNavigate = (direction) => { const newDate = new Date(selectedDate); if (currentView === 'income') newDate.setFullYear(selectedDate.getFullYear() + direction); else newDate.setMonth(selectedDate.getMonth() + direction); setSelectedDate(newDate); };
+  const handleDateNavigate = (direction) => { const newDate = new Date(selectedDate); if (currentView === 'income' || currentView === 'settings') newDate.setFullYear(selectedDate.getFullYear() + direction); else newDate.setMonth(selectedDate.getMonth() + direction); setSelectedDate(newDate); };
 
   // --- Main Render ---
   return (
@@ -2816,6 +2820,7 @@ export default function App() {
               setIsAddTxModalOpen(true);
             }}
             onAddExpense={() => setIsAddTxModalOpen(true)}
+            onRequestHistory={requestHistory}
           />
         )}
         {currentView === 'settings' && (
