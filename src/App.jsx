@@ -201,6 +201,43 @@ const ModalWrapper = ({ title, onClose, children }) => (
   </div>
 );
 
+// Loading Screen Component
+const LoadingScreen = ({ progress, isVisible }) => {
+  if (!isVisible) return null;
+  return (
+    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F5F5F4] transition-opacity duration-500 ${progress >= 100 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      {/* Background decorations */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-violet-200/30 rounded-full blur-[80px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-rose-200/25 rounded-full blur-[80px] pointer-events-none"></div>
+      <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-emerald-100/20 rounded-full blur-[100px] pointer-events-none"></div>
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Logo */}
+        <div className="w-20 h-20 rounded-2xl bg-white/80 backdrop-blur-xl shadow-lg shadow-stone-200/50 flex items-center justify-center mb-8 animate-pulse">
+          <Wallet className="w-10 h-10 text-stone-600" />
+        </div>
+
+        {/* Title */}
+        <h1 className="text-xl font-bold text-stone-700 mb-6 tracking-tight">記帳助手</h1>
+
+        {/* Progress Bar */}
+        <div className="w-48 h-1.5 bg-stone-200/60 rounded-full overflow-hidden backdrop-blur-sm">
+          <div
+            className="h-full bg-gradient-to-r from-stone-400 to-stone-600 rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${Math.min(progress, 100)}%` }}
+          />
+        </div>
+
+        {/* Status Text */}
+        <p className="text-xs text-stone-400 mt-3 font-mono">
+          {progress < 100 ? '載入資料中...' : '完成'}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, autoFocus = false, children, className = "", ...props }) => (
   <div className={`space-y-1.5 w-full ${className}`}>
     {label && <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">{label}</label>}
@@ -2187,6 +2224,37 @@ export default function App() {
   const [stockGoals, setStockGoals] = useState([]);
   const [usdExchanges, setUsdExchanges] = useState([]);
 
+  // Loading State Tracking
+  const [loadingStates, setLoadingStates] = useState({
+    auth: false,
+    settings: false,
+    transactions: false,
+    incomes: false,
+    salaryHistory: false,
+    partnerTransactions: false,
+    mortgageExpenses: false,
+    mortgageFunding: false,
+    mortgageAnalysis: false,
+    stockGoals: false,
+    usdExchanges: false,
+  });
+  const [isLoadingScreenVisible, setIsLoadingScreenVisible] = useState(true);
+
+  // Calculate loading progress
+  const loadingProgress = useMemo(() => {
+    const states = Object.values(loadingStates);
+    const loaded = states.filter(Boolean).length;
+    return (loaded / states.length) * 100;
+  }, [loadingStates]);
+
+  // Hide loading screen after all data is loaded
+  useEffect(() => {
+    if (loadingProgress >= 100) {
+      const timer = setTimeout(() => setIsLoadingScreenVisible(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [loadingProgress]);
+
   // Recurring Manager State
   const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
   const [isRecurringConfirmOpen, setIsRecurringConfirmOpen] = useState(false);
@@ -2233,6 +2301,8 @@ export default function App() {
       if (u?.uid !== user?.uid) {
         setUser(u);
       }
+      // Mark auth as loaded
+      setLoadingStates(prev => ({ ...prev, auth: true }));
     });
     return () => unsubscribe();
   }, []);
@@ -2241,7 +2311,7 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     const unsubs = [];
-    const createSub = (col, setter, order = 'date', dir = 'desc') => {
+    const createSub = (col, setter, loadingKey, order = 'date', dir = 'desc') => {
       const q = query(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col), orderBy(order, dir));
       unsubs.push(onSnapshot(q, (s) => {
         const rawData = s.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -2254,18 +2324,20 @@ export default function App() {
           }
         });
         setter(uniqueData);
+        // Mark this collection as loaded
+        if (loadingKey) setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
       }, (error) => console.error(`Error fetching ${col}:`, error)));
     };
 
     // createSub('transactions', setTransactions); // Managed separately
-    createSub('incomes', setIncomes);
-    createSub('salary_history', setSalaryHistory);
-    createSub('partner_savings', setPartnerTransactions);
-    createSub('mortgage_expenses', setMortgageExpenses);
-    createSub('mortgage_funding', setMortgageFunding);
-    createSub('mortgage_analysis', setMortgageAnalysis, 'createdAt', 'asc');
-    createSub('stock_goals', setStockGoals, 'year', 'desc');
-    createSub('usd_exchanges', setUsdExchanges);
+    createSub('incomes', setIncomes, 'incomes');
+    createSub('salary_history', setSalaryHistory, 'salaryHistory');
+    createSub('partner_savings', setPartnerTransactions, 'partnerTransactions');
+    createSub('mortgage_expenses', setMortgageExpenses, 'mortgageExpenses');
+    createSub('mortgage_funding', setMortgageFunding, 'mortgageFunding');
+    createSub('mortgage_analysis', setMortgageAnalysis, 'mortgageAnalysis', 'createdAt', 'asc');
+    createSub('stock_goals', setStockGoals, 'stockGoals', 'year', 'desc');
+    createSub('usd_exchanges', setUsdExchanges, 'usdExchanges');
 
     return () => {
       unsubs.forEach(u => u());
@@ -2312,6 +2384,8 @@ export default function App() {
               return strB.localeCompare(strA);
             });
             setTransactions(allDocs);
+            // Mark transactions as loaded
+            setLoadingStates(prev => ({ ...prev, transactions: true }));
           }
         } catch (err) {
           console.error("SafeSort Crash Prevented:", err);
@@ -2339,6 +2413,8 @@ export default function App() {
     const unsubSettings = onSnapshot(settingsRef, async (docSnap) => {
       if (docSnap.exists()) {
         setSettings(docSnap.data());
+        // Mark settings as loaded
+        setLoadingStates(prev => ({ ...prev, settings: true }));
       } else {
         // Migration: If config for this year doesn't exist, try to copy from config_v2 (legacy global)
         // or just use defaults.
@@ -2663,6 +2739,9 @@ export default function App() {
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-violet-200/30 rounded-full blur-[80px] pointer-events-none z-0"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-rose-200/25 rounded-full blur-[80px] pointer-events-none z-0"></div>
       <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-emerald-100/20 rounded-full blur-[100px] pointer-events-none z-0"></div>
+
+      {/* Loading Screen */}
+      <LoadingScreen progress={loadingProgress} isVisible={isLoadingScreenVisible} />
 
       <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
 
