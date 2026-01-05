@@ -2268,7 +2268,7 @@ export default function App() {
   useEffect(() => {
     if (appPhase === 'fadeOut') {
       // Wait for fade out animation to complete, then show main content
-      const timer = setTimeout(() => setAppPhase('ready'), 400);
+      const timer = setTimeout(() => setAppPhase('ready'), 500);
       return () => clearTimeout(timer);
     }
   }, [appPhase]);
