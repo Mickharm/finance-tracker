@@ -2239,21 +2239,42 @@ export default function App() {
     usdExchanges: false,
   });
   const [isLoadingScreenVisible, setIsLoadingScreenVisible] = useState(true);
+  const [visualProgress, setVisualProgress] = useState(0);
 
-  // Calculate loading progress
-  const loadingProgress = useMemo(() => {
+  // Calculate actual loading progress
+  const actualProgress = useMemo(() => {
     const states = Object.values(loadingStates);
     const loaded = states.filter(Boolean).length;
     return (loaded / states.length) * 100;
   }, [loadingStates]);
 
-  // Hide loading screen after all data is loaded
+  // Animate visual progress to smoothly reach 100%
   useEffect(() => {
-    if (loadingProgress >= 100) {
-      const timer = setTimeout(() => setIsLoadingScreenVisible(false), 600);
+    const interval = setInterval(() => {
+      setVisualProgress(prev => {
+        // If actual progress is 100%, animate quickly to 100%
+        if (actualProgress >= 100) {
+          const increment = Math.max(5, (100 - prev) * 0.3);
+          return Math.min(100, prev + increment);
+        }
+        // Otherwise, follow actual progress but slightly slower
+        const target = actualProgress;
+        if (prev < target) {
+          return Math.min(target, prev + Math.max(1, (target - prev) * 0.2));
+        }
+        return prev;
+      });
+    }, 50);
+    return () => clearInterval(interval);
+  }, [actualProgress]);
+
+  // Hide loading screen only after visual progress reaches 100%
+  useEffect(() => {
+    if (visualProgress >= 99.5) {
+      const timer = setTimeout(() => setIsLoadingScreenVisible(false), 400);
       return () => clearTimeout(timer);
     }
-  }, [loadingProgress]);
+  }, [visualProgress]);
 
   // Recurring Manager State
   const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
@@ -2741,7 +2762,7 @@ export default function App() {
       <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-emerald-100/20 rounded-full blur-[100px] pointer-events-none z-0"></div>
 
       {/* Loading Screen */}
-      <LoadingScreen progress={loadingProgress} isVisible={isLoadingScreenVisible} />
+      <LoadingScreen progress={visualProgress} isVisible={isLoadingScreenVisible} />
 
       <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
 
