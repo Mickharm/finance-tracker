@@ -202,22 +202,15 @@ const ModalWrapper = ({ title, onClose, children }) => (
 );
 
 // Loading Screen Component
-const LoadingScreen = ({ progress, isVisible }) => {
-  const [hasCompleted, setHasCompleted] = useState(false);
+const LoadingScreen = ({ progress, appPhase }) => {
+  // Don't render after ready phase
+  if (appPhase === 'ready') return null;
 
-  // Only set completed after progress reaches 100% and a delay for fade animation
-  useEffect(() => {
-    if (progress >= 99.5 && !hasCompleted) {
-      const timer = setTimeout(() => setHasCompleted(true), 350);
-      return () => clearTimeout(timer);
-    }
-  }, [progress, hasCompleted]);
-
-  // Don't render if fully completed
-  if (hasCompleted) return null;
+  // Show 100% when fading out
+  const displayProgress = appPhase === 'fadeOut' ? 100 : progress;
 
   return (
-    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F5F5F4] transition-opacity duration-300 ${progress >= 99.5 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F5F5F4] transition-opacity duration-300 ${appPhase === 'fadeOut' ? 'opacity-0' : 'opacity-100'}`}>
       {/* Background decorations */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-violet-200/30 rounded-full blur-[80px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-rose-200/25 rounded-full blur-[80px] pointer-events-none"></div>
@@ -237,13 +230,13 @@ const LoadingScreen = ({ progress, isVisible }) => {
         <div className="w-48 h-1.5 bg-stone-200/60 rounded-full overflow-hidden backdrop-blur-sm">
           <div
             className="h-full bg-gradient-to-r from-stone-400 to-stone-600 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${Math.min(progress, 100)}%` }}
+            style={{ width: `${Math.min(displayProgress, 100)}%` }}
           />
         </div>
 
         {/* Status Text */}
         <p className="text-xs text-stone-400 mt-3 font-mono">
-          {progress < 99 ? '載入資料中...' : '完成'}
+          {appPhase === 'fadeOut' ? '完成' : '載入資料中...'}
         </p>
       </div>
     </div>
@@ -2250,43 +2243,35 @@ export default function App() {
     stockGoals: false,
     usdExchanges: false,
   });
-  const [isLoadingScreenVisible, setIsLoadingScreenVisible] = useState(true);
-  const [visualProgress, setVisualProgress] = useState(0);
 
-  // Calculate actual loading progress
-  const actualProgress = useMemo(() => {
+  // App Phase: 'loading' -> 'fadeOut' -> 'ready'
+  const [appPhase, setAppPhase] = useState('loading');
+
+  // Check if HomeView required data is loaded (settings + transactions)
+  const isDataReady = loadingStates.auth && loadingStates.settings && loadingStates.transactions;
+
+  // Calculate loading progress based on actual states
+  const loadingProgress = useMemo(() => {
     const states = Object.values(loadingStates);
     const loaded = states.filter(Boolean).length;
     return (loaded / states.length) * 100;
   }, [loadingStates]);
 
-  // Animate visual progress to smoothly reach 100%
+  // Phase transitions
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVisualProgress(prev => {
-        // If actual progress is 100%, animate quickly to 100%
-        if (actualProgress >= 100) {
-          const increment = Math.max(5, (100 - prev) * 0.3);
-          return Math.min(100, prev + increment);
-        }
-        // Otherwise, follow actual progress but slightly slower
-        const target = actualProgress;
-        if (prev < target) {
-          return Math.min(target, prev + Math.max(1, (target - prev) * 0.2));
-        }
-        return prev;
-      });
-    }, 50);
-    return () => clearInterval(interval);
-  }, [actualProgress]);
+    if (appPhase === 'loading' && isDataReady) {
+      // Data ready -> start fade out
+      setAppPhase('fadeOut');
+    }
+  }, [appPhase, isDataReady]);
 
-  // Hide loading screen only after visual progress reaches 100%
   useEffect(() => {
-    if (visualProgress >= 99.5) {
-      const timer = setTimeout(() => setIsLoadingScreenVisible(false), 400);
+    if (appPhase === 'fadeOut') {
+      // Wait for fade out animation to complete, then show main content
+      const timer = setTimeout(() => setAppPhase('ready'), 400);
       return () => clearTimeout(timer);
     }
-  }, [visualProgress]);
+  }, [appPhase]);
 
   // Recurring Manager State
   const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
@@ -2774,7 +2759,7 @@ export default function App() {
       <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-emerald-100/20 rounded-full blur-[100px] pointer-events-none z-0"></div>
 
       {/* Loading Screen */}
-      <LoadingScreen progress={visualProgress} isVisible={isLoadingScreenVisible} />
+      <LoadingScreen progress={loadingProgress} appPhase={appPhase} />
 
       <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
 
