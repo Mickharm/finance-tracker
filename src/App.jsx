@@ -2774,384 +2774,387 @@ export default function App() {
       {/* Loading Screen */}
       <LoadingScreen progress={loadingProgress} appPhase={appPhase} />
 
-      <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
+      {/* Main App Content - only show after loading complete */}
+      {appPhase === 'ready' && (
+        <>
+          <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
 
+          {/* Sidebar Menu */}
+          {isMenuOpen && (
+            <div className="fixed inset-0 z-50 flex animate-in slide-in-from-left duration-300">
+              <div className="w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-6 relative border-r border-stone-100">
+                <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 p-2 bg-stone-100 rounded-full text-stone-400 hover:bg-stone-200"><X className="w-4 h-4" /></button>
+                <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-stone-700 flex items-center gap-2"><img src={icon} className="w-8 h-8 rounded-lg shadow-md" alt="Logo" /> 記帳助手</h1><p className="text-xs text-stone-400 mt-1 pl-1">v1.0.0(Mick)</p></div>
+                <div className="space-y-6">
+                  {MENU_SECTIONS.map(section => (
+                    <div key={section.title}>
+                      <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 px-2">{section.title}</h3>
+                      <div className="space-y-1">
+                        {section.items.map(item => (
+                          <button key={item.id} onClick={() => handleViewChange(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all ${currentView === item.id ? 'bg-stone-800 text-white shadow-lg shadow-stone-300/50' : 'text-stone-500 hover:bg-stone-100'}`}>
+                            <item.icon className={`w-4 h-4 ${currentView === item.id ? 'text-indigo-300' : ''}`} />
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1 bg-stone-900/20 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
+            </div>
+          )}
 
+          <header className="bg-white/60 backdrop-blur-md px-4 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20 animate-in fade-in duration-300">
+            <div onClick={() => setIsMenuOpen(true)} className="p-2 glass-button rounded-xl cursor-pointer hover:bg-white/20 transition-all active:scale-95 z-20">
+              <Menu className="w-5 h-5 text-stone-600" />
+            </div>
+            <div className="flex-1 flex justify-center z-10">
+              <h1 className="text-base font-bold text-stone-700 tracking-wide flex items-center gap-2">
+                {MENU_SECTIONS.flatMap(s => s.items).find(i => i.id === currentView)?.icon && React.createElement(MENU_SECTIONS.flatMap(s => s.items).find(i => i.id === currentView).icon, { className: "w-4 h-4 text-stone-500" })}
+                {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label}
+              </h1>
+            </div>
+            <div className="w-auto min-w-[36px] flex justify-end z-20">
+              {(currentView === 'home' || currentView === 'income' || currentView === 'settings') ? (
+                <div className="flex items-center bg-white/40 backdrop-blur-md rounded-full px-1 py-0.5 border border-white/20 shadow-sm">
+                  <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-white/50 rounded-full transition-colors"><ChevronLeft className="w-3 h-3 text-stone-600" /></button>
+                  <span className="text-xs font-bold text-stone-700 mx-1 font-mono whitespace-nowrap">{currentView === 'home' ? `${selectedDate.getMonth() + 1} 月` : `${selectedDate.getFullYear()} 年`}</span>
+                  {/* Note: Settings usually annual? If monthly, show month? Settings is 'Annual Configuration' mostly? Assumed Year. Home is Month? */}
+                  {/* Original logic: if income -> Year, else -> Month. Home shows Month. Settings should probably be Year? */}
+                  {/* But settings has config_2025. So Year makes sense. */}
+                  {/* Correct Logic: if (income OR settings) -> Year Navigator. if (home) -> Month Navigator. */}
+                  <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-white/50 rounded-full transition-colors"><ChevronRight className="w-3 h-3 text-stone-600" /></button>
+                </div>
+              ) : null}
+            </div>
+          </header>
 
-      {/* Sidebar Menu */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-50 flex animate-in slide-in-from-left duration-300">
-          <div className="w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-6 relative border-r border-stone-100">
-            <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 p-2 bg-stone-100 rounded-full text-stone-400 hover:bg-stone-200"><X className="w-4 h-4" /></button>
-            <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-stone-700 flex items-center gap-2"><img src={icon} className="w-8 h-8 rounded-lg shadow-md" alt="Logo" /> 記帳助手</h1><p className="text-xs text-stone-400 mt-1 pl-1">v1.0.0(Mick)</p></div>
-            <div className="space-y-6">
-              {MENU_SECTIONS.map(section => (
-                <div key={section.title}>
-                  <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 px-2">{section.title}</h3>
-                  <div className="space-y-1">
-                    {section.items.map(item => (
-                      <button key={item.id} onClick={() => handleViewChange(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all ${currentView === item.id ? 'bg-stone-800 text-white shadow-lg shadow-stone-300/50' : 'text-stone-500 hover:bg-stone-100'}`}>
-                        <item.icon className={`w-4 h-4 ${currentView === item.id ? 'text-indigo-300' : ''}`} />
-                        {item.label}
-                      </button>
-                    ))}
+          <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10">
+            {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} yearlyTotalStats={yearlyTotalStats} />}
+            {/* 新增: Investment Watchlist */}
+            {currentView === 'watchlist' && <WatchlistView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
+            {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
+            {currentView === 'mortgage' && (
+              <MortgageView
+                mortgageExpenses={mortgageExpenses}
+                mortgageAnalysis={mortgageAnalysis}
+                mortgageFunding={mortgageFunding}
+                deleteMortgageExp={deleteMortgageExp}
+                deleteMortgageAnalysis={deleteMortgageAnalysis}
+                deleteMortgageFunding={deleteMortgageFunding}
+                setMortgageExpType={setMortgageExpType}
+                setIsAddMortgageExpModalOpen={setIsAddMortgageExpModalOpen}
+                setIsAddMortgageAnalysisModalOpen={setIsAddMortgageAnalysisModalOpen}
+                setIsAddMortgageFundingModalOpen={setIsAddMortgageFundingModalOpen}
+                onEditExp={(item) => {
+                  setNewMortgageExp({ ...item, amount: item.amount });
+                  setMortgageExpType(item.type);
+                  setEditingId(item.id);
+                  setIsAddMortgageExpModalOpen(true);
+                }}
+                onEditAnalysis={(item) => {
+                  setNewMortgageAnalysis({ ...item, amount: item.amount });
+                  setEditingId(item.id);
+                  setIsAddMortgageAnalysisModalOpen(true);
+                }}
+                onEditFunding={(item) => {
+                  setNewMortgageFunding({ ...item, amount: item.amount });
+                  setEditingId(item.id);
+                  setIsAddMortgageFundingModalOpen(true);
+                }}
+              />
+            )}
+            {currentView === 'principal' && (
+              <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
+            )}
+            {currentView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} />}
+            {currentView === 'income' && (
+              <IncomeView
+                incomes={incomes}
+                salaryHistory={salaryHistory}
+                onAddSalary={(own) => { setNewSalaryRecord(prev => ({ ...prev, owner: own })); setIsAddSalaryModalOpen(true); }}
+                onDeleteSalary={handleDeleteSalaryRecord}
+                onDeleteIncome={handleDeleteIncome}
+                onAddIncome={(own, item = null) => {
+                  if (item) {
+                    setNewIncome({ ...item, amount: item.amount });
+                    setEditingId(item.id);
+                  } else {
+                    setNewIncome(prev => ({ ...prev, owner: own, amount: '', category: '薪水', note: '', date: selectedDate ? toLocalISOString(selectedDate) : getTodayString() }));
+                  }
+                  setIsAddIncomeModalOpen(true);
+                }}
+                onEditSalary={(item) => {
+                  setNewSalaryRecord({ ...item, amount: item.amount });
+                  setEditingId(item.id);
+                  setIsAddSalaryModalOpen(true);
+                }}
+                selectedDate={selectedDate}
+              />
+            )}
+            {currentView === 'partner' && (
+              <PartnerView
+                partnerTransactions={partnerTransactions}
+                onDelete={deletePartnerTx}
+                onAdd={(item = null) => {
+                  if (item && item.id) {
+                    setNewPartnerTx({ ...item, amount: item.amount });
+                    setEditingId(item.id);
+                  } else {
+                    setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
+                  }
+                  setIsAddPartnerTxModalOpen(true);
+                }}
+                onEdit={(item) => {
+                  setNewPartnerTx({ ...item, amount: item.amount });
+                  setEditingId(item.id);
+                  setIsAddPartnerTxModalOpen(true);
+                }}
+              />
+            )}
+            {currentView === 'calendar' && (
+              <CalendarView
+                transactions={transactions}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+                deleteTransaction={deleteTransaction}
+                onEdit={(item) => {
+                  console.log('[DEBUG] CalendarView onEdit triggered - item:', item);
+                  if (!item.id) {
+                    alert('錯誤：此交易沒有有效ID，無法編輯。請重新整理頁面後再試。');
+                    return;
+                  }
+                  setNewTrans({ ...item, amount: item.amount });
+                  setEditingId(item.id);
+                  console.log('[DEBUG] Set editingId to:', item.id);
+                  setIsAddTxModalOpen(true);
+                }}
+                onAddExpense={() => setIsAddTxModalOpen(true)}
+                onRequestHistory={requestHistory}
+              />
+            )}
+            {currentView === 'settings' && (
+              <div className="pb-24">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+                  <div className="p-2 bg-amber-100 rounded-lg text-amber-600"><SettingsIcon className="w-5 h-5" /></div>
+                  <div>
+                    <h3 className="font-bold text-amber-800 text-sm">正在編輯 {selectedDate.getFullYear()} 年度預算</h3>
+                    <p className="text-xs text-amber-600 mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex-1 bg-stone-900/20 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
-        </div>
-      )}
-
-      <header className="bg-white/60 backdrop-blur-md px-4 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20">
-        <div onClick={() => setIsMenuOpen(true)} className="p-2 glass-button rounded-xl cursor-pointer hover:bg-white/20 transition-all active:scale-95 z-20">
-          <Menu className="w-5 h-5 text-stone-600" />
-        </div>
-        <div className="flex-1 flex justify-center z-10">
-          <h1 className="text-base font-bold text-stone-700 tracking-wide flex items-center gap-2">
-            {MENU_SECTIONS.flatMap(s => s.items).find(i => i.id === currentView)?.icon && React.createElement(MENU_SECTIONS.flatMap(s => s.items).find(i => i.id === currentView).icon, { className: "w-4 h-4 text-stone-500" })}
-            {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label}
-          </h1>
-        </div>
-        <div className="w-auto min-w-[36px] flex justify-end z-20">
-          {(currentView === 'home' || currentView === 'income' || currentView === 'settings') ? (
-            <div className="flex items-center bg-white/40 backdrop-blur-md rounded-full px-1 py-0.5 border border-white/20 shadow-sm">
-              <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-white/50 rounded-full transition-colors"><ChevronLeft className="w-3 h-3 text-stone-600" /></button>
-              <span className="text-xs font-bold text-stone-700 mx-1 font-mono whitespace-nowrap">{currentView === 'home' ? `${selectedDate.getMonth() + 1} 月` : `${selectedDate.getFullYear()} 年`}</span>
-              {/* Note: Settings usually annual? If monthly, show month? Settings is 'Annual Configuration' mostly? Assumed Year. Home is Month? */}
-              {/* Original logic: if income -> Year, else -> Month. Home shows Month. Settings should probably be Year? */}
-              {/* But settings has config_2025. So Year makes sense. */}
-              {/* Correct Logic: if (income OR settings) -> Year Navigator. if (home) -> Month Navigator. */}
-              <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-white/50 rounded-full transition-colors"><ChevronRight className="w-3 h-3 text-stone-600" /></button>
-            </div>
-          ) : null}
-        </div>
-      </header>
-
-      <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10">
-        {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} yearlyTotalStats={yearlyTotalStats} />}
-        {/* 新增: Investment Watchlist */}
-        {currentView === 'watchlist' && <WatchlistView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
-        {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
-        {currentView === 'mortgage' && (
-          <MortgageView
-            mortgageExpenses={mortgageExpenses}
-            mortgageAnalysis={mortgageAnalysis}
-            mortgageFunding={mortgageFunding}
-            deleteMortgageExp={deleteMortgageExp}
-            deleteMortgageAnalysis={deleteMortgageAnalysis}
-            deleteMortgageFunding={deleteMortgageFunding}
-            setMortgageExpType={setMortgageExpType}
-            setIsAddMortgageExpModalOpen={setIsAddMortgageExpModalOpen}
-            setIsAddMortgageAnalysisModalOpen={setIsAddMortgageAnalysisModalOpen}
-            setIsAddMortgageFundingModalOpen={setIsAddMortgageFundingModalOpen}
-            onEditExp={(item) => {
-              setNewMortgageExp({ ...item, amount: item.amount });
-              setMortgageExpType(item.type);
-              setEditingId(item.id);
-              setIsAddMortgageExpModalOpen(true);
-            }}
-            onEditAnalysis={(item) => {
-              setNewMortgageAnalysis({ ...item, amount: item.amount });
-              setEditingId(item.id);
-              setIsAddMortgageAnalysisModalOpen(true);
-            }}
-            onEditFunding={(item) => {
-              setNewMortgageFunding({ ...item, amount: item.amount });
-              setEditingId(item.id);
-              setIsAddMortgageFundingModalOpen(true);
-            }}
-          />
-        )}
-        {currentView === 'principal' && (
-          <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
-        )}
-        {currentView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} />}
-        {currentView === 'income' && (
-          <IncomeView
-            incomes={incomes}
-            salaryHistory={salaryHistory}
-            onAddSalary={(own) => { setNewSalaryRecord(prev => ({ ...prev, owner: own })); setIsAddSalaryModalOpen(true); }}
-            onDeleteSalary={handleDeleteSalaryRecord}
-            onDeleteIncome={handleDeleteIncome}
-            onAddIncome={(own, item = null) => {
-              if (item) {
-                setNewIncome({ ...item, amount: item.amount });
-                setEditingId(item.id);
-              } else {
-                setNewIncome(prev => ({ ...prev, owner: own, amount: '', category: '薪水', note: '', date: selectedDate ? toLocalISOString(selectedDate) : getTodayString() }));
-              }
-              setIsAddIncomeModalOpen(true);
-            }}
-            onEditSalary={(item) => {
-              setNewSalaryRecord({ ...item, amount: item.amount });
-              setEditingId(item.id);
-              setIsAddSalaryModalOpen(true);
-            }}
-            selectedDate={selectedDate}
-          />
-        )}
-        {currentView === 'partner' && (
-          <PartnerView
-            partnerTransactions={partnerTransactions}
-            onDelete={deletePartnerTx}
-            onAdd={(item = null) => {
-              if (item && item.id) {
-                setNewPartnerTx({ ...item, amount: item.amount });
-                setEditingId(item.id);
-              } else {
-                setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
-              }
-              setIsAddPartnerTxModalOpen(true);
-            }}
-            onEdit={(item) => {
-              setNewPartnerTx({ ...item, amount: item.amount });
-              setEditingId(item.id);
-              setIsAddPartnerTxModalOpen(true);
-            }}
-          />
-        )}
-        {currentView === 'calendar' && (
-          <CalendarView
-            transactions={transactions}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            deleteTransaction={deleteTransaction}
-            onEdit={(item) => {
-              console.log('[DEBUG] CalendarView onEdit triggered - item:', item);
-              if (!item.id) {
-                alert('錯誤：此交易沒有有效ID，無法編輯。請重新整理頁面後再試。');
-                return;
-              }
-              setNewTrans({ ...item, amount: item.amount });
-              setEditingId(item.id);
-              console.log('[DEBUG] Set editingId to:', item.id);
-              setIsAddTxModalOpen(true);
-            }}
-            onAddExpense={() => setIsAddTxModalOpen(true)}
-            onRequestHistory={requestHistory}
-          />
-        )}
-        {currentView === 'settings' && (
-          <div className="pb-24">
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg text-amber-600"><SettingsIcon className="w-5 h-5" /></div>
-              <div>
-                <h3 className="font-bold text-amber-800 text-sm">正在編輯 {selectedDate.getFullYear()} 年度預算</h3>
-                <p className="text-xs text-amber-600 mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
+                <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度預算配置`} groups={settings.monthlyGroups || []} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
+                <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度預算配置`} groups={settings.annualGroups || []} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
               </div>
-            </div>
-            <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度預算配置`} groups={settings.monthlyGroups || []} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
-            <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度預算配置`} groups={settings.annualGroups || []} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
-          </div>
-        )}
-      </main>
+            )}
+          </main>
 
-      {currentView === 'home' && (<button onClick={() => setIsAddTxModalOpen(true)} className="absolute bottom-8 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>)}
+          {currentView === 'home' && (<button onClick={() => setIsAddTxModalOpen(true)} className="absolute bottom-8 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>)}
 
 
 
-      {/* --- Modals --- */}
-      {isAddTxModalOpen && (
-        <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
-          {/* 檢查是否有設定預算群組，若無則提示 */}
-          {((settings.monthlyGroups || []).length === 0 && (settings.annualGroups || []).length === 0) ? (
-            <div className="text-center py-10">
-              <p className="text-stone-500 mb-4">請先設定預算分類</p>
-              <GlassButton onClick={() => { setIsAddTxModalOpen(false); setCurrentView('settings'); }}>前往設定</GlassButton>
-            </div>
-          ) : (
-            <form onSubmit={handleAddTransaction} className="space-y-4">
-              <div className="flex justify-end">
-                <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-500 underline flex items-center gap-1 hover:text-stone-800"><SettingsIcon className="w-3 h-3" />管理固定支出</button>
-              </div>
-              <CalculatorInput
-                value={newTrans.amount}
-                onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
-                label="金額"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-stone-100/50 p-1 rounded-2xl flex">
-                  <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'monthly', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'monthly' ? 'bg-white shadow-sm text-stone-800' : 'text-stone-400'}`}>月度</button>
-                  <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'annual', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'annual' ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>年度</button>
+          {/* --- Modals --- */}
+          {isAddTxModalOpen && (
+            <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
+              {/* 檢查是否有設定預算群組，若無則提示 */}
+              {((settings.monthlyGroups || []).length === 0 && (settings.annualGroups || []).length === 0) ? (
+                <div className="text-center py-10">
+                  <p className="text-stone-500 mb-4">請先設定預算分類</p>
+                  <GlassButton onClick={() => { setIsAddTxModalOpen(false); setCurrentView('settings'); }}>前往設定</GlassButton>
                 </div>
-                <div className="bg-stone-100/50 p-1 rounded-2xl flex">
-                  <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
-                  <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
-                </div>
-              </div>
+              ) : (
+                <form onSubmit={handleAddTransaction} className="space-y-4">
+                  <div className="flex justify-end">
+                    <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-500 underline flex items-center gap-1 hover:text-stone-800"><SettingsIcon className="w-3 h-3" />管理固定支出</button>
+                  </div>
+                  <CalculatorInput
+                    value={newTrans.amount}
+                    onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
+                    label="金額"
+                  />
 
-              <div className="space-y-3">
-                <div className="relative">
-                  <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                    {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
-                  </select>
-                  <FolderOpen className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
-                  <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
-                </div>
-                <div className="relative">
-                  <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                    {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
-                  </select>
-                  <Hash className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
-                  <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-stone-100/50 p-1 rounded-2xl flex">
+                      <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'monthly', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'monthly' ? 'bg-white shadow-sm text-stone-800' : 'text-stone-400'}`}>月度</button>
+                      <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'annual', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'annual' ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>年度</button>
+                    </div>
+                    <div className="bg-stone-100/50 p-1 rounded-2xl flex">
+                      <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
+                      <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
+                    </div>
+                  </div>
 
-              <div className="flex flex-col gap-3 min-w-0">
-                <div className="w-full">
-                  <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
-                </div>
-                <div className="w-full relative">
-                  <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." />
-                  <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
-                </div>
-              </div>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
+                        {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
+                      </select>
+                      <FolderOpen className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
+                      <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
+                    </div>
+                    <div className="relative">
+                      <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
+                        {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
+                      </select>
+                      <Hash className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
+                      <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
+                    </div>
+                  </div>
 
-              <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
-            </form>
+                  <div className="flex flex-col gap-3 min-w-0">
+                    <div className="w-full">
+                      <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
+                    </div>
+                    <div className="w-full relative">
+                      <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." />
+                      <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
+                    </div>
+                  </div>
+
+                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                </form>
+              )}
+            </ModalWrapper>
           )}
-        </ModalWrapper>
+
+          {/* Other Modals... (Same structure) */}
+          {isAddMortgageExpModalOpen && (
+            <ModalWrapper title={mortgageExpType === 'down_payment' ? '新增頭期雜支' : '新增雜支紀錄'} onClose={() => setIsAddMortgageExpModalOpen(false)}>
+              <form onSubmit={handleAddMortgageExp} className="space-y-4">
+                <InputField label="項目名稱" value={newMortgageExp.name} onChange={e => setNewMortgageExp({ ...newMortgageExp, name: e.target.value })} autoFocus required />
+                <InputField label="金額" type="number" value={newMortgageExp.amount} onChange={e => setNewMortgageExp({ ...newMortgageExp, amount: e.target.value })} required />
+                <InputField label="日期" type="date" value={newMortgageExp.date} onChange={e => setNewMortgageExp({ ...newMortgageExp, date: e.target.value })} required />
+                {mortgageExpType === 'misc_appliances' && (<InputField label="品牌" value={newMortgageExp.brand} onChange={e => setNewMortgageExp({ ...newMortgageExp, brand: e.target.value })} placeholder="品牌" />)}
+                <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} />
+                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
+              </form>
+            </ModalWrapper>
+          )}
+
+          {isAddMortgageFundingModalOpen && (
+            <ModalWrapper title="新增頭期款來源" onClose={() => setIsAddMortgageFundingModalOpen(false)}>
+              <form onSubmit={handleAddMortgageFunding} className="space-y-4">
+                <InputField label="資金來源" value={newMortgageFunding.source} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, source: e.target.value })} placeholder=" " autoFocus required />
+                <InputField label="股票代碼 (選填)" value={newMortgageFunding.symbol} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, symbol: e.target.value })} placeholder=" " />
+                <div className="flex gap-2">
+                  <div className="flex-1"><InputField label="金額/單價" type="number" value={newMortgageFunding.amount} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, amount: e.target.value })} required /></div>
+                  <div className="w-24"><InputField label="匯率" type="number" value={newMortgageFunding.rate} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, rate: e.target.value })} placeholder="1.0" /></div>
+                </div>
+                <InputField label="股數 (選填)" type="number" value={newMortgageFunding.shares} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, shares: e.target.value })} placeholder="0" />
+                <InputField label="日期" type="date" value={newMortgageFunding.date} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, date: e.target.value })} required />
+                <InputField label="備註" value={newMortgageFunding.note} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, note: e.target.value })} />
+                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
+              </form>
+            </ModalWrapper>
+          )}
+
+          {isAddMortgageAnalysisModalOpen && (
+            <ModalWrapper title="新增划算試算項目" onClose={() => setIsAddMortgageAnalysisModalOpen(false)}>
+              <form onSubmit={handleAddMortgageAnalysis} className="space-y-4">
+                <InputField label="項目名稱" value={newMortgageAnalysis.name} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, name: e.target.value })} autoFocus required />
+                <InputField label="金額" type="number" value={newMortgageAnalysis.amount} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, amount: e.target.value })} required />
+                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
+              </form>
+            </ModalWrapper>
+          )}
+
+          {isAddIncomeModalOpen && (
+            <ModalWrapper title={editingId ? "編輯收入" : "新增收入"} onClose={() => { setIsAddIncomeModalOpen(false); setEditingId(null); setNewIncome({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' }); }}>
+              <form onSubmit={handleAddIncome} className="space-y-6">
+                <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
+                <div className="space-y-1.5"><label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
+                <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
+                <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
+                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認入帳'}</GlassButton>
+              </form>
+            </ModalWrapper>
+          )}
+
+          {isAddPartnerTxModalOpen && (
+            <ModalWrapper title={editingId ? "編輯資金紀錄" : "新增資金紀錄"} onClose={() => { setIsAddPartnerTxModalOpen(false); setEditingId(null); setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' }); }}>
+              <form onSubmit={handleAddPartnerTx} className="space-y-6">
+                <div className="flex gap-2">
+                  <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'saving' })} variant={newPartnerTx.type === 'saving' ? 'success' : 'ghost'} className="flex-1">存入資金</GlassButton>
+                  <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'expense' })} variant={newPartnerTx.type === 'expense' ? 'danger' : 'ghost'} className="flex-1">支出/提領</GlassButton>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1 mb-1">金額</label>
+                  <div className="relative"><input type="number" value={newPartnerTx.amount} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, amount: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none text-sm`} placeholder="0" autoFocus required /></div>
+                  <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">{[10000, 25000, 30000, 50000].map(amt => (<button key={amt} type="button" onClick={() => setNewPartnerTx({ ...newPartnerTx, amount: amt })} className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg text-xs font-bold text-stone-600 whitespace-nowrap transition-colors">${amt.toLocaleString()}</button>))}</div>
+                </div>
+                <InputField label="日期" type="date" value={newPartnerTx.date} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, date: e.target.value })} required />
+                <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
+                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+              </form>
+            </ModalWrapper>
+          )}
+
+          {isAddSalaryModalOpen && (
+            <ModalWrapper title="調薪紀錄" onClose={() => setIsAddSalaryModalOpen(false)}>
+              <form onSubmit={handleAddSalaryRecord} className="space-y-6">
+                <InputField label="新薪資金額" type="number" value={newSalaryRecord.amount} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, amount: e.target.value })} autoFocus required />
+                <InputField label="生效日期" type="date" value={newSalaryRecord.date} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, date: e.target.value })} required />
+                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存調薪'}</GlassButton>
+              </form>
+            </ModalWrapper>
+          )}
+
+          {isAddExchangeModalOpen && (
+            <ModalWrapper title={editingId ? "編輯換匯紀錄" : "新增換匯紀錄"} onClose={() => { setIsAddExchangeModalOpen(false); setEditingId(null); setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' }); }}>
+              <form onSubmit={handleAddExchange} className="space-y-4">
+                {/* Buy/Sell Toggle */}
+                <div className="flex gap-2">
+                  <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'buy' })} variant={newExchange.type === 'buy' ? 'success' : 'ghost'} className="flex-1">買入美金</GlassButton>
+                  <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'sell' })} variant={newExchange.type === 'sell' ? 'danger' : 'ghost'} className="flex-1">賣出美金</GlassButton>
+                </div>
+                {/* Account Toggle */}
+                <div className="flex gap-2">
+                  <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'FT' })} variant={newExchange.account === 'FT' ? 'primary' : 'ghost'} className="flex-1">Firstrade</GlassButton>
+                  <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'IB' })} variant={newExchange.account === 'IB' ? 'primary' : 'ghost'} className="flex-1">IB</GlassButton>
+                </div>
+                <InputField label={newExchange.type === 'sell' ? "賣出美金 (USD)" : "買入美金 (USD)"} type="number" value={newExchange.usdAmount} onChange={e => setNewExchange({ ...newExchange, usdAmount: e.target.value })} autoFocus required />
+                <InputField label="匯率 (TWD/USD)" type="number" value={newExchange.rate} onChange={e => setNewExchange({ ...newExchange, rate: e.target.value })} required />
+                <InputField label="日期" type="date" value={newExchange.date} onChange={e => setNewExchange({ ...newExchange, date: e.target.value })} required />
+                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認紀錄'}</GlassButton>
+              </form>
+            </ModalWrapper>
+          )}
+
+          <ConfirmationModal
+            isOpen={confirmModal.isOpen}
+            onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            onConfirm={async () => {
+              try {
+                await confirmModal.onConfirm();
+              } catch (e) {
+                console.error("Action Failed:", e);
+                alert("操作失敗: " + e.message);
+              } finally {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+              }
+            }}
+            message={confirmModal.message}
+            title={confirmModal.title}
+            confirmText={confirmModal.confirmText}
+            confirmColor={confirmModal.confirmColor}
+          />
+
+          <RecurringManagerModal
+            isOpen={isRecurringManagerOpen}
+            onClose={() => setIsRecurringManagerOpen(false)}
+            items={settings.recurringItems || []}
+            onSave={handleSaveRecurring}
+            groups={settings.monthlyGroups || []}
+          />
+          <RecurringConfirmModal
+            isOpen={isRecurringConfirmOpen}
+            onClose={() => setIsRecurringConfirmOpen(false)}
+            items={recurringConfirmItems}
+            onConfirm={handleBatchAddRecurring}
+            onSkip={handleSkipRecurring}
+          />
+        </>
       )}
-
-      {/* Other Modals... (Same structure) */}
-      {isAddMortgageExpModalOpen && (
-        <ModalWrapper title={mortgageExpType === 'down_payment' ? '新增頭期雜支' : '新增雜支紀錄'} onClose={() => setIsAddMortgageExpModalOpen(false)}>
-          <form onSubmit={handleAddMortgageExp} className="space-y-4">
-            <InputField label="項目名稱" value={newMortgageExp.name} onChange={e => setNewMortgageExp({ ...newMortgageExp, name: e.target.value })} autoFocus required />
-            <InputField label="金額" type="number" value={newMortgageExp.amount} onChange={e => setNewMortgageExp({ ...newMortgageExp, amount: e.target.value })} required />
-            <InputField label="日期" type="date" value={newMortgageExp.date} onChange={e => setNewMortgageExp({ ...newMortgageExp, date: e.target.value })} required />
-            {mortgageExpType === 'misc_appliances' && (<InputField label="品牌" value={newMortgageExp.brand} onChange={e => setNewMortgageExp({ ...newMortgageExp, brand: e.target.value })} placeholder="品牌" />)}
-            <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} />
-            <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-          </form>
-        </ModalWrapper>
-      )}
-
-      {isAddMortgageFundingModalOpen && (
-        <ModalWrapper title="新增頭期款來源" onClose={() => setIsAddMortgageFundingModalOpen(false)}>
-          <form onSubmit={handleAddMortgageFunding} className="space-y-4">
-            <InputField label="資金來源" value={newMortgageFunding.source} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, source: e.target.value })} placeholder=" " autoFocus required />
-            <InputField label="股票代碼 (選填)" value={newMortgageFunding.symbol} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, symbol: e.target.value })} placeholder=" " />
-            <div className="flex gap-2">
-              <div className="flex-1"><InputField label="金額/單價" type="number" value={newMortgageFunding.amount} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, amount: e.target.value })} required /></div>
-              <div className="w-24"><InputField label="匯率" type="number" value={newMortgageFunding.rate} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, rate: e.target.value })} placeholder="1.0" /></div>
-            </div>
-            <InputField label="股數 (選填)" type="number" value={newMortgageFunding.shares} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, shares: e.target.value })} placeholder="0" />
-            <InputField label="日期" type="date" value={newMortgageFunding.date} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, date: e.target.value })} required />
-            <InputField label="備註" value={newMortgageFunding.note} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, note: e.target.value })} />
-            <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-          </form>
-        </ModalWrapper>
-      )}
-
-      {isAddMortgageAnalysisModalOpen && (
-        <ModalWrapper title="新增划算試算項目" onClose={() => setIsAddMortgageAnalysisModalOpen(false)}>
-          <form onSubmit={handleAddMortgageAnalysis} className="space-y-4">
-            <InputField label="項目名稱" value={newMortgageAnalysis.name} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, name: e.target.value })} autoFocus required />
-            <InputField label="金額" type="number" value={newMortgageAnalysis.amount} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, amount: e.target.value })} required />
-            <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-          </form>
-        </ModalWrapper>
-      )}
-
-      {isAddIncomeModalOpen && (
-        <ModalWrapper title={editingId ? "編輯收入" : "新增收入"} onClose={() => { setIsAddIncomeModalOpen(false); setEditingId(null); setNewIncome({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' }); }}>
-          <form onSubmit={handleAddIncome} className="space-y-6">
-            <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
-            <div className="space-y-1.5"><label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
-            <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
-            <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
-            <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認入帳'}</GlassButton>
-          </form>
-        </ModalWrapper>
-      )}
-
-      {isAddPartnerTxModalOpen && (
-        <ModalWrapper title={editingId ? "編輯資金紀錄" : "新增資金紀錄"} onClose={() => { setIsAddPartnerTxModalOpen(false); setEditingId(null); setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' }); }}>
-          <form onSubmit={handleAddPartnerTx} className="space-y-6">
-            <div className="flex gap-2">
-              <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'saving' })} variant={newPartnerTx.type === 'saving' ? 'success' : 'ghost'} className="flex-1">存入資金</GlassButton>
-              <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'expense' })} variant={newPartnerTx.type === 'expense' ? 'danger' : 'ghost'} className="flex-1">支出/提領</GlassButton>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1 mb-1">金額</label>
-              <div className="relative"><input type="number" value={newPartnerTx.amount} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, amount: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none text-sm`} placeholder="0" autoFocus required /></div>
-              <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">{[10000, 25000, 30000, 50000].map(amt => (<button key={amt} type="button" onClick={() => setNewPartnerTx({ ...newPartnerTx, amount: amt })} className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg text-xs font-bold text-stone-600 whitespace-nowrap transition-colors">${amt.toLocaleString()}</button>))}</div>
-            </div>
-            <InputField label="日期" type="date" value={newPartnerTx.date} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, date: e.target.value })} required />
-            <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
-            <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
-          </form>
-        </ModalWrapper>
-      )}
-
-      {isAddSalaryModalOpen && (
-        <ModalWrapper title="調薪紀錄" onClose={() => setIsAddSalaryModalOpen(false)}>
-          <form onSubmit={handleAddSalaryRecord} className="space-y-6">
-            <InputField label="新薪資金額" type="number" value={newSalaryRecord.amount} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, amount: e.target.value })} autoFocus required />
-            <InputField label="生效日期" type="date" value={newSalaryRecord.date} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, date: e.target.value })} required />
-            <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存調薪'}</GlassButton>
-          </form>
-        </ModalWrapper>
-      )}
-
-      {isAddExchangeModalOpen && (
-        <ModalWrapper title={editingId ? "編輯換匯紀錄" : "新增換匯紀錄"} onClose={() => { setIsAddExchangeModalOpen(false); setEditingId(null); setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' }); }}>
-          <form onSubmit={handleAddExchange} className="space-y-4">
-            {/* Buy/Sell Toggle */}
-            <div className="flex gap-2">
-              <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'buy' })} variant={newExchange.type === 'buy' ? 'success' : 'ghost'} className="flex-1">買入美金</GlassButton>
-              <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'sell' })} variant={newExchange.type === 'sell' ? 'danger' : 'ghost'} className="flex-1">賣出美金</GlassButton>
-            </div>
-            {/* Account Toggle */}
-            <div className="flex gap-2">
-              <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'FT' })} variant={newExchange.account === 'FT' ? 'primary' : 'ghost'} className="flex-1">Firstrade</GlassButton>
-              <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'IB' })} variant={newExchange.account === 'IB' ? 'primary' : 'ghost'} className="flex-1">IB</GlassButton>
-            </div>
-            <InputField label={newExchange.type === 'sell' ? "賣出美金 (USD)" : "買入美金 (USD)"} type="number" value={newExchange.usdAmount} onChange={e => setNewExchange({ ...newExchange, usdAmount: e.target.value })} autoFocus required />
-            <InputField label="匯率 (TWD/USD)" type="number" value={newExchange.rate} onChange={e => setNewExchange({ ...newExchange, rate: e.target.value })} required />
-            <InputField label="日期" type="date" value={newExchange.date} onChange={e => setNewExchange({ ...newExchange, date: e.target.value })} required />
-            <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認紀錄'}</GlassButton>
-          </form>
-        </ModalWrapper>
-      )}
-
-      <ConfirmationModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={async () => {
-          try {
-            await confirmModal.onConfirm();
-          } catch (e) {
-            console.error("Action Failed:", e);
-            alert("操作失敗: " + e.message);
-          } finally {
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
-          }
-        }}
-        message={confirmModal.message}
-        title={confirmModal.title}
-        confirmText={confirmModal.confirmText}
-        confirmColor={confirmModal.confirmColor}
-      />
-
-      <RecurringManagerModal
-        isOpen={isRecurringManagerOpen}
-        onClose={() => setIsRecurringManagerOpen(false)}
-        items={settings.recurringItems || []}
-        onSave={handleSaveRecurring}
-        groups={settings.monthlyGroups || []}
-      />
-      <RecurringConfirmModal
-        isOpen={isRecurringConfirmOpen}
-        onClose={() => setIsRecurringConfirmOpen(false)}
-        items={recurringConfirmItems}
-        onConfirm={handleBatchAddRecurring}
-        onSkip={handleSkipRecurring}
-      />
     </div >
   );
 }
