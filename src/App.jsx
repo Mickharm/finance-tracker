@@ -203,9 +203,21 @@ const ModalWrapper = ({ title, onClose, children }) => (
 
 // Loading Screen Component
 const LoadingScreen = ({ progress, isVisible }) => {
-  if (!isVisible) return null;
+  const [hasCompleted, setHasCompleted] = useState(false);
+
+  // Only set completed after progress reaches 100% and a delay for fade animation
+  useEffect(() => {
+    if (progress >= 99.5 && !hasCompleted) {
+      const timer = setTimeout(() => setHasCompleted(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [progress, hasCompleted]);
+
+  // Don't render if fully completed
+  if (hasCompleted) return null;
+
   return (
-    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F5F5F4] transition-opacity duration-500 ${progress >= 100 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F5F5F4] transition-opacity duration-500 ${progress >= 99.5 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
       {/* Background decorations */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-violet-200/30 rounded-full blur-[80px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-rose-200/25 rounded-full blur-[80px] pointer-events-none"></div>
@@ -231,7 +243,7 @@ const LoadingScreen = ({ progress, isVisible }) => {
 
         {/* Status Text */}
         <p className="text-xs text-stone-400 mt-3 font-mono">
-          {progress < 100 ? '載入資料中...' : '完成'}
+          {progress < 99 ? '載入資料中...' : '完成'}
         </p>
       </div>
     </div>
