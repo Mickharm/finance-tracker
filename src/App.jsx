@@ -201,16 +201,29 @@ const ModalWrapper = ({ title, onClose, children }) => (
   </div>
 );
 
-// Loading Screen Component
+// Loading Screen Component - uses overlay pattern with proper transition
 const LoadingScreen = ({ progress, appPhase }) => {
-  // Don't render after ready phase
-  if (appPhase === 'ready') return null;
+  const [shouldRender, setShouldRender] = useState(true);
 
   // Show 100% when fading out
-  const displayProgress = appPhase === 'fadeOut' ? 100 : progress;
+  const displayProgress = appPhase === 'fadeOut' || appPhase === 'ready' ? 100 : progress;
+  const isFadingOut = appPhase === 'fadeOut' || appPhase === 'ready';
+
+  // Handle transition end to unmount
+  const handleTransitionEnd = () => {
+    if (isFadingOut) {
+      setShouldRender(false);
+    }
+  };
+
+  // Don't render if shouldRender is false (animation completed)
+  if (!shouldRender) return null;
 
   return (
-    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F5F5F4] transition-opacity duration-300 ${appPhase === 'fadeOut' ? 'opacity-0' : 'opacity-100'}`}>
+    <div
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F5F5F4] transition-opacity duration-500 ease-out ${isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      onTransitionEnd={handleTransitionEnd}
+    >
       {/* Background decorations */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-violet-200/30 rounded-full blur-[80px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-rose-200/25 rounded-full blur-[80px] pointer-events-none"></div>
@@ -236,7 +249,7 @@ const LoadingScreen = ({ progress, appPhase }) => {
 
         {/* Status Text */}
         <p className="text-xs text-stone-400 mt-3 font-mono">
-          {appPhase === 'fadeOut' ? '完成' : '載入資料中...'}
+          {isFadingOut ? '完成' : '載入資料中...'}
         </p>
       </div>
     </div>
