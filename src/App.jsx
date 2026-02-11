@@ -2177,42 +2177,108 @@ export default function App() {
   const transactionDataPartsRef = useRef({});
   const [extraYears, setExtraYears] = useState([]);
 
-  // Swipe gesture for hamburger menu
+  // Drawer drag gesture for hamburger menu
+  const sidebarRef = useRef(null);
+  const backdropRef = useRef(null);
+  const drawerContainerRef = useRef(null);
+  const DRAWER_WIDTH = 256; // w-64 = 16rem = 256px
+
   useEffect(() => {
     let touchStartX = 0;
     let touchStartY = 0;
-    let touchStartTime = 0;
+    let isDragging = false;
+    let directionLocked = false;
+
+    const setDrawerPosition = (offsetX) => {
+      const clamped = Math.max(-DRAWER_WIDTH, Math.min(0, offsetX));
+      const progress = 1 + clamped / DRAWER_WIDTH; // 0 (closed) to 1 (open)
+      if (sidebarRef.current) sidebarRef.current.style.transform = `translateX(${clamped}px)`;
+      if (backdropRef.current) backdropRef.current.style.opacity = `${progress}`;
+      if (drawerContainerRef.current) drawerContainerRef.current.style.pointerEvents = progress > 0 ? 'auto' : 'none';
+    };
+
+    const enableTransition = () => {
+      if (sidebarRef.current) sidebarRef.current.style.transition = 'transform 0.3s ease-out';
+      if (backdropRef.current) backdropRef.current.style.transition = 'opacity 0.3s ease-out';
+    };
+
+    const disableTransition = () => {
+      if (sidebarRef.current) sidebarRef.current.style.transition = 'none';
+      if (backdropRef.current) backdropRef.current.style.transition = 'none';
+    };
 
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
-      touchStartTime = Date.now();
+      isDragging = false;
+      directionLocked = false;
+      // Only allow dragging if starting from left edge (opening) or menu is open (closing)
+      if (touchStartX < 30 || isMenuOpen) {
+        disableTransition();
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const deltaX = currentX - touchStartX;
+      const deltaY = Math.abs(currentY - touchStartY);
+
+      // Lock direction on first significant movement
+      if (!directionLocked && (Math.abs(deltaX) > 10 || deltaY > 10)) {
+        directionLocked = true;
+        // If vertical movement dominates, abort
+        if (deltaY > Math.abs(deltaX)) { isDragging = false; return; }
+        // Only start drag if from left edge (opening) or menu is open (closing)
+        if (touchStartX < 30 || isMenuOpen) isDragging = true;
+      }
+
+      if (!isDragging) return;
+
+      if (isMenuOpen) {
+        // Closing: start from 0 (fully open), drag left to -DRAWER_WIDTH
+        const offset = Math.min(0, deltaX);
+        setDrawerPosition(offset);
+      } else {
+        // Opening: start from -DRAWER_WIDTH, drag right toward 0
+        const offset = -DRAWER_WIDTH + Math.max(0, deltaX);
+        setDrawerPosition(offset);
+      }
     };
 
     const handleTouchEnd = (e) => {
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = Math.abs(touchEndY - touchStartY);
-      const elapsed = Date.now() - touchStartTime;
+      if (!isDragging) return;
+      isDragging = false;
+      enableTransition();
 
-      // Must be a quick horizontal swipe (not vertical scroll)
-      if (elapsed > 500 || deltaY > Math.abs(deltaX)) return;
+      const endX = e.changedTouches[0].clientX;
+      const deltaX = endX - touchStartX;
 
-      // Right swipe to open: must start from left 40px edge, move > 60px
-      if (!isMenuOpen && touchStartX < 40 && deltaX > 60) {
-        setIsMenuOpen(true);
-      }
-      // Left swipe to close: move > 60px leftward
-      if (isMenuOpen && deltaX < -60) {
-        setIsMenuOpen(false);
+      if (isMenuOpen) {
+        // If dragged left more than 30% of drawer width, close
+        if (deltaX < -(DRAWER_WIDTH * 0.3)) {
+          setDrawerPosition(-DRAWER_WIDTH);
+          setIsMenuOpen(false);
+        } else {
+          setDrawerPosition(0);
+        }
+      } else {
+        // If dragged right more than 30% of drawer width, open
+        if (deltaX > DRAWER_WIDTH * 0.3) {
+          setDrawerPosition(0);
+          setIsMenuOpen(true);
+        } else {
+          setDrawerPosition(-DRAWER_WIDTH);
+        }
       }
     };
 
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.addEventListener('touchend', handleTouchEnd, { passive: true });
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isMenuOpen]);
@@ -2813,8 +2879,8 @@ export default function App() {
           <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
 
           {/* Sidebar Menu */}
-          <div className={`fixed inset-0 z-50 flex transition-all duration-300 ${isMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-            <div className={`w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-6 relative border-r border-stone-100 transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div ref={drawerContainerRef} className="fixed inset-0 z-50 flex" style={{ pointerEvents: isMenuOpen ? 'auto' : 'none' }}>
+            <div ref={sidebarRef} className="w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-6 relative border-r border-stone-100 will-change-transform" style={{ transform: isMenuOpen ? 'translateX(0)' : 'translateX(-256px)', transition: 'transform 0.3s ease-out' }}>
               <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 p-2 bg-stone-100 rounded-full text-stone-400 hover:bg-stone-200"><X className="w-4 h-4" /></button>
               <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-stone-700 flex items-center gap-2"><img src={icon} className="w-8 h-8 rounded-lg shadow-md" alt="Logo" /> 記帳助手</h1><p className="text-xs text-stone-400 mt-1 pl-1">v1.0.0(Mick)</p></div>
               <div className="space-y-6">
@@ -2833,7 +2899,7 @@ export default function App() {
                 ))}
               </div>
             </div>
-            <div className={`flex-1 backdrop-blur-sm transition-all duration-300 ${isMenuOpen ? 'bg-stone-900/20 opacity-100' : 'bg-transparent opacity-0'}`} onClick={() => setIsMenuOpen(false)}></div>
+            <div ref={backdropRef} className="flex-1 bg-stone-900/20 backdrop-blur-sm will-change-[opacity]" style={{ opacity: isMenuOpen ? 1 : 0, transition: 'opacity 0.3s ease-out' }} onClick={() => setIsMenuOpen(false)}></div>
           </div>
 
           <header className="bg-white/60 backdrop-blur-md px-4 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20 animate-in fade-in duration-300">
