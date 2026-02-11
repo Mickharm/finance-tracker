@@ -1513,7 +1513,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory }) => {
   const getMonthlyData = (year) => { const months = Array(12).fill(0); transactions.forEach(t => { const d = new Date(t.date); if (d.getFullYear() === year) { months[d.getMonth()] += Number(t.amount); } }); return months; };
   const baseData = useMemo(() => getMonthlyData(baseYear), [transactions, baseYear]);
   const compareData = useMemo(() => getMonthlyData(compareYear), [transactions, compareYear]);
-  const maxVal = Math.max(...baseData, ...compareData, 1);
+  const maxVal = isCompareMode ? Math.max(...baseData, ...compareData, 1) : Math.max(...baseData, 1);
 
   // Filter breakdown data based on selected month or full year
   const breakdownData = useMemo(() => {
@@ -2176,6 +2176,46 @@ export default function App() {
   const transactionSubsRef = useRef({});
   const transactionDataPartsRef = useRef({});
   const [extraYears, setExtraYears] = useState([]);
+
+  // Swipe gesture for hamburger menu
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    };
+
+    const handleTouchEnd = (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = Math.abs(touchEndY - touchStartY);
+      const elapsed = Date.now() - touchStartTime;
+
+      // Must be a quick horizontal swipe (not vertical scroll)
+      if (elapsed > 500 || deltaY > Math.abs(deltaX)) return;
+
+      // Right swipe to open: must start from left 40px edge, move > 60px
+      if (!isMenuOpen && touchStartX < 40 && deltaX > 60) {
+        setIsMenuOpen(true);
+      }
+      // Left swipe to close: move > 60px leftward
+      if (isMenuOpen && deltaX < -60) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isMenuOpen]);
 
 
 
