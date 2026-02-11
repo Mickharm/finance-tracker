@@ -33,7 +33,6 @@ import {
 } from 'lucide-react';
 import icon from './assets/icon.png';
 
-// --- 1. Infrastructure & Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyAZwgJfZqiej9DOl42a2pLoN7sio3dr9vk",
   authDomain: "accounting-assistant-12f5f.firebaseapp.com",
@@ -48,71 +47,52 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = 'finance-tracker-production';
 const FINNHUB_API_KEY = 'd58c17hr01qptoarifpgd58c17hr01qptoarifq0';
-const LEDGER_ID = 'Mick'; // Hardcoded Shared Ledger ID
+const LEDGER_ID = 'Mick';
 
-// --- 2. Constants & Data Structures ---
-// 🎨 Nippon Colors Theme (日本の伝統色)
-// Primary: 桜鼠 (Sakura-nezumi), 白藤 (Shiro-fuji)
-// Accent: 若竹 (Wakatake), 薄紅 (Usu-kurenai), 藤色 (Fuji-iro)
-// Base: 胡粉 (Gofun), 墨 (Sumi)
-// 🎨 Refined Nippon Colors Theme (Cyber-Zen)
-// 青竹 (Aotake): #00896C / #7EBEAB
-// 灰櫻 (Haizakura): #E8D3D1 / #D05A6E
-// 藤鼠 (Fujinezumi): #A5A5C7 / #6E6E91
-// Cyber-Glass: Higher blur, lower opacity, soft glow
 const GLASS_CARD = "bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl relative overflow-hidden group";
 const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/40 backdrop-blur-md border border-white/60 focus:bg-white/70 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-inner shadow-stone-200/20";
 
 const COLOR_VARIANTS = {
-  // 墨 (Sumi) - Neutral
   slate: {
     bg: 'bg-[#EAEAEA]/60', border: 'border-[#D4D4D4]', text: 'text-[#4A4A4A]',
     iconBg: 'bg-[#F4F4F4]', iconText: 'text-[#6E6E6E]', bar: 'bg-[#4A4A4A]',
     glow: 'border-[#D4D4D4] shadow-sm'
   },
-  // 銀鼠 (Ginnezumi) - Stone
   stone: {
     bg: 'bg-[#F2F0EB]/60', border: 'border-[#E0DCD6]', text: 'text-[#595450]',
     iconBg: 'bg-[#F2F0EB]', iconText: 'text-[#8C8680]', bar: 'bg-[#8C8680]',
     glow: 'border-[#E0DCD6] shadow-sm'
   },
-  // 白藤 (Shirofuji) - Pale Lavender
   sky: {
     bg: 'bg-[#DBE1F1]/40', border: 'border-[#BDC8E6]', text: 'text-[#4B5E96]',
     iconBg: 'bg-[#DBE1F1]/60', iconText: 'text-[#6A7DAE]', bar: 'bg-[#6A7DAE]',
     glow: 'border-[#BDC8E6]/60 shadow-[0_0_20px_rgba(189,200,230,0.3)]'
   },
-  // 藤紫 (Fujimurasaki) - Purple
   blue: {
     bg: 'bg-[#E0DAE8]/40', border: 'border-[#CBB9D8]', text: 'text-[#705885]',
     iconBg: 'bg-[#E0DAE8]/60', iconText: 'text-[#8A6FA3]', bar: 'bg-[#8A6FA3]',
     glow: 'border-[#CBB9D8]/60 shadow-[0_0_20px_rgba(203,185,216,0.3)]'
   },
-  // 灰櫻 (Haizakura) - Muted Pink/Red
   rose: {
     bg: 'bg-[#E8D3D1]/40', border: 'border-[#D9B5B2]', text: 'text-[#A65E62]',
     iconBg: 'bg-[#E8D3D1]/60', iconText: 'text-[#C48286]', bar: 'bg-[#C48286]',
     glow: 'border-[#D9B5B2]/60 shadow-[0_0_20px_rgba(217,181,178,0.3)]'
   },
-  // 青竹 (Aotake) - Muted Teal/Green (Replaces Emerald)
   emerald: {
     bg: 'bg-[#D1E6E1]/40', border: 'border-[#A3D1C8]', text: 'text-[#2F7567]',
     iconBg: 'bg-[#D1E6E1]/60', iconText: 'text-[#4DA391]', bar: 'bg-[#4DA391]',
     glow: 'border-[#A3D1C8]/60 shadow-[0_0_20px_rgba(163,209,200,0.3)]'
   },
-  // 蒸栗 (Mushikuri) - Muted Yellow
   amber: {
     bg: 'bg-[#F0EAC2]/40', border: 'border-[#E0D695]', text: 'text-[#8F8335]',
     iconBg: 'bg-[#F0EAC2]/60', iconText: 'text-[#B8AA54]', bar: 'bg-[#B8AA54]',
     glow: 'border-[#E0D695]/60 shadow-[0_0_20px_rgba(224,214,149,0.3)]'
   },
-  // 桔梗 (Kikyo) - Indigo
   indigo: {
     bg: 'bg-[#D6DEEB]/40', border: 'border-[#B4C4DE]', text: 'text-[#485A85]',
     iconBg: 'bg-[#D6DEEB]/60', iconText: 'text-[#6B80AD]', bar: 'bg-[#6B80AD]',
     glow: 'border-[#B4C4DE]/60 shadow-[0_0_20px_rgba(180,196,222,0.3)]'
   },
-  // 淺蔥 (Asagi) - Cyan
   cyan: {
     bg: 'bg-[#CEE5E6]/40', border: 'border-[#A5D0D1]', text: 'text-[#3B7A7D]',
     iconBg: 'bg-[#CEE5E6]/60', iconText: 'text-[#5CA6A8]', bar: 'bg-[#5CA6A8]',
@@ -148,7 +128,7 @@ const MENU_SECTIONS = [
 ];
 const MENU_ITEMS_FLAT = MENU_SECTIONS.flatMap(section => section.items);
 
-// --- Helper Functions ---
+
 const formatDetailedDate = (dateStr) => {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -168,7 +148,7 @@ const getFixedDepositAmount = (year) => {
   return 0;
 };
 
-// --- Components ---
+
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確認", confirmText = "確定", confirmColor = "bg-stone-800" }) => {
   if (!isOpen) return null;
   return (
@@ -186,37 +166,68 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確�
   );
 };
 
-const ModalWrapper = ({ title, onClose, children }) => (
-  <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
-    <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
-    <div className={`relative w-full rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl scroll-pb-40`}>
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-stone-800 tracking-tight pl-2">{title}</h3>
-        <button type="button" onClick={onClose} className="p-2 bg-stone-100/50 rounded-full text-stone-400 hover:bg-stone-200 hover:text-stone-600 transition-colors z-10 relative">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      {children}
-    </div>
-  </div>
-);
+const ModalWrapper = ({ title, onClose, children }) => {
+  const modalRef = useRef(null);
+  const defaultPadding = 40;
 
-// Loading Screen Component - uses overlay pattern with proper transition
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const handleResize = () => {
+      if (!modalRef.current) return;
+      const keyboardHeight = window.innerHeight - vv.height;
+      if (keyboardHeight > 50) {
+        modalRef.current.style.paddingBottom = `${keyboardHeight + 20}px`;
+        const focused = document.activeElement;
+        if (focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) {
+          setTimeout(() => {
+            focused.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+      } else {
+        modalRef.current.style.paddingBottom = `${defaultPadding}px`;
+      }
+    };
+
+    vv.addEventListener('resize', handleResize);
+    vv.addEventListener('scroll', handleResize);
+    return () => {
+      vv.removeEventListener('resize', handleResize);
+      vv.removeEventListener('scroll', handleResize);
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
+      <div
+        ref={modalRef}
+        className="relative w-full max-h-[90dvh] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-10 animate-in slide-in-from-bottom duration-300 overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-stone-800 tracking-tight pl-2">{title}</h3>
+          <button type="button" onClick={onClose} className="p-2 bg-stone-100/50 rounded-full text-stone-400 hover:bg-stone-200 hover:text-stone-600 transition-colors z-10 relative">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const LoadingScreen = ({ progress, appPhase }) => {
   const [shouldRender, setShouldRender] = useState(true);
-
-  // Show 100% when fading out
   const displayProgress = appPhase === 'fadeOut' || appPhase === 'ready' ? 100 : progress;
   const isFadingOut = appPhase === 'fadeOut' || appPhase === 'ready';
 
-  // Handle transition end to unmount
   const handleTransitionEnd = () => {
     if (isFadingOut) {
       setShouldRender(false);
     }
   };
 
-  // Don't render if shouldRender is false (animation completed)
   if (!shouldRender) return null;
 
   return (
@@ -256,17 +267,23 @@ const LoadingScreen = ({ progress, appPhase }) => {
   );
 };
 
-const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, autoFocus = false, children, className = "", ...props }) => (
-  <div className={`space-y-1.5 w-full ${className}`}>
-    {label && <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">{label}</label>}
-    <div className="relative w-full min-w-0">
-      <input type={type} value={value} onChange={onChange} placeholder={placeholder} required={required} autoFocus={autoFocus} className={GLASS_INPUT} {...props} />
-      {children}
+const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, autoFocus = false, children, className = "", ...props }) => {
+  const handleFocus = (e) => {
+    setTimeout(() => {
+      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 350);
+  };
+  return (
+    <div className={`space-y-1.5 w-full ${className}`}>
+      {label && <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">{label}</label>}
+      <div className="relative w-full min-w-0">
+        <input type={type} value={value} onChange={onChange} placeholder={placeholder} required={required} autoFocus={autoFocus} onFocus={handleFocus} className={GLASS_INPUT} {...props} />
+        {children}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-// Calculator Input Component
 const CalculatorInput = ({ value, onChange, label }) => {
   const [displayValue, setDisplayValue] = useState(String(value !== undefined && value !== null ? value : '0'));
   const [expression, setExpression] = useState('');
@@ -302,13 +319,11 @@ const CalculatorInput = ({ value, onChange, label }) => {
       }
       setExpression(newVal);
     } else {
-      // Numbers, ., 00
       if (String(displayValue) === '0' && !expression && btn !== '.') {
         newVal = btn;
       } else {
         newVal = String(displayValue) + btn;
       }
-      // Basic validation to prevent invalid formats like 1..0 or operators in weird places
       if (!['+', '-', '*', '/'].some(op => newVal.includes(op)) || expression) {
         onChange(newVal);
       }
@@ -329,9 +344,7 @@ const CalculatorInput = ({ value, onChange, label }) => {
       return String(val).split(/([+\-*/])/).map(part => {
         if (['+', '-', '*', '/'].includes(part)) return ` ${part} `;
         if (part === '') return '';
-        // If it's a valid number
         if (!isNaN(Number(part))) {
-          // If it ends with '.', Number() will strip it, so we strictly check usage
           if (part.endsWith('.')) {
             return Number(part.slice(0, -1)).toLocaleString() + '.';
           }
@@ -382,7 +395,6 @@ const CalculatorInput = ({ value, onChange, label }) => {
 };
 
 const GlassButton = ({ onClick, children, className = "", disabled = false, variant = 'primary', type = "button" }) => {
-  // Nippon Colors: 藤鼠 (Fuji-nezumi) - sophisticated grayish purple-brown
   const variants = {
     primary: "bg-stone-700 text-white shadow-lg shadow-stone-400/30 hover:bg-stone-800",
     danger: "bg-rose-50 text-rose-600 border border-rose-200/80 hover:bg-rose-100",
@@ -397,20 +409,15 @@ const GlassButton = ({ onClick, children, className = "", disabled = false, vari
 const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme = 'slate', showDetails = true, showOverBudgetLabel = true }) => {
   const remaining = total - current;
   const isOverBudget = remaining < 0;
-  // Progress: Show % remaining. If over budget (remaining < 0), show 0% (empty bar).
   const remainingPercentage = total > 0 ? (Math.max(0, remaining) / total) * 100 : 0;
 
   const theme = COLOR_VARIANTS[colorTheme] || COLOR_VARIANTS.slate;
 
-  // Color logic: Dynamic warning
-  // > 50%: Theme/Safe
-  // 20% - 50%: Amber (Warning)
-  // < 20%: Rose (Danger)
   let statusColor = theme.bar;
   if (!isOverBudget && total > 0) {
-    if (remainingPercentage < 20) statusColor = 'bg-[#C48286]'; // 灰櫻 Haizakura (Rose)
-    else if (remainingPercentage < 50) statusColor = 'bg-[#B8AA54]'; // 蒸栗 Mushikuri (Amber)
-    else statusColor = theme.bar; // Theme Color (Aotake / Indigo)
+    if (remainingPercentage < 20) statusColor = 'bg-[#C48286]';
+    else if (remainingPercentage < 50) statusColor = 'bg-[#B8AA54]';
+    else statusColor = theme.bar;
   }
 
   return (
@@ -515,7 +522,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
   );
 };
 
-// --- Watchlist Feature (Fixing Fetch Logic) ---
+
 const WatchlistGroup = ({ group, onUpdateStock, onDeleteStock, onDeleteGroup, onAddStock, totalSystemBudget, prices }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [newSymbol, setNewSymbol] = useState('');
@@ -541,7 +548,7 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // FIXED: Robust Fetching
+
   const fetchAllPrices = useCallback(async (currentGroups) => {
     setLoading(true);
     const allSymbols = new Set();
@@ -555,7 +562,6 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
     }
 
     const newPrices = {};
-    // Process symbols in chunks to avoid overwhelming the network
     const symbolsArray = Array.from(allSymbols);
     for (const symbol of symbolsArray) {
       try {
@@ -567,7 +573,6 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
       } catch (e) {
         console.warn(`Error fetching ${symbol}:`, e);
       }
-      // Tiny delay to prevent rate limiting (optional but safer)
       await new Promise(r => setTimeout(r, 100));
     }
 
@@ -1093,13 +1098,9 @@ const PersonCard = ({ name, owner, incomes, total, history, icon: Icon, onAddSal
 };
 
 
-// --- 4. Sub-Views ---
 
-
-// --- 6. View Components (Top Layer) ---
 
 const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
-  // Use passed yearly stats for the summary card if available, otherwise fallback (for safety)
   const totalAnnualBudget = yearlyTotalStats ? yearlyTotalStats.totalBudget : (monthlyStats.totalBudget * 12 + annualStats.totalBudget);
   const totalAnnualUsed = yearlyTotalStats ? yearlyTotalStats.totalUsed : (monthlyStats.totalUsed + annualStats.totalUsed);
   const totalRemaining = totalAnnualBudget - totalAnnualUsed;
@@ -1107,7 +1108,6 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
 
   return (
     <div className="space-y-8 pb-24 animate-in fade-in duration-500">
-      {/* Annual Summary Card */}
       <div className={`${GLASS_CARD} p-6 border-l-4 ${isOverBudget ? 'border-rose-400' : 'border-emerald-400'}`}>
         <div className="flex items-center gap-3 mb-4">
           <div className={`p-2 rounded-xl ${isOverBudget ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
@@ -1984,8 +1984,8 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
 };
 
 
-// --- Recurring Expenses Manager ---
-// --- Recurring Expenses Manager ---
+
+
 const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
   const [localItems, setLocalItems] = useState(items || []);
   const [isAdding, setIsAdding] = useState(false);
@@ -2165,29 +2165,26 @@ const RecurringConfirmModal = ({ isOpen, onClose, items, onConfirm, onSkip }) =>
   );
 };
 
-// --- Main Application Component ---
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /* Force update removed - failed */
-
-  const [editingId, setEditingId] = useState(null); // Track ID of item being edited
+  const [editingId, setEditingId] = useState(null);
   const mainRef = useRef(null);
-  // Transaction Data Persistence Refs (Prevent white screen / load race conditions)
   const transactionSubsRef = useRef({});
   const transactionDataPartsRef = useRef({});
-  const [extraYears, setExtraYears] = useState([]); // For Analysis View to request historical data
+  const [extraYears, setExtraYears] = useState([]);
 
 
-  // Modals
+
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
   const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
   const [isAddSalaryModalOpen, setIsAddSalaryModalOpen] = useState(false);
   const [isAddPartnerTxModalOpen, setIsAddPartnerTxModalOpen] = useState(false);
 
-  // Mortgage Modals
+
   const [isAddMortgageExpModalOpen, setIsAddMortgageExpModalOpen] = useState(false);
   const [mortgageExpType, setMortgageExpType] = useState('down_payment');
   const [isAddMortgageAnalysisModalOpen, setIsAddMortgageAnalysisModalOpen] = useState(false);
@@ -2199,24 +2196,21 @@ export default function App() {
   const [currentView, setCurrentView] = useState('home');
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  /* Privacy Logic Removed */
+
   const handleViewChange = (viewId) => {
     setCurrentView(viewId);
     setIsMenuOpen(false);
   };
 
-  // 1. Scroll to Top on View Change
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTo(0, 0);
   }, [currentView]);
 
-  // 2. Auto-Refresh on Visibility Change (Data Freshness) - 15 mins timeout
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const lastSeen = localStorage.getItem('lastSeen');
         const now = Date.now();
-        // If hidden for > 15 minutes (900,000 ms), force reload
         if (lastSeen && (now - Number(lastSeen) > 900000)) {
           window.location.reload();
         }
@@ -2229,7 +2223,6 @@ export default function App() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  // Data State
   const [transactions, setTransactions] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [salaryHistory, setSalaryHistory] = useState([]);
