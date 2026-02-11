@@ -54,49 +54,49 @@ const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/40 backdrop-b
 
 const COLOR_VARIANTS = {
   slate: {
-    bg: 'bg-[#EAEAEA]/60', border: 'border-[#D4D4D4]', text: 'text-[#4A4A4A]',
-    iconBg: 'bg-[#F4F4F4]', iconText: 'text-[#6E6E6E]', bar: 'bg-[#4A4A4A]',
-    glow: 'border-[#D4D4D4] shadow-sm'
+    bg: 'bg-[#F0EFEC]/60', border: 'border-[#E0DFDB]', text: 'text-[#5C5A56]',
+    iconBg: 'bg-[#F0EFEC]', iconText: 'text-[#8A8884]', bar: 'bg-[#8A8884]',
+    glow: 'border-[#E0DFDB] shadow-sm'
   },
   stone: {
-    bg: 'bg-[#F2F0EB]/60', border: 'border-[#E0DCD6]', text: 'text-[#595450]',
-    iconBg: 'bg-[#F2F0EB]', iconText: 'text-[#8C8680]', bar: 'bg-[#8C8680]',
-    glow: 'border-[#E0DCD6] shadow-sm'
+    bg: 'bg-[#F4F2ED]/60', border: 'border-[#E6E3DC]', text: 'text-[#6B6660]',
+    iconBg: 'bg-[#F4F2ED]', iconText: 'text-[#9C9690]', bar: 'bg-[#9C9690]',
+    glow: 'border-[#E6E3DC] shadow-sm'
   },
   sky: {
-    bg: 'bg-[#DBE1F1]/40', border: 'border-[#BDC8E6]', text: 'text-[#4B5E96]',
-    iconBg: 'bg-[#DBE1F1]/60', iconText: 'text-[#6A7DAE]', bar: 'bg-[#6A7DAE]',
-    glow: 'border-[#BDC8E6]/60 shadow-[0_0_20px_rgba(189,200,230,0.3)]'
+    bg: 'bg-[#EDF2FA]/50', border: 'border-[#D6E2F2]', text: 'text-[#5A7099]',
+    iconBg: 'bg-[#EDF2FA]/70', iconText: 'text-[#7A96BE]', bar: 'bg-[#7A96BE]',
+    glow: 'border-[#D6E2F2]/60 shadow-[0_0_16px_rgba(214,226,242,0.3)]'
   },
   blue: {
-    bg: 'bg-[#E0DAE8]/40', border: 'border-[#CBB9D8]', text: 'text-[#705885]',
-    iconBg: 'bg-[#E0DAE8]/60', iconText: 'text-[#8A6FA3]', bar: 'bg-[#8A6FA3]',
-    glow: 'border-[#CBB9D8]/60 shadow-[0_0_20px_rgba(203,185,216,0.3)]'
+    bg: 'bg-[#EDE9F2]/50', border: 'border-[#DCD4E6]', text: 'text-[#7A6690]',
+    iconBg: 'bg-[#EDE9F2]/70', iconText: 'text-[#9A85B0]', bar: 'bg-[#9A85B0]',
+    glow: 'border-[#DCD4E6]/60 shadow-[0_0_16px_rgba(220,212,230,0.3)]'
   },
   rose: {
-    bg: 'bg-[#E8D3D1]/40', border: 'border-[#D9B5B2]', text: 'text-[#A65E62]',
-    iconBg: 'bg-[#E8D3D1]/60', iconText: 'text-[#C48286]', bar: 'bg-[#C48286]',
-    glow: 'border-[#D9B5B2]/60 shadow-[0_0_20px_rgba(217,181,178,0.3)]'
+    bg: 'bg-[#FDECEA]/50', border: 'border-[#FADBD8]', text: 'text-[#C0392B]',
+    iconBg: 'bg-[#FDECEA]/70', iconText: 'text-[#E57373]', bar: 'bg-[#E57373]',
+    glow: 'border-[#FADBD8]/60 shadow-[0_0_16px_rgba(250,219,216,0.3)]'
   },
   emerald: {
-    bg: 'bg-[#D1E6E1]/40', border: 'border-[#A3D1C8]', text: 'text-[#2F7567]',
-    iconBg: 'bg-[#D1E6E1]/60', iconText: 'text-[#4DA391]', bar: 'bg-[#4DA391]',
-    glow: 'border-[#A3D1C8]/60 shadow-[0_0_20px_rgba(163,209,200,0.3)]'
+    bg: 'bg-[#F1FAEE]/50', border: 'border-[#D8F3DC]', text: 'text-[#2D6A4F]',
+    iconBg: 'bg-[#F1FAEE]/70', iconText: 'text-[#52B788]', bar: 'bg-[#52B788]',
+    glow: 'border-[#D8F3DC]/60 shadow-[0_0_16px_rgba(216,243,220,0.3)]'
   },
   amber: {
-    bg: 'bg-[#F0EAC2]/40', border: 'border-[#E0D695]', text: 'text-[#8F8335]',
-    iconBg: 'bg-[#F0EAC2]/60', iconText: 'text-[#B8AA54]', bar: 'bg-[#B8AA54]',
-    glow: 'border-[#E0D695]/60 shadow-[0_0_20px_rgba(224,214,149,0.3)]'
+    bg: 'bg-[#FEF9E7]/50', border: 'border-[#FCF3CF]', text: 'text-[#9A7D0A]',
+    iconBg: 'bg-[#FEF9E7]/70', iconText: 'text-[#D4AC0D]', bar: 'bg-[#D4AC0D]',
+    glow: 'border-[#FCF3CF]/60 shadow-[0_0_16px_rgba(252,243,207,0.3)]'
   },
   indigo: {
-    bg: 'bg-[#D6DEEB]/40', border: 'border-[#B4C4DE]', text: 'text-[#485A85]',
-    iconBg: 'bg-[#D6DEEB]/60', iconText: 'text-[#6B80AD]', bar: 'bg-[#6B80AD]',
-    glow: 'border-[#B4C4DE]/60 shadow-[0_0_20px_rgba(180,196,222,0.3)]'
+    bg: 'bg-[#EAEEF6]/50', border: 'border-[#CDD5E8]', text: 'text-[#4E5D82]',
+    iconBg: 'bg-[#EAEEF6]/70', iconText: 'text-[#7889B0]', bar: 'bg-[#7889B0]',
+    glow: 'border-[#CDD5E8]/60 shadow-[0_0_16px_rgba(205,213,232,0.3)]'
   },
   cyan: {
-    bg: 'bg-[#CEE5E6]/40', border: 'border-[#A5D0D1]', text: 'text-[#3B7A7D]',
-    iconBg: 'bg-[#CEE5E6]/60', iconText: 'text-[#5CA6A8]', bar: 'bg-[#5CA6A8]',
-    glow: 'border-[#A5D0D1]/60 shadow-[0_0_20px_rgba(165,208,209,0.3)]'
+    bg: 'bg-[#E8F4F5]/50', border: 'border-[#C5E3E5]', text: 'text-[#3E8285]',
+    iconBg: 'bg-[#E8F4F5]/70', iconText: 'text-[#5DAAAD]', bar: 'bg-[#5DAAAD]',
+    glow: 'border-[#C5E3E5]/60 shadow-[0_0_16px_rgba(197,227,229,0.3)]'
   },
 };
 
@@ -232,13 +232,13 @@ const LoadingScreen = ({ progress, appPhase }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F5F5F4] transition-opacity duration-500 ease-out ${isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F8F5F0] transition-opacity duration-500 ease-out ${isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       onTransitionEnd={handleTransitionEnd}
     >
       {/* Background decorations */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-violet-200/30 rounded-full blur-[80px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-rose-200/25 rounded-full blur-[80px] pointer-events-none"></div>
-      <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-emerald-100/20 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#F1FAEE]/40 rounded-full blur-[80px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#FDECEA]/35 rounded-full blur-[80px] pointer-events-none"></div>
+      <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-[#FEF9E7]/30 rounded-full blur-[100px] pointer-events-none"></div>
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center">
@@ -377,8 +377,8 @@ const CalculatorInput = ({ value, onChange, label }) => {
               type="button"
               onClick={() => handleButton(btn === '÷' ? '/' : btn === '×' ? '*' : btn)}
               className={`py-3.5 rounded-xl font-bold text-lg transition-all active:scale-95 shadow-sm
-                ${btn === 'AC' ? 'bg-rose-100 text-rose-600' :
-                  btn === '⌫' ? 'bg-amber-100 text-amber-600' :
+                ${btn === 'AC' ? 'bg-[#FDECEA] text-[#C0392B]' :
+                  btn === '⌫' ? 'bg-[#FEF9E7] text-[#9A7D0A]' :
                     ['÷', '×', '-', '+', '='].includes(btn) ? 'bg-stone-200 text-stone-700' :
                       btn === '0' ? 'col-span-2 bg-white text-stone-800 border border-stone-200' :
                         'bg-white text-stone-800 border border-stone-200'
@@ -397,8 +397,8 @@ const CalculatorInput = ({ value, onChange, label }) => {
 const GlassButton = ({ onClick, children, className = "", disabled = false, variant = 'primary', type = "button" }) => {
   const variants = {
     primary: "bg-stone-700 text-white shadow-lg shadow-stone-400/30 hover:bg-stone-800",
-    danger: "bg-rose-50 text-rose-600 border border-rose-200/80 hover:bg-rose-100",
-    success: "bg-emerald-50 text-emerald-600 border border-emerald-200/80 hover:bg-emerald-100",
+    danger: "bg-[#FDECEA] text-[#C0392B] border border-[#FADBD8] hover:bg-[#FADBD8]",
+    success: "bg-[#F1FAEE] text-[#2D6A4F] border border-[#D8F3DC] hover:bg-[#D8F3DC]",
     ghost: "bg-white/60 text-stone-600 hover:bg-white/90 border border-stone-200/60"
   };
   return (
@@ -415,8 +415,8 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
 
   let statusColor = theme.bar;
   if (!isOverBudget && total > 0) {
-    if (remainingPercentage < 20) statusColor = 'bg-[#C48286]';
-    else if (remainingPercentage < 50) statusColor = 'bg-[#B8AA54]';
+    if (remainingPercentage < 20) statusColor = 'bg-[#E57373]';
+    else if (remainingPercentage < 50) statusColor = 'bg-[#D4AC0D]';
     else statusColor = theme.bar;
   }
 
@@ -425,12 +425,12 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
       <div className="flex justify-between items-end mb-2">
         <span className={`text-xs font-bold uppercase tracking-wider ${theme.text} opacity-80 flex items-center gap-2`}>
           {label}
-          {isOverBudget && showOverBudgetLabel && <span className="bg-rose-50 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">已超支</span>}
+          {isOverBudget && showOverBudgetLabel && <span className="bg-[#FDECEA] text-[#C0392B] text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">已超支</span>}
         </span>
         {showDetails && (
           <div className="flex items-baseline gap-1 text-right">
-            <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-rose-400' : 'text-stone-400'}`}>{isOverBudget ? '已超支' : '剩餘'}</span>
-            <span className={`font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-stone-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
+            <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-[#E57373]' : 'text-stone-400'}`}>{isOverBudget ? '已超支' : '剩餘'}</span>
+            <span className={`font-mono font-bold ${isOverBudget ? 'text-[#C0392B]' : 'text-stone-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         )}
       </div>
@@ -439,7 +439,7 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
       </div>
       {showDetails && variant === 'main' && (
         <div className="flex justify-between mt-1.5 text-[10px] text-stone-400 font-medium">
-          <span className={isOverBudget ? 'text-rose-400' : ''}>{Math.round(remainingPercentage)}% 剩餘</span>
+          <span className={isOverBudget ? 'text-[#E57373]' : ''}>{Math.round(remainingPercentage)}% 剩餘</span>
           <span>總額: ${total.toLocaleString()}</span>
         </div>
       )}
@@ -458,7 +458,7 @@ const PrincipalTrendChart = ({ history }) => {
   const points = data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return `${x},${y}`; }).join(' ');
   const currentNet = values[values.length - 1]; const prevNet = values.length > 1 ? values[values.length - 2] : currentNet; const growth = currentNet - prevNet;
   return (
-    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">歷史資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-stone-800 font-mono tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><polyline points={points} fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return (<circle key={i} cx={x} cy={y} r={i === data.length - 1 ? 2 : 1} className={i === data.length - 1 ? "fill-stone-800" : "fill-white stroke-stone-400 stroke-[0.5]"} />); })}</svg></div><div className="flex justify-between text-[10px] text-stone-400 font-mono mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
+    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">歷史資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-stone-800 font-mono tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><polyline points={points} fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return (<circle key={i} cx={x} cy={y} r={i === data.length - 1 ? 2 : 1} className={i === data.length - 1 ? "fill-stone-800" : "fill-white stroke-stone-400 stroke-[0.5]"} />); })}</svg></div><div className="flex justify-between text-[10px] text-stone-400 font-mono mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
   );
 };
 
@@ -476,8 +476,8 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
 
   let statusBarColor = theme.bar;
   if (!isOverBudget && group.budget > 0) {
-    if (remainingPercentage < 20) statusBarColor = 'bg-[#C48286]'; // Haizakura
-    else if (remainingPercentage < 50) statusBarColor = 'bg-[#B8AA54]'; // Mushikuri
+    if (remainingPercentage < 20) statusBarColor = 'bg-[#E57373]';
+    else if (remainingPercentage < 50) statusBarColor = 'bg-[#D4AC0D]';
     else statusBarColor = theme.bar; // Theme Color
   }
 
@@ -488,11 +488,11 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
           <div className="flex items-center gap-3">
             <div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
             <h3 className="text-sm font-bold text-stone-700 tracking-tight">{group.name}</h3>
-            {isOverBudget && <span className="bg-rose-100 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">已超支</span>}
+            {isOverBudget && <span className="bg-[#FDECEA] text-[#C0392B] text-[10px] px-1.5 py-0.5 rounded-full font-bold">已超支</span>}
           </div>
           <div className="text-right flex items-baseline gap-1">
             <span className="text-[10px] text-stone-400">剩餘</span>
-            <span className={`text-sm font-mono font-bold ${isOverBudget ? 'text-rose-500' : 'text-stone-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
+            <span className={`text-sm font-mono font-bold ${isOverBudget ? 'text-[#C0392B]' : 'text-stone-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         </div>
         <div className={`w-full bg-stone-100/50 rounded-full h-1.5 overflow-hidden`}>
@@ -507,11 +507,11 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
           <div key={idx}>
             <div className="flex justify-between text-xs mb-1.5 font-medium text-stone-500">
               <span>{item.name}</span>
-              <span className={`font-mono ${itemIsOver ? 'text-rose-500' : 'text-stone-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
+              <span className={`font-mono ${itemIsOver ? 'text-[#C0392B]' : 'text-stone-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
             </div>
             <div className={`w-full bg-stone-100/50 rounded-full h-1 overflow-hidden`}>
               <div className={`h-full transition-all duration-500 ${!itemIsOver && item.budget > 0
-                ? (itemPercent < 20 ? 'bg-[#C48286]' : itemPercent < 50 ? 'bg-[#B8AA54]' : theme.bar)
+                ? (itemPercent < 20 ? 'bg-[#E57373]' : itemPercent < 50 ? 'bg-[#D4AC0D]' : theme.bar)
                 : theme.bar
                 }`} style={{ width: `${itemPercent}%` }} />
             </div>
@@ -733,7 +733,7 @@ const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete
         <div key={idx} className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-200 min-w-0">
           <input value={item.name} onChange={(e) => onUpdate(section, groupKey, idx, 'name', e.target.value)} placeholder="項目名稱" className={`${GLASS_INPUT} flex-1 text-base py-2 px-3`} />
           <div className="relative w-28 min-w-0">
-            <span className="absolute left-2 top-1/2 -transtone-y-1/2 text-stone-400 text-xs">$</span>
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-stone-400 text-xs">$</span>
             <input type="text" inputMode="numeric" value={Number(item.amount).toLocaleString()} onChange={(e) => { const v = e.target.value.replace(/,/g, ''); if (!isNaN(v)) onUpdate(section, groupKey, idx, 'amount', v); }} className={`${GLASS_INPUT} w-full text-base py-2 pl-5 pr-2 font-mono text-right text-stone-700 font-bold`} />
           </div>
           <button onClick={() => onDelete(section, groupKey, idx)} className="text-stone-300 hover:text-rose-400"><X className="w-3 h-3" /></button>
@@ -970,11 +970,11 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
                     <span>狀態</span><span>日期</span><span className="text-center">期數</span><span className="text-right">金額</span><span className="text-right">利率</span>
                   </div>
                   {rows.map(row => (
-                    <div key={row.id} className={`grid grid-cols-5 text-xs px-3 py-2 border-b border-stone-100 last:border-0 items-center ${row.isPaid ? 'bg-emerald-50/30' : 'hover:bg-stone-50/30'}`}>
-                      <span>{row.isPaid ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <span className="w-3 h-3 rounded-full border border-stone-200 block"></span>}</span>
-                      <span className={`font-mono ${row.isPaid ? 'text-emerald-700 font-bold' : 'text-stone-500'}`}>{row.date.getMonth() + 1}月</span>
+                    <div key={row.id} className={`grid grid-cols-5 text-xs px-3 py-2 border-b border-stone-100 last:border-0 items-center ${row.isPaid ? 'bg-[#F1FAEE]/40' : 'hover:bg-stone-50/30'}`}>
+                      <span>{row.isPaid ? <CheckCircle2 className="w-3 h-3 text-[#52B788]" /> : <span className="w-3 h-3 rounded-full border border-stone-200 block"></span>}</span>
+                      <span className={`font-mono ${row.isPaid ? 'text-[#2D6A4F] font-bold' : 'text-stone-500'}`}>{row.date.getMonth() + 1}月</span>
                       <span className="text-center text-stone-400">#{row.id}</span>
-                      <span className="text-right font-bold font-mono ${row.isPaid ? 'text-emerald-700' : 'text-stone-700'}">${row.amount.toLocaleString()}</span>
+                      <span className={`text-right font-bold font-mono ${row.isPaid ? 'text-[#2D6A4F]' : 'text-stone-700'}`}>${row.amount.toLocaleString()}</span>
                       <span className="text-right text-stone-400">{row.rate}%</span>
                     </div>
                   ))}
@@ -1123,31 +1123,31 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
             <div className="text-[10px] text-stone-400 font-bold uppercase mb-1">已花費</div>
             <div className="text-base sm:text-lg font-bold text-stone-700 font-mono truncate">${totalAnnualUsed.toLocaleString()}</div>
           </div>
-          <div className={`rounded-xl p-3 flex-1 overflow-hidden ${isOverBudget ? 'bg-rose-50/50' : 'bg-emerald-50/50'}`}>
-            <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-rose-400' : 'text-emerald-400'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
-            <div className={`text-base sm:text-lg font-bold font-mono truncate ${isOverBudget ? 'text-rose-600' : 'text-emerald-600'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
+          <div className={`rounded-xl p-3 flex-1 overflow-hidden ${isOverBudget ? 'bg-[#FDECEA]/50' : 'bg-[#F1FAEE]/50'}`}>
+            <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-[#E57373]' : 'text-[#52B788]'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
+            <div className={`text-base sm:text-lg font-bold font-mono truncate ${isOverBudget ? 'text-[#C0392B]' : 'text-[#2D6A4F]'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
           </div>
         </div>
       </div>
 
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
-          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"><Calendar className="w-4 h-4" /></div>
+          <div className="w-8 h-8 rounded-full bg-[#F1FAEE] flex items-center justify-center text-[#2D6A4F]"><Calendar className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-stone-800 leading-tight">月度預算</h2><p className="text-xs text-stone-400 font-bold tracking-wide uppercase">經常性支出</p></div>
         </div>
-        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-emerald-400`}>
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-[#95D5B2]`}>
           <BudgetProgressBar current={monthlyStats.totalUsed} total={monthlyStats.totalBudget} label="本月總剩餘" colorTheme="emerald" />
         </div>
         <div className="space-y-3">{monthlyStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="emerald" />))}</div>
       </section>
       <section>
         <div className="flex items-center gap-2 mb-4 px-1 mt-10">
-          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600"><Target className="w-4 h-4" /></div>
+          <div className="w-8 h-8 rounded-full bg-[#EAEEF6] flex items-center justify-center text-[#4E5D82]"><Target className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-stone-800 leading-tight">年度預算</h2><p className="text-xs text-stone-400 font-bold tracking-wide uppercase">年度支出</p></div>
         </div>
 
         {/* Annual Summary - Same design as monthly */}
-        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-indigo-400`}>
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-[#7889B0]`}>
           <BudgetProgressBar
             key={annualStats.totalBudget}
             current={annualStats.totalUsed}
@@ -1489,7 +1489,7 @@ const PartnerView = ({ partnerTransactions, onDelete, onAdd, onEdit }) => {
   );
 };
 
-const VisualizationView = ({ transactions, settings, onRequestHistory }) => {
+const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit }) => {
   const [baseYear, setBaseYear] = useState(new Date().getFullYear());
   const [compareYear, setCompareYear] = useState(new Date().getFullYear() - 1);
   const [isCompareMode, setIsCompareMode] = useState(false);
@@ -1785,7 +1785,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory }) => {
               <h3 className="text-sm font-bold text-stone-500 mb-3 px-2">詳細明細 </h3>
               <div className="space-y-3">
                 {detailedTransactions.map(t => (
-                  <div key={t.id} onClick={() => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} className={`${GLASS_CARD} p-4 flex justify-between items-center cursor-pointer hover:bg-white/60 transition-colors`}>
+                  <div key={t.id} onClick={() => onEdit && onEdit(t)} className={`${GLASS_CARD} p-4 flex justify-between items-center cursor-pointer hover:bg-white/60 transition-colors`}>
                     <div className="flex flex-col">
                       <span className="text-sm font-bold text-stone-700">{t.category}</span>
                       <span className="text-xs text-stone-400">{formatDetailedDate(t.date)} {t.note && `• ${t.note}`}</span>
@@ -2099,13 +2099,13 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
                   }} className={`${GLASS_INPUT} w-full px-3 py-2 text-sm appearance-none`}>
                     {(groups || []).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -transtone-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" />
                 </div>
                 <div className="relative col-span-3">
                   <select value={newItem.category} onChange={e => setNewItem({ ...newItem, category: e.target.value })} className={`${GLASS_INPUT} w-full px-3 py-2 text-sm appearance-none`}>
                     {(groups || []).find(g => g.name === newItem.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -transtone-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" />
                 </div>
 
                 <div className="col-span-6 flex gap-2 pt-1">
@@ -2282,10 +2282,29 @@ export default function App() {
       snapToNearest(deltaX);
     };
 
-    const handleTouchCancel = () => {
-      // If drag is interrupted (e.g. system gesture), snap to nearest
+    const handleTouchCancel = (e) => {
+      // Only react if the cancelled touch is our tracked primary touch
+      if (e && e.changedTouches) {
+        const cancelled = getTrackedTouch(e.changedTouches);
+        if (!cancelled) return; // A different finger was cancelled, ignore
+      }
       if (isDragging) {
         isDragging = false;
+        enableTransition();
+        // Snap based on actual drawer position rather than stale isMenuOpen
+        const currentTransform = sidebarRef.current ? sidebarRef.current.style.transform : '';
+        const match = currentTransform.match(/translateX\((-?[\d.]+)px\)/);
+        const currentOffset = match ? parseFloat(match[1]) : (isMenuOpen ? 0 : -DRAWER_WIDTH);
+        const progress = 1 + currentOffset / DRAWER_WIDTH;
+        if (progress > 0.5) {
+          setDrawerPosition(0);
+          setIsMenuOpen(true);
+        } else {
+          setDrawerPosition(-DRAWER_WIDTH);
+          setIsMenuOpen(false);
+        }
+      } else {
+        // Not dragging — just reset, snap to current logical state
         enableTransition();
         setDrawerPosition(isMenuOpen ? 0 : -DRAWER_WIDTH);
       }
@@ -2885,11 +2904,11 @@ export default function App() {
 
   // --- Main Render ---
   return (
-    <div className="flex flex-col h-screen bg-[#F5F5F4] bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] text-stone-800 font-mono overflow-hidden max-w-md mx-auto relative shadow-2xl">
-      {/* Background Blobs - Nippon Colors: 桜鼠 (Sakura-nezumi), 白藤 (Shiro-fuji), 若草 (Wakakusa) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-violet-200/30 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-rose-200/25 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-emerald-100/20 rounded-full blur-[100px] pointer-events-none z-0"></div>
+    <div className="flex flex-col h-screen bg-[#F8F5F0] text-stone-800 font-mono overflow-hidden max-w-md mx-auto relative shadow-2xl">
+      {/* Background Blobs - Soft pastel accents */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#F1FAEE]/50 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#FDECEA]/40 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-[#FEF9E7]/35 rounded-full blur-[100px] pointer-events-none z-0"></div>
 
       {/* Loading Screen */}
       <LoadingScreen progress={loadingProgress} appPhase={appPhase} />
@@ -2897,8 +2916,6 @@ export default function App() {
       {/* Main App Content - only show after loading complete */}
       {appPhase === 'ready' && (
         <>
-          <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
-
           {/* Sidebar Menu */}
           <div ref={drawerContainerRef} className="fixed inset-0 z-50 flex" style={{ pointerEvents: isMenuOpen ? 'auto' : 'none' }}>
             <div ref={sidebarRef} className="w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-6 relative border-r border-stone-100 will-change-transform" style={{ transform: isMenuOpen ? 'translateX(0)' : 'translateX(-256px)', transition: 'transform 0.3s ease-out' }}>
@@ -2921,7 +2938,7 @@ export default function App() {
               </div>
             </div>
             <div ref={backdropRef} className="flex-1 bg-stone-900/20 backdrop-blur-sm will-change-[opacity]" style={{ opacity: isMenuOpen ? 1 : 0, transition: 'opacity 0.3s ease-out' }} onClick={() => setIsMenuOpen(false)}></div>
-          </div>
+          </div >
 
           <header className="bg-white/60 backdrop-blur-md px-4 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20 animate-in fade-in duration-300">
             <div onClick={() => setIsMenuOpen(true)} className="p-2 glass-button rounded-xl cursor-pointer hover:bg-white/20 transition-all active:scale-95 z-20">
@@ -2986,7 +3003,7 @@ export default function App() {
             {currentView === 'principal' && (
               <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
             )}
-            {currentView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} />}
+            {currentView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} onEdit={(t) => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} />}
             {currentView === 'income' && (
               <IncomeView
                 incomes={incomes}
@@ -3054,11 +3071,11 @@ export default function App() {
             )}
             {currentView === 'settings' && (
               <div className="pb-24">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg text-amber-600"><SettingsIcon className="w-5 h-5" /></div>
+                <div className="bg-[#FEF9E7] border border-[#FCF3CF] rounded-xl p-4 mb-6 flex items-start gap-3">
+                  <div className="p-2 bg-[#FCF3CF] rounded-lg text-[#9A7D0A]"><SettingsIcon className="w-5 h-5" /></div>
                   <div>
-                    <h3 className="font-bold text-amber-800 text-sm">正在編輯 {selectedDate.getFullYear()} 年度預算</h3>
-                    <p className="text-xs text-amber-600 mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
+                    <h3 className="font-bold text-[#7D6608] text-sm">正在編輯 {selectedDate.getFullYear()} 年度預算</h3>
+                    <p className="text-xs text-[#9A7D0A] mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
                   </div>
                 </div>
                 <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度預算配置`} groups={settings.monthlyGroups || []} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
@@ -3072,203 +3089,219 @@ export default function App() {
 
 
           {/* --- Modals --- */}
-          {isAddTxModalOpen && (
-            <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
-              {/* 檢查是否有設定預算群組，若無則提示 */}
-              {((settings.monthlyGroups || []).length === 0 && (settings.annualGroups || []).length === 0) ? (
-                <div className="text-center py-10">
-                  <p className="text-stone-500 mb-4">請先設定預算分類</p>
-                  <GlassButton onClick={() => { setIsAddTxModalOpen(false); setCurrentView('settings'); }}>前往設定</GlassButton>
-                </div>
-              ) : (
-                <form onSubmit={handleAddTransaction} className="space-y-4">
-                  <div className="flex justify-end">
-                    <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-500 underline flex items-center gap-1 hover:text-stone-800"><SettingsIcon className="w-3 h-3" />管理固定支出</button>
+          {
+            isAddTxModalOpen && (
+              <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
+                {/* 檢查是否有設定預算群組，若無則提示 */}
+                {((settings.monthlyGroups || []).length === 0 && (settings.annualGroups || []).length === 0) ? (
+                  <div className="text-center py-10">
+                    <p className="text-stone-500 mb-4">請先設定預算分類</p>
+                    <GlassButton onClick={() => { setIsAddTxModalOpen(false); setCurrentView('settings'); }}>前往設定</GlassButton>
                   </div>
-                  <CalculatorInput
-                    value={newTrans.amount}
-                    onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
-                    label="金額"
-                  />
+                ) : (
+                  <form onSubmit={handleAddTransaction} className="space-y-4">
+                    <div className="flex justify-end">
+                      <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-500 underline flex items-center gap-1 hover:text-stone-800"><SettingsIcon className="w-3 h-3" />管理固定支出</button>
+                    </div>
+                    <CalculatorInput
+                      value={newTrans.amount}
+                      onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
+                      label="金額"
+                    />
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-stone-100/50 p-1 rounded-2xl flex">
-                      <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'monthly', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'monthly' ? 'bg-white shadow-sm text-stone-800' : 'text-stone-400'}`}>月度</button>
-                      <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'annual', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'annual' ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>年度</button>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-stone-100/50 p-1 rounded-2xl flex">
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'monthly', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'monthly' ? 'bg-white shadow-sm text-stone-800' : 'text-stone-400'}`}>月度</button>
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'annual', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'annual' ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>年度</button>
+                      </div>
+                      <div className="bg-stone-100/50 p-1 rounded-2xl flex">
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
+                      </div>
                     </div>
-                    <div className="bg-stone-100/50 p-1 rounded-2xl flex">
-                      <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
-                      <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
-                    </div>
-                  </div>
 
-                  <div className="space-y-3">
-                    <div className="relative">
-                      <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                        {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
-                      </select>
-                      <FolderOpen className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
-                      <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
+                          {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
+                        </select>
+                        <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
+                      </div>
+                      <div className="relative">
+                        <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
+                          {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
+                        </select>
+                        <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
+                      </div>
                     </div>
-                    <div className="relative">
-                      <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                        {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
-                      </select>
-                      <Hash className="absolute left-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
-                      <ChevronDown className="absolute right-4 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
-                    </div>
-                  </div>
 
-                  <div className="flex flex-col gap-3 min-w-0">
-                    <div className="w-full">
-                      <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
-                    </div>
-                    <div className="w-full relative">
-                      <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." />
-                      <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
-                    </div>
-                    {/* Quick Note Suggestions */}
-                    {(() => {
-                      const suggestions = transactions
-                        .filter(t => t.group === newTrans.group && t.category === newTrans.category && t.payer === newTrans.payer && t.note && t.note.trim() !== '')
-                        .reduce((acc, t) => { acc[t.note.trim()] = (acc[t.note.trim()] || 0) + 1; return acc; }, {});
-                      const sorted = Object.entries(suggestions).sort((a, b) => b[1] - a[1]).slice(0, 6);
-                      if (sorted.length === 0) return null;
-                      return (
-                        <div className="mt-2">
-                          <div className="flex items-center gap-1.5 mb-2 ml-1">
-                            <Clock className="w-3 h-3 text-stone-300" />
-                            <span className="text-[10px] font-bold text-stone-300 uppercase tracking-wider">常用備註</span>
-                          </div>
-                          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-                            {sorted.map(([note, count]) => (
-                              <button
-                                key={note}
-                                type="button"
-                                onClick={() => setNewTrans({ ...newTrans, note: newTrans.note === note ? '' : note })}
-                                className={`flex-shrink-0 text-xs font-medium px-3.5 py-2 rounded-xl border transition-all whitespace-nowrap ${newTrans.note === note
+                    <div className="flex flex-col gap-3 min-w-0">
+                      <div className="w-full">
+                        <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
+                      </div>
+                      <div className="w-full relative">
+                        <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." />
+                        <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
+                      </div>
+                      {/* Quick Note Suggestions */}
+                      {(() => {
+                        const suggestions = transactions
+                          .filter(t => t.group === newTrans.group && t.category === newTrans.category && t.payer === newTrans.payer && t.note && t.note.trim() !== '')
+                          .reduce((acc, t) => { acc[t.note.trim()] = (acc[t.note.trim()] || 0) + 1; return acc; }, {});
+                        const sorted = Object.entries(suggestions).sort((a, b) => b[1] - a[1]).slice(0, 6);
+                        if (sorted.length === 0) return null;
+                        return (
+                          <div className="mt-2">
+                            <div className="flex items-center gap-1.5 mb-2 ml-1">
+                              <Clock className="w-3 h-3 text-stone-300" />
+                              <span className="text-[10px] font-bold text-stone-300 uppercase tracking-wider">常用備註</span>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                              {sorted.map(([note, count]) => (
+                                <button
+                                  key={note}
+                                  type="button"
+                                  onClick={() => setNewTrans({ ...newTrans, note: newTrans.note === note ? '' : note })}
+                                  className={`flex-shrink-0 text-xs font-medium px-3.5 py-2 rounded-xl border transition-all whitespace-nowrap ${newTrans.note === note
                                     ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
                                     : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300 active:scale-95'
-                                  }`}
-                              >
-                                {note}
-                                <span className={`ml-1.5 text-[9px] ${newTrans.note === note ? 'text-stone-400' : 'text-stone-300'}`}>{count}</span>
-                              </button>
-                            ))}
+                                    }`}
+                                >
+                                  {note}
+                                  <span className={`ml-1.5 text-[9px] ${newTrans.note === note ? 'text-stone-400' : 'text-stone-300'}`}>{count}</span>
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
+                        );
+                      })()}
+                    </div>
 
-                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
-                </form>
-              )}
-            </ModalWrapper>
-          )}
+                    <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                  </form>
+                )}
+              </ModalWrapper>
+            )
+          }
 
           {/* Other Modals... (Same structure) */}
-          {isAddMortgageExpModalOpen && (
-            <ModalWrapper title={mortgageExpType === 'down_payment' ? '新增頭期雜支' : '新增雜支紀錄'} onClose={() => setIsAddMortgageExpModalOpen(false)}>
-              <form onSubmit={handleAddMortgageExp} className="space-y-4">
-                <InputField label="項目名稱" value={newMortgageExp.name} onChange={e => setNewMortgageExp({ ...newMortgageExp, name: e.target.value })} autoFocus required />
-                <InputField label="金額" type="number" value={newMortgageExp.amount} onChange={e => setNewMortgageExp({ ...newMortgageExp, amount: e.target.value })} required />
-                <InputField label="日期" type="date" value={newMortgageExp.date} onChange={e => setNewMortgageExp({ ...newMortgageExp, date: e.target.value })} required />
-                {mortgageExpType === 'misc_appliances' && (<InputField label="品牌" value={newMortgageExp.brand} onChange={e => setNewMortgageExp({ ...newMortgageExp, brand: e.target.value })} placeholder="品牌" />)}
-                <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} />
-                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-              </form>
-            </ModalWrapper>
-          )}
+          {
+            isAddMortgageExpModalOpen && (
+              <ModalWrapper title={mortgageExpType === 'down_payment' ? '新增頭期雜支' : '新增雜支紀錄'} onClose={() => setIsAddMortgageExpModalOpen(false)}>
+                <form onSubmit={handleAddMortgageExp} className="space-y-4">
+                  <InputField label="項目名稱" value={newMortgageExp.name} onChange={e => setNewMortgageExp({ ...newMortgageExp, name: e.target.value })} autoFocus required />
+                  <InputField label="金額" type="number" value={newMortgageExp.amount} onChange={e => setNewMortgageExp({ ...newMortgageExp, amount: e.target.value })} required />
+                  <InputField label="日期" type="date" value={newMortgageExp.date} onChange={e => setNewMortgageExp({ ...newMortgageExp, date: e.target.value })} required />
+                  {mortgageExpType === 'misc_appliances' && (<InputField label="品牌" value={newMortgageExp.brand} onChange={e => setNewMortgageExp({ ...newMortgageExp, brand: e.target.value })} placeholder="品牌" />)}
+                  <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} />
+                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
+                </form>
+              </ModalWrapper>
+            )
+          }
 
-          {isAddMortgageFundingModalOpen && (
-            <ModalWrapper title="新增頭期款來源" onClose={() => setIsAddMortgageFundingModalOpen(false)}>
-              <form onSubmit={handleAddMortgageFunding} className="space-y-4">
-                <InputField label="資金來源" value={newMortgageFunding.source} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, source: e.target.value })} placeholder=" " autoFocus required />
-                <InputField label="股票代碼 (選填)" value={newMortgageFunding.symbol} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, symbol: e.target.value })} placeholder=" " />
-                <div className="flex gap-2">
-                  <div className="flex-1"><InputField label="金額/單價" type="number" value={newMortgageFunding.amount} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, amount: e.target.value })} required /></div>
-                  <div className="w-24"><InputField label="匯率" type="number" value={newMortgageFunding.rate} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, rate: e.target.value })} placeholder="1.0" /></div>
-                </div>
-                <InputField label="股數 (選填)" type="number" value={newMortgageFunding.shares} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, shares: e.target.value })} placeholder="0" />
-                <InputField label="日期" type="date" value={newMortgageFunding.date} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, date: e.target.value })} required />
-                <InputField label="備註" value={newMortgageFunding.note} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, note: e.target.value })} />
-                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-              </form>
-            </ModalWrapper>
-          )}
+          {
+            isAddMortgageFundingModalOpen && (
+              <ModalWrapper title="新增頭期款來源" onClose={() => setIsAddMortgageFundingModalOpen(false)}>
+                <form onSubmit={handleAddMortgageFunding} className="space-y-4">
+                  <InputField label="資金來源" value={newMortgageFunding.source} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, source: e.target.value })} placeholder=" " autoFocus required />
+                  <InputField label="股票代碼 (選填)" value={newMortgageFunding.symbol} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, symbol: e.target.value })} placeholder=" " />
+                  <div className="flex gap-2">
+                    <div className="flex-1"><InputField label="金額/單價" type="number" value={newMortgageFunding.amount} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, amount: e.target.value })} required /></div>
+                    <div className="w-24"><InputField label="匯率" type="number" value={newMortgageFunding.rate} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, rate: e.target.value })} placeholder="1.0" /></div>
+                  </div>
+                  <InputField label="股數 (選填)" type="number" value={newMortgageFunding.shares} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, shares: e.target.value })} placeholder="0" />
+                  <InputField label="日期" type="date" value={newMortgageFunding.date} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, date: e.target.value })} required />
+                  <InputField label="備註" value={newMortgageFunding.note} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, note: e.target.value })} />
+                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
+                </form>
+              </ModalWrapper>
+            )
+          }
 
-          {isAddMortgageAnalysisModalOpen && (
-            <ModalWrapper title="新增划算試算項目" onClose={() => setIsAddMortgageAnalysisModalOpen(false)}>
-              <form onSubmit={handleAddMortgageAnalysis} className="space-y-4">
-                <InputField label="項目名稱" value={newMortgageAnalysis.name} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, name: e.target.value })} autoFocus required />
-                <InputField label="金額" type="number" value={newMortgageAnalysis.amount} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, amount: e.target.value })} required />
-                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-              </form>
-            </ModalWrapper>
-          )}
+          {
+            isAddMortgageAnalysisModalOpen && (
+              <ModalWrapper title="新增划算試算項目" onClose={() => setIsAddMortgageAnalysisModalOpen(false)}>
+                <form onSubmit={handleAddMortgageAnalysis} className="space-y-4">
+                  <InputField label="項目名稱" value={newMortgageAnalysis.name} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, name: e.target.value })} autoFocus required />
+                  <InputField label="金額" type="number" value={newMortgageAnalysis.amount} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, amount: e.target.value })} required />
+                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
+                </form>
+              </ModalWrapper>
+            )
+          }
 
-          {isAddIncomeModalOpen && (
-            <ModalWrapper title={editingId ? "編輯收入" : "新增收入"} onClose={() => { setIsAddIncomeModalOpen(false); setEditingId(null); setNewIncome({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' }); }}>
-              <form onSubmit={handleAddIncome} className="space-y-6">
-                <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
-                <div className="space-y-1.5"><label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
-                <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
-                <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
-                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認入帳'}</GlassButton>
-              </form>
-            </ModalWrapper>
-          )}
+          {
+            isAddIncomeModalOpen && (
+              <ModalWrapper title={editingId ? "編輯收入" : "新增收入"} onClose={() => { setIsAddIncomeModalOpen(false); setEditingId(null); setNewIncome({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' }); }}>
+                <form onSubmit={handleAddIncome} className="space-y-6">
+                  <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
+                  <div className="space-y-1.5"><label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
+                  <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
+                  <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
+                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認入帳'}</GlassButton>
+                </form>
+              </ModalWrapper>
+            )
+          }
 
-          {isAddPartnerTxModalOpen && (
-            <ModalWrapper title={editingId ? "編輯資金紀錄" : "新增資金紀錄"} onClose={() => { setIsAddPartnerTxModalOpen(false); setEditingId(null); setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' }); }}>
-              <form onSubmit={handleAddPartnerTx} className="space-y-6">
-                <div className="flex gap-2">
-                  <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'saving' })} variant={newPartnerTx.type === 'saving' ? 'success' : 'ghost'} className="flex-1">存入資金</GlassButton>
-                  <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'expense' })} variant={newPartnerTx.type === 'expense' ? 'danger' : 'ghost'} className="flex-1">支出/提領</GlassButton>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1 mb-1">金額</label>
-                  <div className="relative"><input type="number" value={newPartnerTx.amount} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, amount: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none text-sm`} placeholder="0" autoFocus required /></div>
-                  <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">{[10000, 25000, 30000, 50000].map(amt => (<button key={amt} type="button" onClick={() => setNewPartnerTx({ ...newPartnerTx, amount: amt })} className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg text-xs font-bold text-stone-600 whitespace-nowrap transition-colors">${amt.toLocaleString()}</button>))}</div>
-                </div>
-                <InputField label="日期" type="date" value={newPartnerTx.date} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, date: e.target.value })} required />
-                <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
-                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
-              </form>
-            </ModalWrapper>
-          )}
+          {
+            isAddPartnerTxModalOpen && (
+              <ModalWrapper title={editingId ? "編輯資金紀錄" : "新增資金紀錄"} onClose={() => { setIsAddPartnerTxModalOpen(false); setEditingId(null); setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' }); }}>
+                <form onSubmit={handleAddPartnerTx} className="space-y-6">
+                  <div className="flex gap-2">
+                    <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'saving' })} variant={newPartnerTx.type === 'saving' ? 'success' : 'ghost'} className="flex-1">存入資金</GlassButton>
+                    <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'expense' })} variant={newPartnerTx.type === 'expense' ? 'danger' : 'ghost'} className="flex-1">支出/提領</GlassButton>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1 mb-1">金額</label>
+                    <div className="relative"><input type="number" value={newPartnerTx.amount} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, amount: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none text-sm`} placeholder="0" autoFocus required /></div>
+                    <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">{[10000, 25000, 30000, 50000].map(amt => (<button key={amt} type="button" onClick={() => setNewPartnerTx({ ...newPartnerTx, amount: amt })} className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg text-xs font-bold text-stone-600 whitespace-nowrap transition-colors">${amt.toLocaleString()}</button>))}</div>
+                  </div>
+                  <InputField label="日期" type="date" value={newPartnerTx.date} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, date: e.target.value })} required />
+                  <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
+                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                </form>
+              </ModalWrapper>
+            )
+          }
 
-          {isAddSalaryModalOpen && (
-            <ModalWrapper title="調薪紀錄" onClose={() => setIsAddSalaryModalOpen(false)}>
-              <form onSubmit={handleAddSalaryRecord} className="space-y-6">
-                <InputField label="新薪資金額" type="number" value={newSalaryRecord.amount} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, amount: e.target.value })} autoFocus required />
-                <InputField label="生效日期" type="date" value={newSalaryRecord.date} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, date: e.target.value })} required />
-                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存調薪'}</GlassButton>
-              </form>
-            </ModalWrapper>
-          )}
+          {
+            isAddSalaryModalOpen && (
+              <ModalWrapper title="調薪紀錄" onClose={() => setIsAddSalaryModalOpen(false)}>
+                <form onSubmit={handleAddSalaryRecord} className="space-y-6">
+                  <InputField label="新薪資金額" type="number" value={newSalaryRecord.amount} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, amount: e.target.value })} autoFocus required />
+                  <InputField label="生效日期" type="date" value={newSalaryRecord.date} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, date: e.target.value })} required />
+                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存調薪'}</GlassButton>
+                </form>
+              </ModalWrapper>
+            )
+          }
 
-          {isAddExchangeModalOpen && (
-            <ModalWrapper title={editingId ? "編輯換匯紀錄" : "新增換匯紀錄"} onClose={() => { setIsAddExchangeModalOpen(false); setEditingId(null); setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' }); }}>
-              <form onSubmit={handleAddExchange} className="space-y-4">
-                {/* Buy/Sell Toggle */}
-                <div className="flex gap-2">
-                  <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'buy' })} variant={newExchange.type === 'buy' ? 'success' : 'ghost'} className="flex-1">買入美金</GlassButton>
-                  <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'sell' })} variant={newExchange.type === 'sell' ? 'danger' : 'ghost'} className="flex-1">賣出美金</GlassButton>
-                </div>
-                {/* Account Toggle */}
-                <div className="flex gap-2">
-                  <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'FT' })} variant={newExchange.account === 'FT' ? 'primary' : 'ghost'} className="flex-1">Firstrade</GlassButton>
-                  <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'IB' })} variant={newExchange.account === 'IB' ? 'primary' : 'ghost'} className="flex-1">IB</GlassButton>
-                </div>
-                <InputField label={newExchange.type === 'sell' ? "賣出美金 (USD)" : "買入美金 (USD)"} type="number" value={newExchange.usdAmount} onChange={e => setNewExchange({ ...newExchange, usdAmount: e.target.value })} autoFocus required />
-                <InputField label="匯率 (TWD/USD)" type="number" value={newExchange.rate} onChange={e => setNewExchange({ ...newExchange, rate: e.target.value })} required />
-                <InputField label="日期" type="date" value={newExchange.date} onChange={e => setNewExchange({ ...newExchange, date: e.target.value })} required />
-                <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認紀錄'}</GlassButton>
-              </form>
-            </ModalWrapper>
-          )}
+          {
+            isAddExchangeModalOpen && (
+              <ModalWrapper title={editingId ? "編輯換匯紀錄" : "新增換匯紀錄"} onClose={() => { setIsAddExchangeModalOpen(false); setEditingId(null); setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' }); }}>
+                <form onSubmit={handleAddExchange} className="space-y-4">
+                  {/* Buy/Sell Toggle */}
+                  <div className="flex gap-2">
+                    <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'buy' })} variant={newExchange.type === 'buy' ? 'success' : 'ghost'} className="flex-1">買入美金</GlassButton>
+                    <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'sell' })} variant={newExchange.type === 'sell' ? 'danger' : 'ghost'} className="flex-1">賣出美金</GlassButton>
+                  </div>
+                  {/* Account Toggle */}
+                  <div className="flex gap-2">
+                    <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'FT' })} variant={newExchange.account === 'FT' ? 'primary' : 'ghost'} className="flex-1">Firstrade</GlassButton>
+                    <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'IB' })} variant={newExchange.account === 'IB' ? 'primary' : 'ghost'} className="flex-1">IB</GlassButton>
+                  </div>
+                  <InputField label={newExchange.type === 'sell' ? "賣出美金 (USD)" : "買入美金 (USD)"} type="number" value={newExchange.usdAmount} onChange={e => setNewExchange({ ...newExchange, usdAmount: e.target.value })} autoFocus required />
+                  <InputField label="匯率 (TWD/USD)" type="number" value={newExchange.rate} onChange={e => setNewExchange({ ...newExchange, rate: e.target.value })} required />
+                  <InputField label="日期" type="date" value={newExchange.date} onChange={e => setNewExchange({ ...newExchange, date: e.target.value })} required />
+                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認紀錄'}</GlassButton>
+                </form>
+              </ModalWrapper>
+            )
+          }
 
           <ConfirmationModal
             isOpen={confirmModal.isOpen}
@@ -3304,7 +3337,8 @@ export default function App() {
             onSkip={handleSkipRecurring}
           />
         </>
-      )}
+      )
+      }
     </div >
   );
 }
