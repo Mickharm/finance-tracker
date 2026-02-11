@@ -2188,6 +2188,7 @@ export default function App() {
     let touchStartY = 0;
     let isDragging = false;
     let directionLocked = false;
+    let primaryTouchId = null;
 
     const setDrawerPosition = (offsetX) => {
       const clamped = Math.max(-DRAWER_WIDTH, Math.min(0, offsetX));
@@ -2207,55 +2208,9 @@ export default function App() {
       if (backdropRef.current) backdropRef.current.style.transition = 'none';
     };
 
-    const handleTouchStart = (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      isDragging = false;
-      directionLocked = false;
-      // Only allow dragging if starting from left edge (opening) or menu is open (closing)
-      if (touchStartX < 30 || isMenuOpen) {
-        disableTransition();
-      }
-    };
-
-    const handleTouchMove = (e) => {
-      const currentX = e.touches[0].clientX;
-      const currentY = e.touches[0].clientY;
-      const deltaX = currentX - touchStartX;
-      const deltaY = Math.abs(currentY - touchStartY);
-
-      // Lock direction on first significant movement
-      if (!directionLocked && (Math.abs(deltaX) > 10 || deltaY > 10)) {
-        directionLocked = true;
-        // If vertical movement dominates, abort
-        if (deltaY > Math.abs(deltaX)) { isDragging = false; return; }
-        // Only start drag if from left edge (opening) or menu is open (closing)
-        if (touchStartX < 30 || isMenuOpen) isDragging = true;
-      }
-
-      if (!isDragging) return;
-
-      if (isMenuOpen) {
-        // Closing: start from 0 (fully open), drag left to -DRAWER_WIDTH
-        const offset = Math.min(0, deltaX);
-        setDrawerPosition(offset);
-      } else {
-        // Opening: start from -DRAWER_WIDTH, drag right toward 0
-        const offset = -DRAWER_WIDTH + Math.max(0, deltaX);
-        setDrawerPosition(offset);
-      }
-    };
-
-    const handleTouchEnd = (e) => {
-      if (!isDragging) return;
-      isDragging = false;
+    const snapToNearest = (deltaX) => {
       enableTransition();
-
-      const endX = e.changedTouches[0].clientX;
-      const deltaX = endX - touchStartX;
-
       if (isMenuOpen) {
-        // If dragged left more than 30% of drawer width, close
         if (deltaX < -(DRAWER_WIDTH * 0.3)) {
           setDrawerPosition(-DRAWER_WIDTH);
           setIsMenuOpen(false);
@@ -2263,7 +2218,6 @@ export default function App() {
           setDrawerPosition(0);
         }
       } else {
-        // If dragged right more than 30% of drawer width, open
         if (deltaX > DRAWER_WIDTH * 0.3) {
           setDrawerPosition(0);
           setIsMenuOpen(true);
@@ -2273,13 +2227,80 @@ export default function App() {
       }
     };
 
+    const handleTouchStart = (e) => {
+      // Only track the first finger; ignore additional touches
+      if (primaryTouchId !== null) return;
+      const touch = e.touches[0];
+      primaryTouchId = touch.identifier;
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      isDragging = false;
+      directionLocked = false;
+      if (touchStartX < 30 || isMenuOpen) {
+        disableTransition();
+      }
+    };
+
+    const getTrackedTouch = (touches) => {
+      for (let i = 0; i < touches.length; i++) {
+        if (touches[i].identifier === primaryTouchId) return touches[i];
+      }
+      return null;
+    };
+
+    const handleTouchMove = (e) => {
+      const touch = getTrackedTouch(e.touches);
+      if (!touch) return;
+
+      const currentX = touch.clientX;
+      const currentY = touch.clientY;
+      const deltaX = currentX - touchStartX;
+      const deltaY = Math.abs(currentY - touchStartY);
+
+      if (!directionLocked && (Math.abs(deltaX) > 10 || deltaY > 10)) {
+        directionLocked = true;
+        if (deltaY > Math.abs(deltaX)) { isDragging = false; return; }
+        if (touchStartX < 30 || isMenuOpen) isDragging = true;
+      }
+
+      if (!isDragging) return;
+
+      if (isMenuOpen) {
+        setDrawerPosition(Math.min(0, deltaX));
+      } else {
+        setDrawerPosition(-DRAWER_WIDTH + Math.max(0, deltaX));
+      }
+    };
+
+    const handleTouchEnd = (e) => {
+      const touch = getTrackedTouch(e.changedTouches);
+      if (!touch) return;
+      primaryTouchId = null;
+      if (!isDragging) return;
+      isDragging = false;
+      const deltaX = touch.clientX - touchStartX;
+      snapToNearest(deltaX);
+    };
+
+    const handleTouchCancel = () => {
+      // If drag is interrupted (e.g. system gesture), snap to nearest
+      if (isDragging) {
+        isDragging = false;
+        enableTransition();
+        setDrawerPosition(isMenuOpen ? 0 : -DRAWER_WIDTH);
+      }
+      primaryTouchId = null;
+    };
+
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    document.addEventListener('touchcancel', handleTouchCancel, { passive: true });
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchcancel', handleTouchCancel);
     };
   }, [isMenuOpen]);
 
@@ -3106,6 +3127,23 @@ export default function App() {
                       <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." />
                       <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
                     </div>
+                    {/* Quick Note Suggestions */}
+                    {(() => {
+                      const suggestions = transactions
+                        .filter(t => t.group === newTrans.group && t.category === newTrans.category && t.payer === newTrans.payer && t.note && t.note.trim() !== '')
+                        .reduce((acc, t) => { acc[t.note.trim()] = (acc[t.note.trim()] || 0) + 1; return acc; }, {});
+                      const sorted = Object.entries(suggestions).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                      if (sorted.length === 0) return null;
+                      return (
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {sorted.map(([note]) => (
+                            <button key={note} type="button" onClick={() => setNewTrans({ ...newTrans, note })} className={`text-xs px-3 py-1.5 rounded-full border transition-all ${newTrans.note === note ? 'bg-stone-800 text-white border-stone-800' : 'bg-white/60 text-stone-500 border-stone-200 hover:bg-stone-100 active:scale-95'}`}>
+                              {note}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
