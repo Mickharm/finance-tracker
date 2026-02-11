@@ -2813,30 +2813,28 @@ export default function App() {
           <ConfirmationModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} onConfirm={confirmModal.onConfirm} message={confirmModal.message} title={confirmModal.title} confirmText={confirmModal.confirmText} confirmColor={confirmModal.confirmColor} />
 
           {/* Sidebar Menu */}
-          {isMenuOpen && (
-            <div className="fixed inset-0 z-50 flex animate-in slide-in-from-left duration-300">
-              <div className="w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-6 relative border-r border-stone-100">
-                <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 p-2 bg-stone-100 rounded-full text-stone-400 hover:bg-stone-200"><X className="w-4 h-4" /></button>
-                <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-stone-700 flex items-center gap-2"><img src={icon} className="w-8 h-8 rounded-lg shadow-md" alt="Logo" /> 記帳助手</h1><p className="text-xs text-stone-400 mt-1 pl-1">v1.0.0(Mick)</p></div>
-                <div className="space-y-6">
-                  {MENU_SECTIONS.map(section => (
-                    <div key={section.title}>
-                      <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 px-2">{section.title}</h3>
-                      <div className="space-y-1">
-                        {section.items.map(item => (
-                          <button key={item.id} onClick={() => handleViewChange(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all ${currentView === item.id ? 'bg-stone-800 text-white shadow-lg shadow-stone-300/50' : 'text-stone-500 hover:bg-stone-100'}`}>
-                            <item.icon className={`w-4 h-4 ${currentView === item.id ? 'text-indigo-300' : ''}`} />
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
+          <div className={`fixed inset-0 z-50 flex transition-all duration-300 ${isMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+            <div className={`w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-6 relative border-r border-stone-100 transition-transform duration-300 ease-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+              <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 p-2 bg-stone-100 rounded-full text-stone-400 hover:bg-stone-200"><X className="w-4 h-4" /></button>
+              <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-stone-700 flex items-center gap-2"><img src={icon} className="w-8 h-8 rounded-lg shadow-md" alt="Logo" /> 記帳助手</h1><p className="text-xs text-stone-400 mt-1 pl-1">v1.0.0(Mick)</p></div>
+              <div className="space-y-6">
+                {MENU_SECTIONS.map(section => (
+                  <div key={section.title}>
+                    <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 px-2">{section.title}</h3>
+                    <div className="space-y-1">
+                      {section.items.map(item => (
+                        <button key={item.id} onClick={() => handleViewChange(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all ${currentView === item.id ? 'bg-stone-800 text-white shadow-lg shadow-stone-300/50' : 'text-stone-500 hover:bg-stone-100'}`}>
+                          <item.icon className={`w-4 h-4 ${currentView === item.id ? 'text-indigo-300' : ''}`} />
+                          {item.label}
+                        </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex-1 bg-stone-900/20 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
             </div>
-          )}
+            <div className={`flex-1 backdrop-blur-sm transition-all duration-300 ${isMenuOpen ? 'bg-stone-900/20 opacity-100' : 'bg-transparent opacity-0'}`} onClick={() => setIsMenuOpen(false)}></div>
+          </div>
 
           <header className="bg-white/60 backdrop-blur-md px-4 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20 animate-in fade-in duration-300">
             <div onClick={() => setIsMenuOpen(true)} className="p-2 glass-button rounded-xl cursor-pointer hover:bg-white/20 transition-all active:scale-95 z-20">
