@@ -523,6 +523,467 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
 };
 
 
+// ─── Holdings View (持股檢視) ────────────────────────────────────────────────
+const HoldingsStockCard = ({ stock, onAddPurchase, onDeletePurchase, onDeleteStock, currentPrice, priceChange }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const totalShares = stock.purchases.reduce((sum, p) => sum + Number(p.shares), 0);
+  const totalCost = stock.purchases.reduce((sum, p) => sum + Number(p.shares) * Number(p.price), 0);
+  const avgCost = totalShares > 0 ? totalCost / totalShares : 0;
+  const marketValue = totalShares * (currentPrice || 0);
+  const pnl = currentPrice ? marketValue - totalCost : 0;
+  const pnlPercent = totalCost > 0 && currentPrice ? (pnl / totalCost) * 100 : 0;
+  const isUp = pnl >= 0;
+
+  return (
+    <div className="border border-stone-100 rounded-2xl p-4 bg-white/30">
+      <div className="flex justify-between items-start cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-bold text-stone-800 text-base">{stock.symbol}</span>
+            {currentPrice > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${priceChange >= 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>
+                {priceChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}{priceChange?.toFixed(2)}%
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3 text-xs text-stone-400">
+            <span className="font-mono">{totalShares} 股</span>
+            <span>均價 ${avgCost.toFixed(2)}</span>
+            <span>現價 ${currentPrice ? currentPrice.toFixed(2) : '---'}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {currentPrice > 0 && (
+            <div className="text-right">
+              <div className={`text-sm font-bold font-mono ${isUp ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>
+                {isUp ? '+' : ''}{pnlPercent.toFixed(2)}%
+              </div>
+              <div className={`text-[10px] font-mono ${isUp ? 'text-[#52B788]' : 'text-[#E57373]'}`}>
+                {isUp ? '+' : ''}${pnl.toFixed(0)}
+              </div>
+            </div>
+          )}
+          <button onClick={(e) => { e.stopPropagation(); onDeleteStock(); }} className="text-stone-300 hover:text-[#C0392B] p-1 transition-colors">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+      {/* Market Value Bar */}
+      {currentPrice > 0 && (
+        <div className="mt-3 flex justify-between items-center text-[10px] text-stone-400">
+          <span>市值 <span className="font-mono font-bold text-stone-600">${marketValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
+          <span>成本 <span className="font-mono">${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
+        </div>
+      )}
+      {isExpanded && (
+        <div className="mt-3 pt-3 border-t border-stone-100/50 animate-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] text-stone-400 font-bold uppercase">購買紀錄</span>
+            <button onClick={(e) => { e.stopPropagation(); onAddPurchase(stock.symbol); }} className="text-[10px] bg-stone-800 text-white px-2.5 py-1 rounded-lg font-bold hover:bg-stone-700 flex items-center gap-1">
+              <Plus className="w-3 h-3" /> 新增買入
+            </button>
+          </div>
+          {stock.purchases.length === 0 ? (
+            <div className="text-xs text-stone-300 text-center py-3">尚無購買紀錄</div>
+          ) : (
+            <div className="space-y-1.5">
+              {stock.purchases.map(p => (
+                <div key={p.id} className="flex justify-between items-center text-xs bg-stone-50/50 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-stone-400 font-mono">{p.date}</span>
+                    <span className="font-bold text-stone-600">{p.shares} 股</span>
+                    <span className="text-stone-400">@${Number(p.price).toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-stone-500">${(Number(p.shares) * Number(p.price)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    <button onClick={(e) => { e.stopPropagation(); onDeletePurchase(p.id); }} className="text-stone-300 hover:text-[#C0392B] p-0.5">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const HoldingsGroupCard = ({ group, prices, onAddStock, onDeleteStock, onAddPurchase, onDeletePurchase, onDeleteGroup }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [newSymbol, setNewSymbol] = useState('');
+  const theme = COLOR_VARIANTS.sky;
+
+  const groupStats = useMemo(() => {
+    let totalCost = 0, totalValue = 0;
+    group.stocks.forEach(s => {
+      const shares = s.purchases.reduce((sum, p) => sum + Number(p.shares), 0);
+      const cost = s.purchases.reduce((sum, p) => sum + Number(p.shares) * Number(p.price), 0);
+      const price = prices[s.symbol]?.price || 0;
+      totalCost += cost;
+      totalValue += shares * price;
+    });
+    const pnl = totalValue - totalCost;
+    const pnlPercent = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+    return { totalCost, totalValue, pnl, pnlPercent };
+  }, [group.stocks, prices]);
+
+  const handleAdd = () => {
+    if (newSymbol.trim()) {
+      onAddStock(group.id, newSymbol.trim().toUpperCase());
+      setNewSymbol('');
+    }
+  };
+
+  return (
+    <div className={`${GLASS_CARD} p-5 mb-4 ${theme.glow}`}>
+      <div className="flex justify-between items-center mb-3">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+          <div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>
+            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-stone-700 tracking-tight">{group.name}</h3>
+            <span className="text-[10px] text-stone-400 font-medium">
+              {group.stocks.length} 檔 · 市值 <span className="font-mono">${groupStats.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {groupStats.totalCost > 0 && (
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${groupStats.pnl >= 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>
+              {groupStats.pnl >= 0 ? '+' : ''}{groupStats.pnlPercent.toFixed(1)}%
+            </span>
+          )}
+          <button onClick={(e) => { e.stopPropagation(); onDeleteGroup(); }} className="p-1.5 rounded-lg bg-stone-100 text-stone-400 hover:bg-[#FDECEA] hover:text-[#C0392B] transition-all">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+      {isExpanded && (
+        <div className="space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-stone-100/50 pt-3">
+          {group.stocks.map((stock, idx) => (
+            <HoldingsStockCard
+              key={`${stock.symbol}-${idx}`}
+              stock={stock}
+              currentPrice={prices[stock.symbol]?.price}
+              priceChange={prices[stock.symbol]?.change}
+              onAddPurchase={onAddPurchase}
+              onDeletePurchase={(purchaseId) => onDeletePurchase(group.id, stock.symbol, purchaseId)}
+              onDeleteStock={() => onDeleteStock(group.id, idx)}
+            />
+          ))}
+          <div className="flex gap-2 pt-1">
+            <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdd()} placeholder="輸入股票代碼" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} />
+            <button onClick={handleAdd} className="bg-stone-800 text-white px-4 rounded-xl hover:bg-stone-700 font-bold text-xs shadow-lg">
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const HoldingsDonutChart = ({ data }) => {
+  if (!data || data.length === 0) return null;
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  if (total <= 0) return null;
+  const colors = ['#52B788', '#7A96BE', '#D4AC0D', '#E57373', '#9A85B0', '#5DAAAD', '#8A8884', '#7889B0', '#9C9690'];
+  const cx = 50, cy = 50, r = 35, innerR = 22;
+  let cumAngle = -90;
+  const arcs = data.map((d, i) => {
+    const pct = d.value / total;
+    const angle = pct * 360;
+    const startAngle = cumAngle;
+    const endAngle = cumAngle + angle;
+    cumAngle = endAngle;
+    const largeArc = angle > 180 ? 1 : 0;
+    const toRad = (a) => (a * Math.PI) / 180;
+    const x1 = cx + r * Math.cos(toRad(startAngle));
+    const y1 = cy + r * Math.sin(toRad(startAngle));
+    const x2 = cx + r * Math.cos(toRad(endAngle));
+    const y2 = cy + r * Math.sin(toRad(endAngle));
+    const ix1 = cx + innerR * Math.cos(toRad(endAngle));
+    const iy1 = cy + innerR * Math.sin(toRad(endAngle));
+    const ix2 = cx + innerR * Math.cos(toRad(startAngle));
+    const iy2 = cy + innerR * Math.sin(toRad(startAngle));
+    return (
+      <path key={i} d={`M${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} L${ix1},${iy1} A${innerR},${innerR} 0 ${largeArc},0 ${ix2},${iy2} Z`} fill={colors[i % colors.length]} opacity="0.85" />
+    );
+  });
+  return (
+    <div className="flex items-center gap-4">
+      <svg viewBox="0 0 100 100" className="w-28 h-28 flex-shrink-0">
+        {arcs}
+        <text x={cx} y={cy - 3} textAnchor="middle" className="fill-stone-700 text-[7px] font-bold">${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</text>
+        <text x={cx} y={cy + 6} textAnchor="middle" className="fill-stone-400 text-[4px]">總市值</text>
+      </svg>
+      <div className="flex-1 space-y-1.5">
+        {data.map((d, i) => (
+          <div key={i} className="flex items-center gap-2 text-xs">
+            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
+            <span className="text-stone-600 truncate flex-1">{d.label}</span>
+            <span className="font-mono text-stone-500 text-[10px]">{(d.value / total * 100).toFixed(1)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
+  const [activeTab, setActiveTab] = useState('holdings');
+  // Holdings state
+  const [holdingsGroups, setHoldingsGroups] = useState([]);
+  const [holdingsPrices, setHoldingsPrices] = useState({});
+  const [holdingsLoading, setHoldingsLoading] = useState(false);
+  const [holdingsLastUpdated, setHoldingsLastUpdated] = useState(null);
+  const [isAddHoldingsGroupOpen, setIsAddHoldingsGroupOpen] = useState(false);
+  const [newHoldingsGroupName, setNewHoldingsGroupName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Add purchase modal
+  const [purchaseModal, setPurchaseModal] = useState({ open: false, symbol: '' });
+  const [newPurchase, setNewPurchase] = useState({ date: new Date().toISOString().split('T')[0], shares: '', price: '' });
+
+  // ─ Firestore ─
+  const holdingsRef = useMemo(() => user ? doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'holdings_config') : null, [user, db, appId]);
+
+  useEffect(() => {
+    if (!holdingsRef) return;
+    const unsub = onSnapshot(holdingsRef, (s) => {
+      if (s.exists()) {
+        const data = s.data().groups || [];
+        setHoldingsGroups(data);
+        if (data.length > 0) fetchHoldingsPrices(data);
+      } else setHoldingsGroups([]);
+    });
+    return () => unsub();
+  }, [holdingsRef]);
+
+  const saveHoldings = async (newGroups) => {
+    if (holdingsRef) await setDoc(holdingsRef, { groups: newGroups });
+  };
+
+  // ─ Price fetching ─
+  const fetchHoldingsPrices = useCallback(async (currentGroups) => {
+    setHoldingsLoading(true);
+    const allSymbols = new Set();
+    currentGroups.forEach(g => g.stocks?.forEach(s => {
+      if (s.symbol?.trim()) allSymbols.add(s.symbol.trim().toUpperCase());
+    }));
+    if (allSymbols.size === 0) { setHoldingsLoading(false); return; }
+    const newPrices = {};
+    for (const symbol of allSymbols) {
+      try {
+        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+        if (res.ok) { const data = await res.json(); if (data.c) newPrices[symbol] = { price: data.c, change: data.dp }; }
+      } catch (e) { console.warn(e); }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    setHoldingsPrices(prev => ({ ...prev, ...newPrices }));
+    setHoldingsLastUpdated(new Date());
+    setHoldingsLoading(false);
+  }, []);
+
+  // ─ CRUD ─
+  const addHoldingsGroup = async () => {
+    if (!newHoldingsGroupName.trim() || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const updated = [...holdingsGroups, { id: Date.now().toString(), name: newHoldingsGroupName, stocks: [] }];
+      await saveHoldings(updated);
+      setNewHoldingsGroupName('');
+      setIsAddHoldingsGroupOpen(false);
+    } catch (e) { console.error(e); } finally { setIsSubmitting(false); }
+  };
+
+  const deleteHoldingsGroup = (id) => requestConfirmation({
+    message: '確定刪除此群組及所有持股紀錄？',
+    onConfirm: async () => { await saveHoldings(holdingsGroups.filter(g => g.id !== id)); }
+  });
+
+  const addStockToGroup = async (groupId, symbol) => {
+    const exists = holdingsGroups.find(g => g.id === groupId)?.stocks?.some(s => s.symbol === symbol);
+    if (exists) return;
+    const updated = holdingsGroups.map(g => g.id === groupId ? { ...g, stocks: [...(g.stocks || []), { symbol, purchases: [] }] } : g);
+    await saveHoldings(updated);
+    fetchHoldingsPrices(updated);
+  };
+
+  const deleteStockFromGroup = async (groupId, stockIdx) => {
+    const updated = holdingsGroups.map(g => g.id === groupId ? { ...g, stocks: g.stocks.filter((_, i) => i !== stockIdx) } : g);
+    await saveHoldings(updated);
+  };
+
+  const addPurchaseToStock = async (symbol) => {
+    if (!newPurchase.shares || !newPurchase.price) return;
+    const purchase = { id: Date.now().toString(), date: newPurchase.date, shares: Number(newPurchase.shares), price: Number(newPurchase.price) };
+    const updated = holdingsGroups.map(g => ({
+      ...g,
+      stocks: g.stocks.map(s => s.symbol === symbol ? { ...s, purchases: [...s.purchases, purchase] } : s)
+    }));
+    await saveHoldings(updated);
+    setPurchaseModal({ open: false, symbol: '' });
+    setNewPurchase({ date: new Date().toISOString().split('T')[0], shares: '', price: '' });
+  };
+
+  const deletePurchaseFromStock = async (groupId, symbol, purchaseId) => {
+    const updated = holdingsGroups.map(g => g.id === groupId ? {
+      ...g,
+      stocks: g.stocks.map(s => s.symbol === symbol ? { ...s, purchases: s.purchases.filter(p => p.id !== purchaseId) } : s)
+    } : g);
+    await saveHoldings(updated);
+  };
+
+  // ─ Computed ─
+  const portfolioSummary = useMemo(() => {
+    let totalCost = 0, totalValue = 0;
+    const pieData = [];
+    holdingsGroups.forEach(g => {
+      let gValue = 0;
+      g.stocks?.forEach(s => {
+        const shares = s.purchases.reduce((sum, p) => sum + Number(p.shares), 0);
+        const cost = s.purchases.reduce((sum, p) => sum + Number(p.shares) * Number(p.price), 0);
+        const price = holdingsPrices[s.symbol]?.price || 0;
+        const value = shares * price;
+        totalCost += cost;
+        totalValue += value;
+        gValue += value;
+        if (value > 0) pieData.push({ label: s.symbol, value });
+      });
+    });
+    return { totalCost, totalValue, pnl: totalValue - totalCost, pnlPercent: totalCost > 0 ? ((totalValue - totalCost) / totalCost) * 100 : 0, pieData };
+  }, [holdingsGroups, holdingsPrices]);
+
+  return (
+    <div className="pb-24 animate-in fade-in">
+      {/* Tab Bar */}
+      <div className="flex bg-stone-100 p-1 rounded-xl mb-6">
+        <button onClick={() => setActiveTab('holdings')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'holdings' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-400'}`}>持股檢視</button>
+        <button onClick={() => setActiveTab('allocation')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'allocation' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-400'}`}>占比計算</button>
+      </div>
+
+      {activeTab === 'holdings' ? (
+        <div className="space-y-5 animate-in slide-in-from-left-4 duration-300">
+          {/* Header */}
+          <div className="flex justify-between items-end px-1">
+            <div>
+              <h2 className="text-xl font-bold text-stone-800">持股檢視</h2>
+              <p className="text-xs text-stone-400 font-mono mt-1">{holdingsLastUpdated ? `最後更新: ${holdingsLastUpdated.toLocaleTimeString()}` : '更新中...'}</p>
+            </div>
+            <button onClick={() => fetchHoldingsPrices(holdingsGroups)} className="p-2 rounded-xl bg-white shadow-sm border border-stone-100 text-[#5A7099]">
+              <RefreshCw className={`w-5 h-5 ${holdingsLoading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+
+          {/* Portfolio Summary */}
+          {portfolioSummary.totalCost > 0 && (
+            <div className={`${GLASS_CARD} p-5`}>
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <div className="text-xs text-stone-400 uppercase font-bold mb-1">總持有市值</div>
+                  <div className="text-2xl font-bold text-stone-800 font-mono">${portfolioSummary.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                </div>
+                <span className={`text-sm font-bold px-2.5 py-1 rounded-xl ${portfolioSummary.pnl >= 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>
+                  {portfolioSummary.pnl >= 0 ? '+' : ''}{portfolioSummary.pnlPercent.toFixed(2)}%
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-stone-50/50 rounded-xl p-3">
+                  <div className="text-[10px] text-stone-400 font-bold uppercase mb-1">總成本</div>
+                  <div className="text-sm font-bold text-stone-700 font-mono">${portfolioSummary.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                </div>
+                <div className={`rounded-xl p-3 ${portfolioSummary.pnl >= 0 ? 'bg-[#F1FAEE]/50' : 'bg-[#FDECEA]/50'}`}>
+                  <div className={`text-[10px] font-bold uppercase mb-1 ${portfolioSummary.pnl >= 0 ? 'text-[#52B788]' : 'text-[#E57373]'}`}>總損益</div>
+                  <div className={`text-sm font-bold font-mono ${portfolioSummary.pnl >= 0 ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>
+                    {portfolioSummary.pnl >= 0 ? '+' : ''}${portfolioSummary.pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </div>
+                </div>
+              </div>
+              {portfolioSummary.pieData.length > 0 && <HoldingsDonutChart data={portfolioSummary.pieData} />}
+            </div>
+          )}
+
+          {/* Add Group */}
+          <div>
+            {!isAddHoldingsGroupOpen ? (
+              <button onClick={() => setIsAddHoldingsGroupOpen(true)} className="w-full py-3 border-2 border-dashed border-stone-200 rounded-2xl text-stone-400 font-bold text-sm hover:border-[#7A96BE] hover:text-[#5A7099] transition-all flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> 新增群組
+              </button>
+            ) : (
+              <div className={`${GLASS_CARD} p-3 flex gap-2 animate-in slide-in-from-top-2 duration-200`}>
+                <input value={newHoldingsGroupName} onChange={e => setNewHoldingsGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHoldingsGroup()} placeholder="輸入群組名稱" className={`${GLASS_INPUT} py-2 px-3 text-xs`} autoFocus />
+                <button onClick={addHoldingsGroup} disabled={isSubmitting} className="bg-stone-800 text-white px-4 rounded-xl font-bold shadow-md hover:bg-stone-700">
+                  <Check className="w-4 h-4" />
+                </button>
+                <button onClick={() => setIsAddHoldingsGroupOpen(false)} className="bg-stone-100 text-stone-500 px-3 rounded-xl hover:bg-stone-200">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Group Cards */}
+          {holdingsGroups.length === 0 && !isAddHoldingsGroupOpen && (
+            <div className="text-center text-stone-400 py-10">
+              <Layers className="w-10 h-10 mx-auto mb-3 text-stone-200" />
+              <p className="text-sm font-medium">尚無持股群組</p>
+              <p className="text-xs mt-1">點擊上方按鈕新增群組開始追蹤</p>
+            </div>
+          )}
+          {holdingsGroups.map(g => (
+            <HoldingsGroupCard
+              key={g.id}
+              group={g}
+              prices={holdingsPrices}
+              onAddStock={addStockToGroup}
+              onDeleteStock={deleteStockFromGroup}
+              onAddPurchase={(symbol) => { setPurchaseModal({ open: true, symbol }); setNewPurchase({ date: new Date().toISOString().split('T')[0], shares: '', price: '' }); }}
+              onDeletePurchase={deletePurchaseFromStock}
+              onDeleteGroup={() => deleteHoldingsGroup(g.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="animate-in slide-in-from-right-4 duration-300">
+          <WatchlistView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />
+        </div>
+      )}
+
+      {/* Add Purchase Modal */}
+      {purchaseModal.open && (
+        <ModalWrapper title={`新增買入 — ${purchaseModal.symbol}`} onClose={() => setPurchaseModal({ open: false, symbol: '' })}>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-stone-500 uppercase block mb-1.5">購買日期</label>
+              <input type="date" value={newPurchase.date} onChange={e => setNewPurchase(p => ({ ...p, date: e.target.value }))} className={`${GLASS_INPUT} py-3 px-4 text-sm`} />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-stone-500 uppercase block mb-1.5">股數</label>
+              <input type="number" value={newPurchase.shares} onChange={e => setNewPurchase(p => ({ ...p, shares: e.target.value }))} placeholder="10" className={`${GLASS_INPUT} py-3 px-4 text-sm font-mono`} />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-stone-500 uppercase block mb-1.5">每股價格 (USD)</label>
+              <input type="number" step="0.01" value={newPurchase.price} onChange={e => setNewPurchase(p => ({ ...p, price: e.target.value }))} placeholder="480.50" className={`${GLASS_INPUT} py-3 px-4 text-sm font-mono`} />
+            </div>
+            {newPurchase.shares && newPurchase.price && (
+              <div className="bg-stone-50 rounded-xl p-3 text-center">
+                <span className="text-[10px] text-stone-400 uppercase font-bold">總金額</span>
+                <div className="text-lg font-bold text-stone-800 font-mono">${(Number(newPurchase.shares) * Number(newPurchase.price)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+              </div>
+            )}
+            <GlassButton onClick={() => addPurchaseToStock(purchaseModal.symbol)} className="w-full py-4">
+              <Check className="w-4 h-4" /> 確認新增
+            </GlassButton>
+          </div>
+        </ModalWrapper>
+      )}
+    </div>
+  );
+};
+
 const WatchlistGroup = ({ group, onUpdateStock, onDeleteStock, onDeleteGroup, onAddStock, totalSystemBudget, prices }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [newSymbol, setNewSymbol] = useState('');
@@ -2967,8 +3428,8 @@ export default function App() {
 
           <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10">
             {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} yearlyTotalStats={yearlyTotalStats} />}
-            {/* 新增: Investment Watchlist */}
-            {currentView === 'watchlist' && <WatchlistView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
+            {/* 新增: Investment Tab View (持股檢視 + 占比計算) */}
+            {currentView === 'watchlist' && <InvestmentTabView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
             {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
             {currentView === 'mortgage' && (
               <MortgageView
