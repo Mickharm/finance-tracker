@@ -3132,15 +3132,30 @@ export default function App() {
                       const suggestions = transactions
                         .filter(t => t.group === newTrans.group && t.category === newTrans.category && t.payer === newTrans.payer && t.note && t.note.trim() !== '')
                         .reduce((acc, t) => { acc[t.note.trim()] = (acc[t.note.trim()] || 0) + 1; return acc; }, {});
-                      const sorted = Object.entries(suggestions).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                      const sorted = Object.entries(suggestions).sort((a, b) => b[1] - a[1]).slice(0, 6);
                       if (sorted.length === 0) return null;
                       return (
-                        <div className="flex flex-wrap gap-1.5 mt-1">
-                          {sorted.map(([note]) => (
-                            <button key={note} type="button" onClick={() => setNewTrans({ ...newTrans, note })} className={`text-xs px-3 py-1.5 rounded-full border transition-all ${newTrans.note === note ? 'bg-stone-800 text-white border-stone-800' : 'bg-white/60 text-stone-500 border-stone-200 hover:bg-stone-100 active:scale-95'}`}>
-                              {note}
-                            </button>
-                          ))}
+                        <div className="mt-2">
+                          <div className="flex items-center gap-1.5 mb-2 ml-1">
+                            <Clock className="w-3 h-3 text-stone-300" />
+                            <span className="text-[10px] font-bold text-stone-300 uppercase tracking-wider">常用備註</span>
+                          </div>
+                          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                            {sorted.map(([note, count]) => (
+                              <button
+                                key={note}
+                                type="button"
+                                onClick={() => setNewTrans({ ...newTrans, note: newTrans.note === note ? '' : note })}
+                                className={`flex-shrink-0 text-xs font-medium px-3.5 py-2 rounded-xl border transition-all whitespace-nowrap ${newTrans.note === note
+                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
+                                    : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300 active:scale-95'
+                                  }`}
+                              >
+                                {note}
+                                <span className={`ml-1.5 text-[9px] ${newTrans.note === note ? 'text-stone-400' : 'text-stone-300'}`}>{count}</span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       );
                     })()}
