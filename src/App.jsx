@@ -171,25 +171,33 @@ const ModalWrapper = ({ title, onClose, children }) => {
   const defaultPadding = 40;
 
   useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    let rafId = null;
+    const modal = modalRef.current;
+    if (!modal) return;
 
+    // 1. On focus: immediately scroll input into view (parallel with keyboard animation)
+    const handleFocusIn = (e) => {
+      const el = e.target;
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+        // Small delay to let the browser begin the keyboard animation
+        requestAnimationFrame(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
+    };
+    modal.addEventListener('focusin', handleFocusIn);
+
+    // 2. Visual Viewport resize: adjust padding/maxHeight (no extra scrollIntoView — focusin already did it)
+    const vv = window.visualViewport;
+    let rafId = null;
     const handleResize = () => {
+      if (!vv) return;
       if (rafId) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
         if (!modalRef.current) return;
         const keyboardHeight = window.innerHeight - vv.height;
         if (keyboardHeight > 50) {
           modalRef.current.style.paddingBottom = `${keyboardHeight + 20}px`;
-          // Adjust modal container height so content is visible
           modalRef.current.style.maxHeight = `${vv.height - 20}px`;
-          const focused = document.activeElement;
-          if (focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) {
-            setTimeout(() => {
-              focused.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 50);
-          }
         } else {
           modalRef.current.style.paddingBottom = `${defaultPadding}px`;
           modalRef.current.style.maxHeight = '';
@@ -197,13 +205,18 @@ const ModalWrapper = ({ title, onClose, children }) => {
       });
     };
 
-    vv.addEventListener('resize', handleResize);
-    vv.addEventListener('scroll', handleResize);
-    // Run once on mount in case keyboard is already open
-    handleResize();
+    if (vv) {
+      vv.addEventListener('resize', handleResize);
+      vv.addEventListener('scroll', handleResize);
+      handleResize();
+    }
+
     return () => {
-      vv.removeEventListener('resize', handleResize);
-      vv.removeEventListener('scroll', handleResize);
+      modal.removeEventListener('focusin', handleFocusIn);
+      if (vv) {
+        vv.removeEventListener('resize', handleResize);
+        vv.removeEventListener('scroll', handleResize);
+      }
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
