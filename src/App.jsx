@@ -173,28 +173,38 @@ const ModalWrapper = ({ title, onClose, children }) => {
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
+    let rafId = null;
 
     const handleResize = () => {
-      if (!modalRef.current) return;
-      const keyboardHeight = window.innerHeight - vv.height;
-      if (keyboardHeight > 50) {
-        modalRef.current.style.paddingBottom = `${keyboardHeight + 20}px`;
-        const focused = document.activeElement;
-        if (focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) {
-          setTimeout(() => {
-            focused.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 100);
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        if (!modalRef.current) return;
+        const keyboardHeight = window.innerHeight - vv.height;
+        if (keyboardHeight > 50) {
+          modalRef.current.style.paddingBottom = `${keyboardHeight + 20}px`;
+          // Adjust modal container height so content is visible
+          modalRef.current.style.maxHeight = `${vv.height - 20}px`;
+          const focused = document.activeElement;
+          if (focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) {
+            setTimeout(() => {
+              focused.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 50);
+          }
+        } else {
+          modalRef.current.style.paddingBottom = `${defaultPadding}px`;
+          modalRef.current.style.maxHeight = '';
         }
-      } else {
-        modalRef.current.style.paddingBottom = `${defaultPadding}px`;
-      }
+      });
     };
 
     vv.addEventListener('resize', handleResize);
     vv.addEventListener('scroll', handleResize);
+    // Run once on mount in case keyboard is already open
+    handleResize();
     return () => {
       vv.removeEventListener('resize', handleResize);
       vv.removeEventListener('scroll', handleResize);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -233,6 +243,7 @@ const LoadingScreen = ({ progress, appPhase }) => {
   return (
     <div
       className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F8F5F0] transition-opacity duration-500 ease-out ${isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      style={{ height: '100dvh' }}
       onTransitionEnd={handleTransitionEnd}
     >
       {/* Background decorations */}
@@ -3365,7 +3376,7 @@ export default function App() {
 
   // --- Main Render ---
   return (
-    <div className="flex flex-col h-screen bg-[#F8F5F0] text-stone-800 font-mono overflow-hidden max-w-md mx-auto relative shadow-2xl">
+    <div className="flex flex-col bg-[#F8F5F0] text-stone-800 font-mono overflow-hidden max-w-md mx-auto relative shadow-2xl" style={{ height: '100dvh' }}>
       {/* Background Blobs - Soft pastel accents */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#F1FAEE]/50 rounded-full blur-[80px] pointer-events-none z-0"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#FDECEA]/40 rounded-full blur-[80px] pointer-events-none z-0"></div>
