@@ -2,16 +2,8 @@
 
 html,
 body {
-  height: 100dvh;
+  height: 100%;
   height: -webkit-fill-available;
-  overflow: hidden;
-}
-
-/* Ensure the app shrinks with visual viewport (keyboard) */
-#root {
-  height: 100dvh;
-  height: -webkit-fill-available;
-  overflow: hidden;
 }
 
 .scrollbar-hide::-webkit-scrollbar {

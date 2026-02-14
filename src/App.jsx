@@ -168,39 +168,45 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確�
 
 const ModalWrapper = ({ title, onClose, children }) => {
   const modalRef = useRef(null);
-  const defaultPadding = 40;
+  const wrapperRef = useRef(null);
 
   useEffect(() => {
     const modal = modalRef.current;
-    if (!modal) return;
+    const wrapper = wrapperRef.current;
+    if (!modal || !wrapper) return;
 
     // 1. On focus: immediately scroll input into view (parallel with keyboard animation)
     const handleFocusIn = (e) => {
       const el = e.target;
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
-        // Small delay to let the browser begin the keyboard animation
+        // Wait for keyboard to start animating, then scroll
         requestAnimationFrame(() => {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 80);
         });
       }
     };
     modal.addEventListener('focusin', handleFocusIn);
 
-    // 2. Visual Viewport resize: adjust padding/maxHeight (no extra scrollIntoView — focusin already did it)
+    // 2. Visual Viewport resize: translate wrapper up to avoid keyboard overlap
     const vv = window.visualViewport;
     let rafId = null;
     const handleResize = () => {
       if (!vv) return;
       if (rafId) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
-        if (!modalRef.current) return;
-        const keyboardHeight = window.innerHeight - vv.height;
+        if (!wrapper) return;
+        // Calculate how much the keyboard covers
+        const keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
         if (keyboardHeight > 50) {
-          modalRef.current.style.paddingBottom = `${keyboardHeight + 20}px`;
-          modalRef.current.style.maxHeight = `${vv.height - 20}px`;
+          // Move the entire modal wrapper up by the keyboard height
+          wrapper.style.transform = `translateY(${-keyboardHeight}px)`;
+          // Add extra bottom padding inside the modal so content doesn't clip
+          if (modal) modal.style.paddingBottom = `${40}px`;
         } else {
-          modalRef.current.style.paddingBottom = `${defaultPadding}px`;
-          modalRef.current.style.maxHeight = '';
+          wrapper.style.transform = '';
+          if (modal) modal.style.paddingBottom = '';
         }
       });
     };
@@ -208,7 +214,6 @@ const ModalWrapper = ({ title, onClose, children }) => {
     if (vv) {
       vv.addEventListener('resize', handleResize);
       vv.addEventListener('scroll', handleResize);
-      handleResize();
     }
 
     return () => {
@@ -222,11 +227,11 @@ const ModalWrapper = ({ title, onClose, children }) => {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+    <div ref={wrapperRef} className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style={{ transition: 'transform 0.2s ease-out' }}>
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
       <div
         ref={modalRef}
-        className="relative w-full max-h-[90dvh] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-10 animate-in slide-in-from-bottom duration-300 overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl"
+        className="relative w-full max-h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-10 animate-in slide-in-from-bottom duration-300 overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl"
       >
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-stone-800 tracking-tight pl-2">{title}</h3>
@@ -256,7 +261,6 @@ const LoadingScreen = ({ progress, appPhase }) => {
   return (
     <div
       className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F8F5F0] transition-opacity duration-500 ease-out ${isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ height: '100dvh' }}
       onTransitionEnd={handleTransitionEnd}
     >
       {/* Background decorations */}
@@ -3389,7 +3393,7 @@ export default function App() {
 
   // --- Main Render ---
   return (
-    <div className="flex flex-col bg-[#F8F5F0] text-stone-800 font-mono overflow-hidden max-w-md mx-auto relative shadow-2xl" style={{ height: '100dvh' }}>
+    <div className="flex flex-col h-screen bg-[#F8F5F0] text-stone-800 font-mono overflow-hidden max-w-md mx-auto relative shadow-2xl">
       {/* Background Blobs - Soft pastel accents */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#F1FAEE]/50 rounded-full blur-[80px] pointer-events-none z-0"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#FDECEA]/40 rounded-full blur-[80px] pointer-events-none z-0"></div>
