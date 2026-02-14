@@ -168,45 +168,39 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "ç¢ºèª
 
 const ModalWrapper = ({ title, onClose, children }) => {
   const modalRef = useRef(null);
-  const wrapperRef = useRef(null);
 
   useEffect(() => {
     const modal = modalRef.current;
-    const wrapper = wrapperRef.current;
-    if (!modal || !wrapper) return;
+    if (!modal) return;
 
-    // 1. On focus: immediately scroll input into view (parallel with keyboard animation)
+    // 1. On focus: scroll input into view inside the modal's own scroll area
     const handleFocusIn = (e) => {
       const el = e.target;
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
-        // Wait for keyboard to start animating, then scroll
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 80);
-        });
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
       }
     };
     modal.addEventListener('focusin', handleFocusIn);
 
-    // 2. Visual Viewport resize: translate wrapper up to avoid keyboard overlap
+    // 2. Visual Viewport resize: resize modal to fit above keyboard
     const vv = window.visualViewport;
     let rafId = null;
     const handleResize = () => {
       if (!vv) return;
       if (rafId) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
-        if (!wrapper) return;
-        // Calculate how much the keyboard covers
+        if (!modal) return;
         const keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
         if (keyboardHeight > 50) {
-          // Move the entire modal wrapper up by the keyboard height
-          wrapper.style.transform = `translateY(${-keyboardHeight}px)`;
-          // Add extra bottom padding inside the modal so content doesn't clip
-          if (modal) modal.style.paddingBottom = `${40}px`;
+          // Cap the modal height to visual viewport, leaving some breathing room
+          modal.style.maxHeight = `${vv.height * 0.85}px`;
+          // Push the modal up via bottom margin
+          modal.style.marginBottom = `${keyboardHeight}px`;
         } else {
-          wrapper.style.transform = '';
-          if (modal) modal.style.paddingBottom = '';
+          modal.style.maxHeight = '';
+          modal.style.marginBottom = '';
         }
       });
     };
@@ -227,11 +221,12 @@ const ModalWrapper = ({ title, onClose, children }) => {
   }, []);
 
   return (
-    <div ref={wrapperRef} className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style={{ transition: 'transform 0.2s ease-out' }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
       <div
         ref={modalRef}
         className="relative w-full max-h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-10 animate-in slide-in-from-bottom duration-300 overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl"
+        style={{ transition: 'max-height 0.25s ease-out, margin-bottom 0.25s ease-out' }}
       >
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-stone-800 tracking-tight pl-2">{title}</h3>
