@@ -3648,104 +3648,159 @@ export default function App() {
                       />
                     </div>
 
-                    {/* Special Scenario Row ($0 tracking) */}
-                    <div className="flex gap-2 mb-4">
-                      <button
-                        type="button"
-                        onClick={() => setNewTrans(prev => ({ ...prev, amount: '0', note: '請客/自煮' }))}
-                        className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 ${newTrans.note?.includes('請客/自煮') && parseFloat(newTrans.amount||0) === 0 ? 'bg-[#F1FAEE] border-[#D8F3DC] text-[#2D6A4F] shadow-inner' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}
-                      >
-                        🎁 請客/自煮 $0
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNewTrans(prev => ({ ...prev, amount: '0', note: '減肥/斷食' }))}
-                        className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 ${newTrans.note?.includes('減肥/斷食') && parseFloat(newTrans.amount||0) === 0 ? 'bg-[#FDECEA] border-[#FADBD8] text-[#C0392B] shadow-inner' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}
-                      >
-                        🚫 減肥/沒吃 $0
-                      </button>
+                    {/* Note Input (Always visible) */}
+                    <div className="mb-4">
+                      <div className="w-full relative mb-2">
+                        <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="輸入備註 (選填)..." />
+                        <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
+                      </div>
+
+                      {/* Top 5 Smart Notes */}
+                      {(() => {
+                        const noteStats = {};
+                        transactions.forEach(t => {
+                          const n = (t.note || '').trim();
+                          if (!n || n === '請客/自煮' || n === '減肥/斷食' || n === '減肥/沒吃') return;
+                          if (!noteStats[n]) noteStats[n] = { count: 0, mappings: {} };
+                          noteStats[n].count++;
+                          const mappingKey = `${t.type}|${t.group}|${t.category}`;
+                          noteStats[n].mappings[mappingKey] = (noteStats[n].mappings[mappingKey] || 0) + 1;
+                        });
+
+                        const top5Notes = Object.entries(noteStats)
+                          .sort((a, b) => b[1].count - a[1].count)
+                          .slice(0, 5)
+                          .map(([note, data]) => {
+                            let bestMapping = '';
+                            let maxCount = 0;
+                            Object.entries(data.mappings).forEach(([mk, count]) => {
+                              if (count > maxCount) {
+                                maxCount = count;
+                                bestMapping = mk;
+                              }
+                            });
+                            const [type, group, category] = bestMapping.split('|');
+                            return { note, type, group, category, count: data.count };
+                          });
+
+                        if (top5Notes.length === 0) return null;
+
+                        return (
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-2 ml-1">
+                              <Clock className="w-3 h-3 text-stone-300" />
+                              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">常用備註 (點擊自動帶入分類)</span>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                              {top5Notes.map(({ note, type, group, category }) => (
+                                <button
+                                  key={note}
+                                  type="button"
+                                  onClick={() => setNewTrans(prev => ({
+                                    ...prev,
+                                    note,
+                                    type: type && type !== 'undefined' ? type : prev.type,
+                                    group: group && group !== 'undefined' ? group : prev.group,
+                                    category: category && category !== 'undefined' ? category : prev.category
+                                  }))}
+                                  className="flex-shrink-0 px-4 py-2 bg-stone-50/80 hover:bg-stone-100 text-stone-600 rounded-xl text-xs font-bold transition-all active:scale-95 border border-stone-200/60"
+                                >
+                                  {note}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
 
-                    {/* Quick Category Chips (One-click Submit) */}
-                    {(() => {
-                      const firstGroup = settings.monthlyGroups?.[0]; // Usually "日常飲食"
-                      const quickItems = firstGroup?.items || [];
+                    <div className="border-t border-stone-100 my-4"></div>
+
+                    {/* Group & Category Grids */}
+                    <div className="space-y-4 mb-4">
+                      {/* Group Flow (Horizontal Scroll) */}
+                      {(() => {
+                        const monthlyGroups = (settings.monthlyGroups || []).map(g => ({ ...g, budgetType: 'monthly' }));
+                        const annualGroups = (settings.annualGroups || []).map(g => ({ ...g, budgetType: 'annual' }));
+                        
+                        return (
+                          <div>
+                            <div className="flex justify-between items-end mb-2 ml-1">
+                              <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider">分類群組</label>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                              {monthlyGroups.map(g => (
+                                <button key={`m-${g.name}`} type="button" onClick={() => {
+                                  const firstItem = g.items?.[0]?.name || '';
+                                  setNewTrans({ ...newTrans, type: 'monthly', group: g.name, category: firstItem });
+                                }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
+                                  newTrans.group === g.name && newTrans.type === 'monthly'
+                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
+                                    : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300'
+                                }`}>{g.name}</button>
+                              ))}
+                              {monthlyGroups.length > 0 && annualGroups.length > 0 && <div className="flex-shrink-0 w-px bg-stone-200 mx-1 self-stretch"></div>}
+                              {annualGroups.map(g => (
+                                <button key={`a-${g.name}`} type="button" onClick={() => {
+                                  const firstItem = g.items?.[0]?.name || '';
+                                  setNewTrans({ ...newTrans, type: 'annual', group: g.name, category: firstItem });
+                                }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
+                                  newTrans.group === g.name && newTrans.type === 'annual'
+                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
+                                    : 'bg-white/60 text-stone-500 border-stone-200/60 hover:bg-white hover:border-stone-300'
+                                }`}>
+                                  <span className="text-[9px] text-stone-400 mr-1">年</span>{g.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       
-                      return (
-                        <div className="mb-4">
-                          <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-wider ml-1 mb-2">常用分類 (點擊記帳)</label>
+                      {/* Category Grid */}
+                      {(() => {
+                        const currentGroups = newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || []);
+                        const currentGroup = currentGroups.find(g => g.name === newTrans.group);
+                        const items = currentGroup?.items || [];
+                        if (items.length === 0) return null;
+                        return (
                           <div className="grid grid-cols-3 gap-2">
-                            {quickItems.map(item => (
+                            {items.map(item => (
                               <button
                                 key={item.name}
                                 type="button"
-                                onClick={(e) => {
-                                  // Immediate Submit with overrides
-                                  handleAddTransaction(null, { ...newTrans, type: 'monthly', group: firstGroup?.name, category: item.name });
-                                }}
-                                className="py-4 px-2 bg-stone-800 text-white rounded-2xl text-sm font-bold shadow-lg shadow-stone-800/30 hover:bg-stone-900 active:scale-95 transition-all w-full leading-tight truncate"
+                                onClick={() => setNewTrans({ ...newTrans, category: item.name })}
+                                className={`py-3 px-2 rounded-xl text-xs font-bold border transition-all active:scale-95 text-center truncate ${
+                                  newTrans.category === item.name
+                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
+                                    : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300'
+                                }`}
                               >
                                 {item.name}
                               </button>
                             ))}
                           </div>
-                        </div>
-                      );
-                    })()}
-                    {/* Advanced Section: Folded by default unless requested */}
-                    <details className="mt-4 pt-4 border-t border-stone-100 group">
-                      <summary className="text-xs font-bold text-stone-400 cursor-pointer list-none flex items-center justify-center gap-1 w-full p-2 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors">
-                        更多選項 (備註/日期/付款人/其他分類)
-                        <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
-                      </summary>
-                      <div className="pt-4 space-y-4 animate-in fade-in duration-200">
-                        {/* Option 1: Payer Toggle & Settings */}
-                        <div className="flex justify-between items-center">
-                          <div className="bg-stone-100/50 p-1 rounded-2xl flex flex-1 max-w-[160px]">
-                            <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
-                            <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
-                          </div>
-                          <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-400 flex items-center gap-1 hover:text-stone-600 transition-colors"><SettingsIcon className="w-3 h-3" />固定支出</button>
-                        </div>
+                        );
+                      })()}
+                    </div>
 
-                        {/* Option 2: Full Group/Category selection */}
-                        <div className="space-y-3">
-                          <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">自訂分類</label>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-stone-100/50 p-1 rounded-2xl flex">
-                              <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'monthly', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'monthly' ? 'bg-white shadow-sm text-stone-800' : 'text-stone-400'}`}>月度</button>
-                              <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'annual', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'annual' ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>年度</button>
-                            </div>
-                          </div>
-                          <div className="relative">
-                            <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                              {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
-                            </select>
-                            <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
-                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
-                          </div>
-                          <div className="relative">
-                            <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                              {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
-                            </select>
-                            <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
-                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
-                          </div>
-                        </div>
+                    <div className="border-t border-stone-100 my-4"></div>
 
-                        {/* Option 3: Date & Note Base */}
-                        <div className="flex flex-col gap-3 min-w-0">
-                          <div className="w-full">
-                            <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
-                          </div>
-                          <div className="w-full relative">
-                            <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="手動備註..." />
-                            <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
-                          </div>
-                        </div>
-                        <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                    {/* Meta Options (Payer & Date) */}
+                    <div className="flex gap-4">
+                      {/* Payer Toggle */}
+                      <div className="bg-stone-100/50 p-1 rounded-2xl flex flex-1 h-[42px]">
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
                       </div>
-                    </details>
+                      
+                      {/* Date */}
+                      <div className="flex-1">
+                        <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
+                      </div>
+                    </div>
+
+                    <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl shadow-xl shadow-stone-300/50 mt-6">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
                   </form>
                 )}
               </ModalWrapper>
