@@ -1842,7 +1842,7 @@ const MealToggleButton = ({ status, onToggle, icon: Icon, label }) => {
   );
 };
 
-const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit, onAddExpense, onRequestHistory, mealRecords, onUpdateMealRecord }) => {
+const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
   const [viewDate, setViewDate] = useState(selectedDate);
   const [selectedDay, setSelectedDay] = useState(null);
   useEffect(() => setViewDate(selectedDate), [selectedDate]);
@@ -1859,17 +1859,6 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
     }
   };
 
-  const handleMealToggle = (dateStr, meal) => {
-    if (!onUpdateMealRecord) return;
-    const current = mealRecords?.[dateStr]?.[meal];
-    // Cycle: null -> true -> false -> null
-    let next = null;
-    if (current === null || current === undefined) next = true;
-    else if (current === true) next = false;
-    else next = null;
-    onUpdateMealRecord(dateStr, meal, next);
-  };
-
   const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   const daysInMonth = getDaysInMonth(viewDate);
@@ -1883,18 +1872,37 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
     const dayTotal = dayTrans.reduce((sum, t) => sum + Number(t.amount), 0);
     const isSelected = selectedDay === day;
     const isToday = getTodayString() === dateStr;
-    const dayMeal = mealRecords?.[dateStr];
+    
+    // Auto-detect meal status from transactions
+    let lunch = null;
+    let dinner = null;
+    
+    // Using string matching for category variations (e.g. 午餐, 晚餐, Lunch, Dinner)
+    const lunchTrans = dayTrans.filter(t => t.category?.includes('午') || t.category?.toLowerCase() === 'lunch');
+    if (lunchTrans.length > 0) {
+      if (lunchTrans.some(t => t.note?.includes('減肥') || t.note?.includes('斷食') || t.note?.includes('沒吃'))) lunch = false; // Intentionally skipped
+      else lunch = true; // Has a record (even if $0 treated meal)
+    }
+    
+    const dinnerTrans = dayTrans.filter(t => t.category?.includes('晚') || t.category?.toLowerCase() === 'dinner');
+    if (dinnerTrans.length > 0) {
+      if (dinnerTrans.some(t => t.note?.includes('減肥') || t.note?.includes('斷食') || t.note?.includes('沒吃'))) dinner = false;
+      else dinner = true;
+    }
+    
+    const dayMeal = (lunch !== null || dinner !== null) ? { lunch, dinner } : null;
+
     calendarCells.push(
       <div key={day} onClick={() => setSelectedDay(day)} className={`h-24 border-t border-r border-stone-100/50 p-1 flex flex-col justify-between transition-colors cursor-pointer relative ${isSelected ? 'bg-stone-50/50 shadow-inner' : 'bg-white/30'} ${day % 7 === 0 ? 'border-r-0' : ''}`}>
         <div className="flex justify-between items-start">
           <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-stone-800 text-white' : 'text-stone-400'}`}>{day}</span>
           {/* Meal icons */}
-          {dayMeal && (dayMeal.lunch !== null && dayMeal.lunch !== undefined || dayMeal.dinner !== null && dayMeal.dinner !== undefined) && (
+          {dayMeal && (
             <div className="flex gap-0.5 mt-0.5">
-              {dayMeal.lunch !== null && dayMeal.lunch !== undefined && (
+              {dayMeal.lunch !== null && (
                 <span className={`text-[8px] ${dayMeal.lunch ? 'text-[#52B788]' : 'text-[#E57373]'}`}>{dayMeal.lunch ? '☀' : '☀̶'}</span>
               )}
-              {dayMeal.dinner !== null && dayMeal.dinner !== undefined && (
+              {dayMeal.dinner !== null && (
                 <span className={`text-[8px] ${dayMeal.dinner ? 'text-[#52B788]' : 'text-[#E57373]'}`}>{dayMeal.dinner ? '☽' : '☽̶'}</span>
               )}
             </div>
@@ -1907,7 +1915,6 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
   }
   const selectedDateStr = selectedDay ? toLocalISOString(new Date(viewDate.getFullYear(), viewDate.getMonth(), selectedDay)) : null;
   const selectedTrans = selectedDateStr ? transactions.filter(t => t.date === selectedDateStr) : [];
-  const selectedMeal = selectedDateStr ? mealRecords?.[selectedDateStr] : null;
   return (
     <div className="pb-24 animate-in fade-in duration-300 relative">
       <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-stone-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronRight className="w-5 h-5" /></button></div></div>
@@ -1932,30 +1939,6 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                 <div className="text-lg font-bold font-mono text-stone-800">${selectedTrans.reduce((s, t) => s + Number(t.amount), 0).toLocaleString()}</div>
               </div>
             </div>
-
-            {/* Meal Tracking Section */}
-            {selectedDateStr && (
-              <div className="mb-3 p-3 bg-stone-50/50 rounded-xl border border-stone-100">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <UtensilsCrossed className="w-3.5 h-3.5 text-stone-400" />
-                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">用餐紀錄</span>
-                </div>
-                <div className="flex gap-2">
-                  <MealToggleButton
-                    status={selectedMeal?.lunch ?? null}
-                    onToggle={() => handleMealToggle(selectedDateStr, 'lunch')}
-                    icon={Sun}
-                    label="午餐"
-                  />
-                  <MealToggleButton
-                    status={selectedMeal?.dinner ?? null}
-                    onToggle={() => handleMealToggle(selectedDateStr, 'dinner')}
-                    icon={Moon}
-                    label="晚餐"
-                  />
-                </div>
-              </div>
-            )}
 
             {selectedTrans.length === 0 ? (
               <div className="text-center py-6 text-stone-400 text-sm">當日無消費紀錄</div>
@@ -2934,7 +2917,6 @@ export default function App() {
   const [mortgageFunding, setMortgageFunding] = useState([]);
   const [stockGoals, setStockGoals] = useState([]);
   const [usdExchanges, setUsdExchanges] = useState([]);
-  const [mealRecords, setMealRecords] = useState({});
 
   // Loading State Tracking
   const [loadingStates, setLoadingStates] = useState({
@@ -3063,14 +3045,6 @@ export default function App() {
     createSub('mortgage_analysis', setMortgageAnalysis, 'mortgageAnalysis', 'createdAt', 'asc');
     createSub('stock_goals', setStockGoals, 'stockGoals', 'year', 'desc');
     createSub('usd_exchanges', setUsdExchanges, 'usdExchanges');
-
-    // Meal records listener
-    const mealRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'meal_records');
-    unsubs.push(onSnapshot(mealRef, (s) => {
-      const records = {};
-      s.docs.forEach(d => { records[d.id] = d.data(); });
-      setMealRecords(records);
-    }));
 
     return () => {
       unsubs.forEach(u => u());
@@ -3320,19 +3294,20 @@ export default function App() {
   const requestDelete = (message, action) => requestConfirmation({ message, title: '確認刪除', confirmText: '刪除', confirmColor: 'bg-rose-500', onConfirm: action });
 
   // --- Handlers ---
-  const handleAddTransaction = (e) => {
-    e.preventDefault();
-    console.log('[DEBUG] handleAddTransaction - editingId:', editingId, 'newTrans:', newTrans);
+  const handleAddTransaction = (e, overrideTrans = null) => {
+    if (e) e.preventDefault();
+    const saveTrans = overrideTrans || newTrans;
+    console.log('[DEBUG] handleAddTransaction - editingId:', editingId, 'trans:', saveTrans);
     withSubmission(async () => {
       if (editingId) {
         console.log('[DEBUG] Updating existing transaction:', editingId);
         // Clean data: remove ID from body and ensure numeric amount
-        const { id, ...updateData } = newTrans;
-        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...updateData, amount: Number(newTrans.amount) }, { merge: true });
+        const { id, ...updateData } = saveTrans;
+        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...updateData, amount: Number(saveTrans.amount) }, { merge: true });
       } else {
         console.log('[DEBUG] Creating new transaction');
-        const { id, ...createData } = newTrans;
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...createData, amount: Number(newTrans.amount), createdAt: serverTimestamp() });
+        const { id, ...createData } = saveTrans;
+        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...createData, amount: Number(saveTrans.amount), createdAt: serverTimestamp() });
       }
       setNewTrans(prev => ({ ...prev, amount: '0', note: '' }));
       setIsAddTxModalOpen(false);
@@ -3630,23 +3605,6 @@ export default function App() {
                 }}
                 onAddExpense={() => setIsAddTxModalOpen(true)}
                 onRequestHistory={requestHistory}
-                mealRecords={mealRecords}
-                onUpdateMealRecord={async (dateStr, meal, value) => {
-                  const mealDocRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'meal_records', dateStr);
-                  if (value === null) {
-                    // Remove the field by setting to deleteField or just set the other field
-                    const currentRecord = mealRecords[dateStr] || {};
-                    const updated = { ...currentRecord };
-                    delete updated[meal];
-                    if (Object.keys(updated).length === 0 || (Object.values(updated).every(v => v === null || v === undefined))) {
-                      await deleteDoc(mealDocRef).catch(() => {});
-                    } else {
-                      await setDoc(mealDocRef, { [meal]: null }, { merge: true });
-                    }
-                  } else {
-                    await setDoc(mealDocRef, { [meal]: value }, { merge: true });
-                  }
-                }}
               />
             )}
             {currentView === 'settings' && (
@@ -3679,93 +3637,53 @@ export default function App() {
                     <GlassButton onClick={() => { setIsAddTxModalOpen(false); setCurrentView('settings'); }}>前往設定</GlassButton>
                   </div>
                 ) : (
-                  <form onSubmit={handleAddTransaction} className="space-y-4">
-                    {/* Payer Toggle + Settings */}
-                    <div className="flex justify-between items-center">
-                      <div className="bg-stone-100/50 p-1 rounded-2xl flex flex-1 max-w-[160px]">
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
-                      </div>
-                      <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-400 flex items-center gap-1 hover:text-stone-600 transition-colors"><SettingsIcon className="w-3 h-3" />固定支出</button>
+                  <form onSubmit={handleAddTransaction} className="space-y-0 relative">
+                    {/* Ultimate Quick-Add Section */}
+                    
+                    {/* Amount Input (Main focus) */}
+                    <div className="mb-4">
+                      <CalculatorInput
+                        value={newTrans.amount}
+                        onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
+                      />
                     </div>
 
-                    {/* Group Pills (Horizontal Scroll) */}
-                    {(() => {
-                      const monthlyGroups = (settings.monthlyGroups || []).map(g => ({ ...g, budgetType: 'monthly' }));
-                      const annualGroups = (settings.annualGroups || []).map(g => ({ ...g, budgetType: 'annual' }));
-                      const allGroups = [...monthlyGroups, ...annualGroups];
-                      return (
-                        <div>
-                          <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1 mb-2">群組</label>
-                          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-                            {monthlyGroups.length > 0 && annualGroups.length > 0 && (
-                              <>
-                                {monthlyGroups.map(g => (
-                                  <button key={`m-${g.name}`} type="button" onClick={() => {
-                                    const firstItem = g.items?.[0]?.name || '';
-                                    setNewTrans({ ...newTrans, type: 'monthly', group: g.name, category: firstItem });
-                                  }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
-                                    newTrans.group === g.name && newTrans.type === 'monthly'
-                                      ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
-                                      : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300'
-                                  }`}>{g.name}</button>
-                                ))}
-                                <div className="flex-shrink-0 w-px bg-stone-200 mx-1 self-stretch"></div>
-                                {annualGroups.map(g => (
-                                  <button key={`a-${g.name}`} type="button" onClick={() => {
-                                    const firstItem = g.items?.[0]?.name || '';
-                                    setNewTrans({ ...newTrans, type: 'annual', group: g.name, category: firstItem });
-                                  }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
-                                    newTrans.group === g.name && newTrans.type === 'annual'
-                                      ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
-                                      : 'bg-white/60 text-stone-500 border-stone-200/60 hover:bg-white hover:border-stone-300'
-                                  }`}>
-                                    <span className="text-[9px] text-stone-400 mr-1">年</span>{g.name}
-                                  </button>
-                                ))}
-                              </>
-                            )}
-                            {monthlyGroups.length > 0 && annualGroups.length === 0 && monthlyGroups.map(g => (
-                              <button key={g.name} type="button" onClick={() => {
-                                const firstItem = g.items?.[0]?.name || '';
-                                setNewTrans({ ...newTrans, type: 'monthly', group: g.name, category: firstItem });
-                              }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
-                                newTrans.group === g.name ? 'bg-stone-800 text-white border-stone-800 shadow-lg' : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white'
-                              }`}>{g.name}</button>
-                            ))}
-                            {annualGroups.length > 0 && monthlyGroups.length === 0 && annualGroups.map(g => (
-                              <button key={g.name} type="button" onClick={() => {
-                                const firstItem = g.items?.[0]?.name || '';
-                                setNewTrans({ ...newTrans, type: 'annual', group: g.name, category: firstItem });
-                              }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
-                                newTrans.group === g.name ? 'bg-stone-800 text-white border-stone-800 shadow-lg' : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white'
-                              }`}>{g.name}</button>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    {/* Special Scenario Row ($0 tracking) */}
+                    <div className="flex gap-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setNewTrans(prev => ({ ...prev, amount: '0', note: '請客/自煮' }))}
+                        className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 ${newTrans.note?.includes('請客/自煮') && parseFloat(newTrans.amount||0) === 0 ? 'bg-[#F1FAEE] border-[#D8F3DC] text-[#2D6A4F] shadow-inner' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}
+                      >
+                        🎁 請客/自煮 $0
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewTrans(prev => ({ ...prev, amount: '0', note: '減肥/斷食' }))}
+                        className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 ${newTrans.note?.includes('減肥/斷食') && parseFloat(newTrans.amount||0) === 0 ? 'bg-[#FDECEA] border-[#FADBD8] text-[#C0392B] shadow-inner' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}
+                      >
+                        🚫 減肥/沒吃 $0
+                      </button>
+                    </div>
 
-                    {/* Category Grid */}
+                    {/* Quick Category Chips (One-click Submit) */}
                     {(() => {
-                      const currentGroups = newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || []);
-                      const currentGroup = currentGroups.find(g => g.name === newTrans.group);
-                      const items = currentGroup?.items || [];
-                      if (items.length === 0) return null;
+                      const firstGroup = settings.monthlyGroups?.[0]; // Usually "日常飲食"
+                      const quickItems = firstGroup?.items || [];
+                      
                       return (
-                        <div>
-                          <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1 mb-2">類別</label>
+                        <div className="mb-4">
+                          <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-wider ml-1 mb-2">常用分類 (點擊記帳)</label>
                           <div className="grid grid-cols-3 gap-2">
-                            {items.map(item => (
+                            {quickItems.map(item => (
                               <button
                                 key={item.name}
                                 type="button"
-                                onClick={() => setNewTrans({ ...newTrans, category: item.name })}
-                                className={`py-3 px-2 rounded-xl text-xs font-bold border transition-all active:scale-95 text-center truncate ${
-                                  newTrans.category === item.name
-                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
-                                    : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300'
-                                }`}
+                                onClick={(e) => {
+                                  // Immediate Submit with overrides
+                                  handleAddTransaction(null, { ...newTrans, type: 'monthly', group: firstGroup?.name, category: item.name });
+                                }}
+                                className="py-4 px-2 bg-stone-800 text-white rounded-2xl text-sm font-bold shadow-lg shadow-stone-800/30 hover:bg-stone-900 active:scale-95 transition-all w-full leading-tight truncate"
                               >
                                 {item.name}
                               </button>
@@ -3774,63 +3692,66 @@ export default function App() {
                         </div>
                       );
                     })()}
+                    {/* Advanced Section: Folded by default unless requested */}
+                    <details className="mt-4 pt-4 border-t border-stone-100 group">
+                      <summary className="text-xs font-bold text-stone-400 cursor-pointer list-none flex items-center justify-center gap-1 w-full p-2 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors">
+                        更多選項 (備註/日期/付款人/其他分類)
+                        <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
+                      </summary>
+                      <div className="pt-4 space-y-4 animate-in fade-in duration-200">
+                        {/* Option 1: Payer Toggle & Settings */}
+                        <div className="flex justify-between items-center">
+                          <div className="bg-stone-100/50 p-1 rounded-2xl flex flex-1 max-w-[160px]">
+                            <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
+                            <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
+                          </div>
+                          <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-400 flex items-center gap-1 hover:text-stone-600 transition-colors"><SettingsIcon className="w-3 h-3" />固定支出</button>
+                        </div>
 
-                    {/* Amount Calculator */}
-                    <CalculatorInput
-                      value={newTrans.amount}
-                      onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
-                      label="金額"
-                    />
-
-                    {/* Date & Note */}
-                    <div className="flex flex-col gap-3 min-w-0">
-                      <div className="w-full">
-                        <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
-                      </div>
-                      <div className="w-full relative">
-                        <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="備註..." />
-                        <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
-                      </div>
-                      {/* Quick Note Suggestions */}
-                      {(() => {
-                        const suggestions = transactions
-                          .filter(t => t.group === newTrans.group && t.category === newTrans.category && t.payer === newTrans.payer && t.note && t.note.trim() !== '')
-                          .reduce((acc, t) => { acc[t.note.trim()] = (acc[t.note.trim()] || 0) + 1; return acc; }, {});
-                        const sorted = Object.entries(suggestions).sort((a, b) => b[1] - a[1]).slice(0, 6);
-                        if (sorted.length === 0) return null;
-                        return (
-                          <div className="mt-2">
-                            <div className="flex items-center gap-1.5 mb-2 ml-1">
-                              <Clock className="w-3 h-3 text-stone-300" />
-                              <span className="text-[10px] font-bold text-stone-300 uppercase tracking-wider">常用備註</span>
-                            </div>
-                            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-                              {sorted.map(([note, count]) => (
-                                <button
-                                  key={note}
-                                  type="button"
-                                  onClick={() => setNewTrans({ ...newTrans, note: newTrans.note === note ? '' : note })}
-                                  className={`flex-shrink-0 text-xs font-medium px-3.5 py-2 rounded-xl border transition-all whitespace-nowrap ${newTrans.note === note
-                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
-                                    : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300 active:scale-95'
-                                    }`}
-                                >
-                                  {note}
-                                  <span className={`ml-1.5 text-[9px] ${newTrans.note === note ? 'text-stone-400' : 'text-stone-300'}`}>{count}</span>
-                                </button>
-                              ))}
+                        {/* Option 2: Full Group/Category selection */}
+                        <div className="space-y-3">
+                          <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">自訂分類</label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-stone-100/50 p-1 rounded-2xl flex">
+                              <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'monthly', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'monthly' ? 'bg-white shadow-sm text-stone-800' : 'text-stone-400'}`}>月度</button>
+                              <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'annual', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'annual' ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>年度</button>
                             </div>
                           </div>
-                        );
-                      })()}
-                    </div>
+                          <div className="relative">
+                            <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
+                              {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
+                            </select>
+                            <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
+                          </div>
+                          <div className="relative">
+                            <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
+                              {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
+                            </select>
+                            <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
+                          </div>
+                        </div>
 
-                    <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4 shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                        {/* Option 3: Date & Note Base */}
+                        <div className="flex flex-col gap-3 min-w-0">
+                          <div className="w-full">
+                            <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
+                          </div>
+                          <div className="w-full relative">
+                            <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="手動備註..." />
+                            <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
+                          </div>
+                        </div>
+                        <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                      </div>
+                    </details>
                   </form>
                 )}
               </ModalWrapper>
             )
           }
+
 
           {/* Other Modals... (Same structure) */}
           {
