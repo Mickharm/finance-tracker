@@ -29,7 +29,8 @@ import {
   Wallet, ArrowUpCircle, ArrowDownCircle, BarChart2, Save, Landmark,
   Building2, Clock, ToggleLeft, ToggleRight, ClipboardList, Calculator,
   Coins, Receipt, CheckCircle2, Check, ArrowRightLeft, PenTool, Hash, FileText,
-  TrendingUp, TrendingDown, RefreshCw, Layers, Search, Lock
+  TrendingUp, TrendingDown, RefreshCw, Layers, Search, Lock,
+  UtensilsCrossed, Sun, Moon
 } from 'lucide-react';
 import icon from './assets/icon.png';
 
@@ -979,18 +980,9 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
       {purchaseModal.open && (
         <ModalWrapper title={`新增買入 — ${purchaseModal.symbol}`} onClose={() => setPurchaseModal({ open: false, symbol: '' })}>
           <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-stone-500 uppercase block mb-1.5">購買日期</label>
-              <input type="date" value={newPurchase.date} onChange={e => setNewPurchase(p => ({ ...p, date: e.target.value }))} className={`${GLASS_INPUT} py-3 px-4 text-sm`} />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-stone-500 uppercase block mb-1.5">股數</label>
-              <input type="number" value={newPurchase.shares} onChange={e => setNewPurchase(p => ({ ...p, shares: e.target.value }))} placeholder="10" className={`${GLASS_INPUT} py-3 px-4 text-sm font-mono`} />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-stone-500 uppercase block mb-1.5">每股價格 (USD)</label>
-              <input type="number" step="0.01" value={newPurchase.price} onChange={e => setNewPurchase(p => ({ ...p, price: e.target.value }))} placeholder="480.50" className={`${GLASS_INPUT} py-3 px-4 text-sm font-mono`} />
-            </div>
+            <InputField label="購買日期" type="date" value={newPurchase.date} onChange={e => setNewPurchase(p => ({ ...p, date: e.target.value }))} />
+            <InputField label="股數" type="number" value={newPurchase.shares} onChange={e => setNewPurchase(p => ({ ...p, shares: e.target.value }))} placeholder="10" />
+            <InputField label="每股價格 (USD)" type="number" step="0.01" value={newPurchase.price} onChange={e => setNewPurchase(p => ({ ...p, price: e.target.value }))} placeholder="480.50" />
             {newPurchase.shares && newPurchase.price && (
               <div className="bg-stone-50 rounded-xl p-3 text-center">
                 <span className="text-[10px] text-stone-400 uppercase font-bold">總金額</span>
@@ -1822,7 +1814,35 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
   );
 };
 
-const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
+const MealToggleButton = ({ status, onToggle, icon: Icon, label }) => {
+  const getStyle = () => {
+    if (status === true) return 'bg-[#F1FAEE] border-[#D8F3DC] text-[#2D6A4F]';
+    if (status === false) return 'bg-[#FDECEA] border-[#FADBD8] text-[#C0392B]';
+    return 'bg-stone-50 border-stone-200 text-stone-400';
+  };
+  const getIcon = () => {
+    if (status === true) return <CheckCircle2 className="w-3.5 h-3.5" />;
+    if (status === false) return <X className="w-3.5 h-3.5" />;
+    return <Icon className="w-3.5 h-3.5" />;
+  };
+  const getText = () => {
+    if (status === true) return '有吃';
+    if (status === false) return '沒吃';
+    return '未標記';
+  };
+  return (
+    <button
+      onClick={onToggle}
+      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all active:scale-95 ${getStyle()}`}
+    >
+      {getIcon()}
+      <span>{label}</span>
+      <span className="opacity-70">· {getText()}</span>
+    </button>
+  );
+};
+
+const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit, onAddExpense, onRequestHistory, mealRecords, onUpdateMealRecord }) => {
   const [viewDate, setViewDate] = useState(selectedDate);
   const [selectedDay, setSelectedDay] = useState(null);
   useEffect(() => setViewDate(selectedDate), [selectedDate]);
@@ -1839,6 +1859,17 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
     }
   };
 
+  const handleMealToggle = (dateStr, meal) => {
+    if (!onUpdateMealRecord) return;
+    const current = mealRecords?.[dateStr]?.[meal];
+    // Cycle: null -> true -> false -> null
+    let next = null;
+    if (current === null || current === undefined) next = true;
+    else if (current === true) next = false;
+    else next = null;
+    onUpdateMealRecord(dateStr, meal, next);
+  };
+
   const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   const daysInMonth = getDaysInMonth(viewDate);
@@ -1852,9 +1883,23 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
     const dayTotal = dayTrans.reduce((sum, t) => sum + Number(t.amount), 0);
     const isSelected = selectedDay === day;
     const isToday = getTodayString() === dateStr;
+    const dayMeal = mealRecords?.[dateStr];
     calendarCells.push(
       <div key={day} onClick={() => setSelectedDay(day)} className={`h-24 border-t border-r border-stone-100/50 p-1 flex flex-col justify-between transition-colors cursor-pointer relative ${isSelected ? 'bg-stone-50/50 shadow-inner' : 'bg-white/30'} ${day % 7 === 0 ? 'border-r-0' : ''}`}>
-        <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-stone-800 text-white' : 'text-stone-400'}`}>{day}</span>
+        <div className="flex justify-between items-start">
+          <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-stone-800 text-white' : 'text-stone-400'}`}>{day}</span>
+          {/* Meal icons */}
+          {dayMeal && (dayMeal.lunch !== null && dayMeal.lunch !== undefined || dayMeal.dinner !== null && dayMeal.dinner !== undefined) && (
+            <div className="flex gap-0.5 mt-0.5">
+              {dayMeal.lunch !== null && dayMeal.lunch !== undefined && (
+                <span className={`text-[8px] ${dayMeal.lunch ? 'text-[#52B788]' : 'text-[#E57373]'}`}>{dayMeal.lunch ? '☀' : '☀̶'}</span>
+              )}
+              {dayMeal.dinner !== null && dayMeal.dinner !== undefined && (
+                <span className={`text-[8px] ${dayMeal.dinner ? 'text-[#52B788]' : 'text-[#E57373]'}`}>{dayMeal.dinner ? '☽' : '☽̶'}</span>
+              )}
+            </div>
+          )}
+        </div>
         {dayTotal > 0 && (<div className="mb-1 flex flex-col items-end px-1 w-full"><span className="text-[10px] text-stone-400 font-medium">總計</span><span className={`text-[10px] font-bold truncate w-full text-right ${dayTrans.some(t => t.type === 'annual') ? 'text-amber-600' : 'text-stone-600'}`}>${dayTotal.toLocaleString()}</span></div>)}
         {isSelected && <div className="absolute inset-1 border-2 border-stone-400/50 rounded-lg pointer-events-none"></div>}
       </div>
@@ -1862,6 +1907,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
   }
   const selectedDateStr = selectedDay ? toLocalISOString(new Date(viewDate.getFullYear(), viewDate.getMonth(), selectedDay)) : null;
   const selectedTrans = selectedDateStr ? transactions.filter(t => t.date === selectedDateStr) : [];
+  const selectedMeal = selectedDateStr ? mealRecords?.[selectedDateStr] : null;
   return (
     <div className="pb-24 animate-in fade-in duration-300 relative">
       <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-stone-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronRight className="w-5 h-5" /></button></div></div>
@@ -1869,7 +1915,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
         <div className="grid grid-cols-7 bg-stone-50/50 border-b border-stone-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-stone-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
       </div>
-      {/* Redesigned Daily Detail Panel */}
+      {/* Daily Detail Panel with Meal Tracking */}
       {selectedDay && (
         <div className="mt-4 animate-in fade-in duration-200">
           <div className={`${GLASS_CARD} p-4`}>
@@ -1886,6 +1932,31 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                 <div className="text-lg font-bold font-mono text-stone-800">${selectedTrans.reduce((s, t) => s + Number(t.amount), 0).toLocaleString()}</div>
               </div>
             </div>
+
+            {/* Meal Tracking Section */}
+            {selectedDateStr && (
+              <div className="mb-3 p-3 bg-stone-50/50 rounded-xl border border-stone-100">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <UtensilsCrossed className="w-3.5 h-3.5 text-stone-400" />
+                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">用餐紀錄</span>
+                </div>
+                <div className="flex gap-2">
+                  <MealToggleButton
+                    status={selectedMeal?.lunch ?? null}
+                    onToggle={() => handleMealToggle(selectedDateStr, 'lunch')}
+                    icon={Sun}
+                    label="午餐"
+                  />
+                  <MealToggleButton
+                    status={selectedMeal?.dinner ?? null}
+                    onToggle={() => handleMealToggle(selectedDateStr, 'dinner')}
+                    icon={Moon}
+                    label="晚餐"
+                  />
+                </div>
+              </div>
+            )}
+
             {selectedTrans.length === 0 ? (
               <div className="text-center py-6 text-stone-400 text-sm">當日無消費紀錄</div>
             ) : (
@@ -1926,7 +1997,6 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
           </div>
         </div>
       )}
-      {/* Add expense FAB */}
       {/* Add expense FAB - Fixed position */}
       {onAddExpense && <button onClick={onAddExpense} className="fixed bottom-6 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-50"><Plus className="w-6 h-6" /></button>}
     </div>
@@ -2864,6 +2934,7 @@ export default function App() {
   const [mortgageFunding, setMortgageFunding] = useState([]);
   const [stockGoals, setStockGoals] = useState([]);
   const [usdExchanges, setUsdExchanges] = useState([]);
+  const [mealRecords, setMealRecords] = useState({});
 
   // Loading State Tracking
   const [loadingStates, setLoadingStates] = useState({
@@ -2992,6 +3063,14 @@ export default function App() {
     createSub('mortgage_analysis', setMortgageAnalysis, 'mortgageAnalysis', 'createdAt', 'asc');
     createSub('stock_goals', setStockGoals, 'stockGoals', 'year', 'desc');
     createSub('usd_exchanges', setUsdExchanges, 'usdExchanges');
+
+    // Meal records listener
+    const mealRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'meal_records');
+    unsubs.push(onSnapshot(mealRef, (s) => {
+      const records = {};
+      s.docs.forEach(d => { records[d.id] = d.data(); });
+      setMealRecords(records);
+    }));
 
     return () => {
       unsubs.forEach(u => u());
@@ -3551,6 +3630,23 @@ export default function App() {
                 }}
                 onAddExpense={() => setIsAddTxModalOpen(true)}
                 onRequestHistory={requestHistory}
+                mealRecords={mealRecords}
+                onUpdateMealRecord={async (dateStr, meal, value) => {
+                  const mealDocRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'meal_records', dateStr);
+                  if (value === null) {
+                    // Remove the field by setting to deleteField or just set the other field
+                    const currentRecord = mealRecords[dateStr] || {};
+                    const updated = { ...currentRecord };
+                    delete updated[meal];
+                    if (Object.keys(updated).length === 0 || (Object.values(updated).every(v => v === null || v === undefined))) {
+                      await deleteDoc(mealDocRef).catch(() => {});
+                    } else {
+                      await setDoc(mealDocRef, { [meal]: null }, { merge: true });
+                    }
+                  } else {
+                    await setDoc(mealDocRef, { [meal]: value }, { merge: true });
+                  }
+                }}
               />
             )}
             {currentView === 'settings' && (
@@ -3584,43 +3680,109 @@ export default function App() {
                   </div>
                 ) : (
                   <form onSubmit={handleAddTransaction} className="space-y-4">
-                    <div className="flex justify-end">
-                      <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-500 underline flex items-center gap-1 hover:text-stone-800"><SettingsIcon className="w-3 h-3" />管理固定支出</button>
+                    {/* Payer Toggle + Settings */}
+                    <div className="flex justify-between items-center">
+                      <div className="bg-stone-100/50 p-1 rounded-2xl flex flex-1 max-w-[160px]">
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
+                      </div>
+                      <button type="button" onClick={() => setIsRecurringManagerOpen(true)} className="text-xs text-stone-400 flex items-center gap-1 hover:text-stone-600 transition-colors"><SettingsIcon className="w-3 h-3" />固定支出</button>
                     </div>
+
+                    {/* Group Pills (Horizontal Scroll) */}
+                    {(() => {
+                      const monthlyGroups = (settings.monthlyGroups || []).map(g => ({ ...g, budgetType: 'monthly' }));
+                      const annualGroups = (settings.annualGroups || []).map(g => ({ ...g, budgetType: 'annual' }));
+                      const allGroups = [...monthlyGroups, ...annualGroups];
+                      return (
+                        <div>
+                          <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1 mb-2">群組</label>
+                          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                            {monthlyGroups.length > 0 && annualGroups.length > 0 && (
+                              <>
+                                {monthlyGroups.map(g => (
+                                  <button key={`m-${g.name}`} type="button" onClick={() => {
+                                    const firstItem = g.items?.[0]?.name || '';
+                                    setNewTrans({ ...newTrans, type: 'monthly', group: g.name, category: firstItem });
+                                  }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
+                                    newTrans.group === g.name && newTrans.type === 'monthly'
+                                      ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
+                                      : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300'
+                                  }`}>{g.name}</button>
+                                ))}
+                                <div className="flex-shrink-0 w-px bg-stone-200 mx-1 self-stretch"></div>
+                                {annualGroups.map(g => (
+                                  <button key={`a-${g.name}`} type="button" onClick={() => {
+                                    const firstItem = g.items?.[0]?.name || '';
+                                    setNewTrans({ ...newTrans, type: 'annual', group: g.name, category: firstItem });
+                                  }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
+                                    newTrans.group === g.name && newTrans.type === 'annual'
+                                      ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
+                                      : 'bg-white/60 text-stone-500 border-stone-200/60 hover:bg-white hover:border-stone-300'
+                                  }`}>
+                                    <span className="text-[9px] text-stone-400 mr-1">年</span>{g.name}
+                                  </button>
+                                ))}
+                              </>
+                            )}
+                            {monthlyGroups.length > 0 && annualGroups.length === 0 && monthlyGroups.map(g => (
+                              <button key={g.name} type="button" onClick={() => {
+                                const firstItem = g.items?.[0]?.name || '';
+                                setNewTrans({ ...newTrans, type: 'monthly', group: g.name, category: firstItem });
+                              }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
+                                newTrans.group === g.name ? 'bg-stone-800 text-white border-stone-800 shadow-lg' : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white'
+                              }`}>{g.name}</button>
+                            ))}
+                            {annualGroups.length > 0 && monthlyGroups.length === 0 && annualGroups.map(g => (
+                              <button key={g.name} type="button" onClick={() => {
+                                const firstItem = g.items?.[0]?.name || '';
+                                setNewTrans({ ...newTrans, type: 'annual', group: g.name, category: firstItem });
+                              }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
+                                newTrans.group === g.name ? 'bg-stone-800 text-white border-stone-800 shadow-lg' : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white'
+                              }`}>{g.name}</button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Category Grid */}
+                    {(() => {
+                      const currentGroups = newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || []);
+                      const currentGroup = currentGroups.find(g => g.name === newTrans.group);
+                      const items = currentGroup?.items || [];
+                      if (items.length === 0) return null;
+                      return (
+                        <div>
+                          <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1 mb-2">類別</label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {items.map(item => (
+                              <button
+                                key={item.name}
+                                type="button"
+                                onClick={() => setNewTrans({ ...newTrans, category: item.name })}
+                                className={`py-3 px-2 rounded-xl text-xs font-bold border transition-all active:scale-95 text-center truncate ${
+                                  newTrans.category === item.name
+                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
+                                    : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300'
+                                }`}
+                              >
+                                {item.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Amount Calculator */}
                     <CalculatorInput
                       value={newTrans.amount}
                       onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
                       label="金額"
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-stone-100/50 p-1 rounded-2xl flex">
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'monthly', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'monthly' ? 'bg-white shadow-sm text-stone-800' : 'text-stone-400'}`}>月度</button>
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, type: 'annual', group: '' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.type === 'annual' ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>年度</button>
-                      </div>
-                      <div className="bg-stone-100/50 p-1 rounded-2xl flex">
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="relative">
-                        <select value={newTrans.group} onChange={(e) => setNewTrans({ ...newTrans, group: e.target.value, category: '' })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                          {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).map(g => <option key={g.name} value={g.name}>{g.name}</option>)}
-                        </select>
-                        <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
-                      </div>
-                      <div className="relative">
-                        <select value={newTrans.category} onChange={(e) => setNewTrans({ ...newTrans, category: e.target.value })} className={`w-full p-4 pl-12 ${GLASS_INPUT} text-stone-700 font-medium appearance-none`}>
-                          {(newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || [])).find(g => g.name === newTrans.group)?.items.map(i => <option key={i.name} value={i.name}>{i.name}</option>)}
-                        </select>
-                        <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none z-10" />
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300 pointer-events-none z-10" />
-                      </div>
-                    </div>
-
+                    {/* Date & Note */}
                     <div className="flex flex-col gap-3 min-w-0">
                       <div className="w-full">
                         <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
@@ -3720,7 +3882,7 @@ export default function App() {
           {
             isAddIncomeModalOpen && (
               <ModalWrapper title={editingId ? "編輯收入" : "新增收入"} onClose={() => { setIsAddIncomeModalOpen(false); setEditingId(null); setNewIncome({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' }); }}>
-                <form onSubmit={handleAddIncome} className="space-y-6">
+                <form onSubmit={handleAddIncome} className="space-y-4">
                   <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
                   <div className="space-y-1.5"><label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-stone-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
                   <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
