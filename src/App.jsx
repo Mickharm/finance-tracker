@@ -3659,6 +3659,7 @@ export default function App() {
                       {(() => {
                         const noteStats = {};
                         transactions.forEach(t => {
+                          if (t.payer !== newTrans.payer) return; // Filter by current payer
                           const n = (t.note || '').trim();
                           if (!n || n === '請客/自煮' || n === '減肥/斷食' || n === '減肥/沒吃') return;
                           if (!noteStats[n]) noteStats[n] = { count: 0, mappings: {} };
@@ -3728,30 +3729,31 @@ export default function App() {
                             <div className="flex justify-between items-end mb-2 ml-1">
                               <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider">分類群組</label>
                             </div>
-                            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-                              {monthlyGroups.map(g => (
-                                <button key={`m-${g.name}`} type="button" onClick={() => {
-                                  const firstItem = g.items?.[0]?.name || '';
-                                  setNewTrans({ ...newTrans, type: 'monthly', group: g.name, category: firstItem });
-                                }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
-                                  newTrans.group === g.name && newTrans.type === 'monthly'
-                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
-                                    : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300'
-                                }`}>{g.name}</button>
-                              ))}
-                              {monthlyGroups.length > 0 && annualGroups.length > 0 && <div className="flex-shrink-0 w-px bg-stone-200 mx-1 self-stretch"></div>}
-                              {annualGroups.map(g => (
-                                <button key={`a-${g.name}`} type="button" onClick={() => {
-                                  const firstItem = g.items?.[0]?.name || '';
-                                  setNewTrans({ ...newTrans, type: 'annual', group: g.name, category: firstItem });
-                                }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap active:scale-95 ${
-                                  newTrans.group === g.name && newTrans.type === 'annual'
-                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
-                                    : 'bg-white/60 text-stone-500 border-stone-200/60 hover:bg-white hover:border-stone-300'
-                                }`}>
-                                  <span className="text-[9px] text-stone-400 mr-1">年</span>{g.name}
-                                </button>
-                              ))}
+                            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                              <div className="flex bg-stone-100/80 p-1 rounded-2xl">
+                                {monthlyGroups.map(g => (
+                                  <button key={`m-${g.name}`} type="button" onClick={() => {
+                                    const firstItem = g.items?.[0]?.name || '';
+                                    setNewTrans({ ...newTrans, type: 'monthly', group: g.name, category: firstItem });
+                                  }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
+                                    newTrans.group === g.name && newTrans.type === 'monthly'
+                                      ? 'bg-white text-stone-800 shadow-sm'
+                                      : 'text-stone-500 hover:text-stone-700'
+                                  }`}>{g.name}</button>
+                                ))}
+                                {annualGroups.map(g => (
+                                  <button key={`a-${g.name}`} type="button" onClick={() => {
+                                    const firstItem = g.items?.[0]?.name || '';
+                                    setNewTrans({ ...newTrans, type: 'annual', group: g.name, category: firstItem });
+                                  }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
+                                    newTrans.group === g.name && newTrans.type === 'annual'
+                                      ? 'bg-white text-stone-800 shadow-sm'
+                                      : 'text-stone-400 hover:text-stone-600'
+                                  }`}>
+                                    <span className="text-[9px] text-stone-400 mr-1">年</span>{g.name}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         );
@@ -3764,16 +3766,16 @@ export default function App() {
                         const items = currentGroup?.items || [];
                         if (items.length === 0) return null;
                         return (
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-3 gap-2 mt-3">
                             {items.map(item => (
                               <button
                                 key={item.name}
                                 type="button"
                                 onClick={() => setNewTrans({ ...newTrans, category: item.name })}
-                                className={`py-3 px-2 rounded-xl text-xs font-bold border transition-all active:scale-95 text-center truncate ${
+                                className={`py-3 px-2 rounded-xl text-xs font-bold transition-all active:scale-95 text-center truncate ${
                                   newTrans.category === item.name
-                                    ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-300/40'
-                                    : 'bg-white/70 text-stone-600 border-stone-200/80 hover:bg-white hover:border-stone-300'
+                                    ? 'bg-stone-800 text-white shadow-md shadow-stone-800/20'
+                                    : 'bg-stone-50 text-stone-600 hover:bg-stone-100'
                                 }`}
                               >
                                 {item.name}
@@ -3789,9 +3791,9 @@ export default function App() {
                     {/* Meta Options (Payer & Date) */}
                     <div className="flex gap-4">
                       {/* Payer Toggle */}
-                      <div className="bg-stone-100/50 p-1 rounded-2xl flex flex-1 h-[42px]">
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 rounded-xl text-xs font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
+                      <div className="bg-stone-100/50 p-1.5 rounded-[1.3rem] flex flex-1 h-[56px] items-center">
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 h-full rounded-2xl text-sm font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 h-full rounded-2xl text-sm font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
                       </div>
                       
                       {/* Date */}
