@@ -3648,6 +3648,17 @@ export default function App() {
                       />
                     </div>
 
+                    {/* Payer & Date (right below calculator) */}
+                    <div className="flex gap-4 mb-4">
+                      <div className="bg-stone-100/50 p-1.5 rounded-[1.3rem] flex flex-1 h-[56px] items-center">
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 h-full rounded-2xl text-sm font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
+                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 h-full rounded-2xl text-sm font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
+                      </div>
+                      <div className="flex-1">
+                        <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
+                      </div>
+                    </div>
+
                     {/* Note Input (Always visible) */}
                     <div className="mb-4">
                       <div className="w-full relative mb-2">
@@ -3655,11 +3666,12 @@ export default function App() {
                         <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
                       </div>
 
-                      {/* Top 5 Smart Notes */}
+                      {/* Top 5 Smart Notes (filtered by payer + group) */}
                       {(() => {
                         const noteStats = {};
                         transactions.forEach(t => {
-                          if (t.payer !== newTrans.payer) return; // Filter by current payer
+                          if (t.payer !== newTrans.payer) return;
+                          if (newTrans.group && t.group !== newTrans.group) return;
                           const n = (t.note || '').trim();
                           if (!n || n === '請客/自煮' || n === '減肥/斷食' || n === '減肥/沒吃') return;
                           if (!noteStats[n]) noteStats[n] = { count: 0, mappings: {} };
@@ -3786,23 +3798,7 @@ export default function App() {
                       })()}
                     </div>
 
-                    <div className="border-t border-stone-100 my-4"></div>
-
-                    {/* Meta Options (Payer & Date) */}
-                    <div className="flex gap-4">
-                      {/* Payer Toggle */}
-                      <div className="bg-stone-100/50 p-1.5 rounded-[1.3rem] flex flex-1 h-[56px] items-center">
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 h-full rounded-2xl text-sm font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-stone-400'}`}>士程</button>
-                        <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 h-full rounded-2xl text-sm font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-stone-400'}`}>佳欣</button>
-                      </div>
-                      
-                      {/* Date */}
-                      <div className="flex-1">
-                        <InputField type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required />
-                      </div>
-                    </div>
-
-                    <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl shadow-xl shadow-stone-300/50 mt-6">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                    <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl shadow-xl shadow-stone-300/50 mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
                   </form>
                 )}
               </ModalWrapper>
