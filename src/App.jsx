@@ -3672,6 +3672,7 @@ export default function App() {
                         transactions.forEach(t => {
                           if (t.payer !== newTrans.payer) return;
                           if (newTrans.group && t.group !== newTrans.group) return;
+                          if (newTrans.category && t.category !== newTrans.category) return;
                           const n = (t.note || '').trim();
                           if (!n || n === '請客/自煮' || n === '減肥/斷食' || n === '減肥/沒吃') return;
                           if (!noteStats[n]) noteStats[n] = { count: 0, mappings: {} };
