@@ -1250,12 +1250,12 @@ const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete
         {(items || []).map((item, idx) => (
           <div key={idx} className="flex items-center gap-2 group/item min-w-0">
             <div className="w-1.5 h-1.5 rounded-full bg-stone-300 flex-shrink-0"></div>
-            <input value={item.name} onChange={(e) => onUpdate(section, groupKey, idx, 'name', e.target.value)} placeholder="Name" className="flex-1 text-sm py-1.5 px-2 bg-transparent border-b border-transparent focus:border-stone-300 outline-none text-stone-600 transition-colors" />
-            <div className="relative w-28 min-w-0">
+            <input value={item.name} onChange={(e) => onUpdate(section, groupKey, idx, 'name', e.target.value)} placeholder="Name" className="flex-1 text-sm py-1.5 px-2 bg-transparent border-b border-transparent focus:border-stone-300 outline-none text-stone-600 transition-colors min-w-0" />
+            <div className="relative w-36 flex-shrink-0">
               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-stone-400 text-[10px]">$</span>
               <input type="text" inputMode="numeric" value={Number(item.amount).toLocaleString()} onChange={(e) => { const v = e.target.value.replace(/,/g, ''); if (!isNaN(v)) onUpdate(section, groupKey, idx, 'amount', v); }} className="w-full text-sm py-1.5 pl-5 pr-2 font-mono text-right text-stone-700 font-bold bg-transparent border-b border-transparent focus:border-stone-300 outline-none transition-colors" />
             </div>
-            <button onClick={() => onDelete(section, groupKey, idx)} className="p-1 text-stone-200 hover:text-rose-400 opacity-0 group-hover/item:opacity-100 transition-all"><X className="w-3 h-3" /></button>
+            <button onClick={() => onDelete(section, groupKey, idx)} className="p-1 text-stone-300 hover:text-rose-400 transition-all flex-shrink-0"><X className="w-3 h-3" /></button>
           </div>
         ))}
         {(items || []).length === 0 && <div className="text-center text-xs text-stone-300 py-3">No items</div>}
@@ -1269,14 +1269,21 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
   const [dragOffset, setDragOffset] = useState(0);
 
   const handleDragStart = (x) => { setDragStartX(x); setDragOffset(0); };
-  const handleDragMove = (x) => { if (dragStartX !== null) setDragOffset(x - dragStartX); };
+  const handleDragMove = (x) => {
+    if (dragStartX !== null) {
+      const offset = x - dragStartX;
+      // Only allow left swipe (negative direction), clamp right swipe to 0
+      setDragOffset(Math.min(0, offset));
+    }
+  };
   const handleDragEnd = () => {
-    if (dragStartX !== null && Math.abs(dragOffset) > 80 && onDelete) onDelete(yearData.id);
+    // Trigger delete only on left swipe exceeding threshold
+    if (dragStartX !== null && dragOffset < -80 && onDelete) onDelete(yearData.id);
     setDragStartX(null);
     setDragOffset(0);
   };
 
-  const isDragging = dragStartX !== null && Math.abs(dragOffset) > 5;
+  const isDragging = dragStartX !== null && dragOffset < -5;
   const swipeProgress = Math.min(Math.abs(dragOffset) / 80, 1);
   const cardStyle = isDragging ? {
     transform: `translateX(${dragOffset * 0.4}px) scale(${1 - swipeProgress * 0.04})`,
@@ -2526,21 +2533,6 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
           <div className="flex flex-col gap-0.5 mt-2">
             <span className="text-[9px] text-stone-400 font-mono">負債比 {totalAssets > 0 ? ((totalLiabilities / totalAssets) * 100).toFixed(1) : '0'}%</span>
           </div>
-        </div>
-      </div>
-
-      {/* Net Worth Bar */}
-      <div className={`${GLASS_CARD} p-4`}>
-        <div className="flex justify-between items-baseline mb-3">
-          <span className="text-xs text-stone-500 font-bold">資產淨值</span>
-          <span className={`text-lg font-mono font-bold ${netWorth >= 0 ? 'text-stone-800' : 'text-rose-600'}`}>${netWorth.toLocaleString()}</span>
-        </div>
-        <div className="h-2.5 bg-stone-100 rounded-full overflow-hidden flex">
-          <div className="bg-gradient-to-r from-emerald-400 to-emerald-300 h-full rounded-full transition-all duration-500" style={{ width: `${totalAssets + totalLiabilities > 0 ? (totalAssets / (totalAssets + totalLiabilities)) * 100 : 50}%` }} />
-        </div>
-        <div className="flex justify-between mt-1.5">
-          <span className="text-[9px] text-emerald-500 font-bold">{totalAssets + totalLiabilities > 0 ? ((totalAssets / (totalAssets + totalLiabilities)) * 100).toFixed(0) : 50}%</span>
-          <span className="text-[9px] text-rose-400 font-bold">{totalAssets + totalLiabilities > 0 ? ((totalLiabilities / (totalAssets + totalLiabilities)) * 100).toFixed(0) : 50}%</span>
         </div>
       </div>
 
