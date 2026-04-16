@@ -48,6 +48,29 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = 'finance-tracker-production';
 const FINNHUB_API_KEY = 'd58c17hr01qptoarifpgd58c17hr01qptoarifq0';
+const PRICE_CACHE_KEY = 'finnhub_price_cache';
+const PRICE_CACHE_TTL = 5 * 60 * 1000;
+
+const getCachedPrices = () => {
+  try {
+    const raw = localStorage.getItem(PRICE_CACHE_KEY);
+    if (!raw) return {};
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > PRICE_CACHE_TTL) {
+      localStorage.removeItem(PRICE_CACHE_KEY);
+      return {};
+    }
+    return data || {};
+  } catch { return {}; }
+};
+
+const setCachedPrices = (prices) => {
+  try {
+    const existing = getCachedPrices();
+    const merged = { ...existing, ...prices };
+    localStorage.setItem(PRICE_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: merged }));
+  } catch { /* quota exceeded */ }
+};
 const LEDGER_ID = 'Mick';
 
 const GLASS_CARD = "bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl relative overflow-hidden group";
@@ -790,7 +813,7 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
     if (holdingsRef) await setDoc(holdingsRef, { groups: newGroups });
   };
 
-  // ─ Price fetching ─
+  // ─ Price fetching (with localStorage cache) ─
   const fetchHoldingsPrices = useCallback(async (currentGroups) => {
     setHoldingsLoading(true);
     const allSymbols = new Set();
@@ -798,14 +821,21 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
       if (s.symbol?.trim()) allSymbols.add(s.symbol.trim().toUpperCase());
     }));
     if (allSymbols.size === 0) { setHoldingsLoading(false); return; }
+    const cached = getCachedPrices();
     const newPrices = {};
+    const symbolsToFetch = [];
     for (const symbol of allSymbols) {
+      if (cached[symbol]) { newPrices[symbol] = cached[symbol]; }
+      else { symbolsToFetch.push(symbol); }
+    }
+    for (const symbol of symbolsToFetch) {
       try {
         const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
         if (res.ok) { const data = await res.json(); if (data.c) newPrices[symbol] = { price: data.c, change: data.dp }; }
       } catch (e) { console.warn(e); }
       await new Promise(r => setTimeout(r, 100));
     }
+    if (symbolsToFetch.length > 0) setCachedPrices(newPrices);
     setHoldingsPrices(prev => ({ ...prev, ...newPrices }));
     setHoldingsLastUpdated(new Date());
     setHoldingsLoading(false);
@@ -1037,9 +1067,14 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
       return;
     }
 
+    const cached = getCachedPrices();
     const newPrices = {};
-    const symbolsArray = Array.from(allSymbols);
-    for (const symbol of symbolsArray) {
+    const symbolsToFetch = [];
+    for (const symbol of allSymbols) {
+      if (cached[symbol]) { newPrices[symbol] = cached[symbol]; }
+      else { symbolsToFetch.push(symbol); }
+    }
+    for (const symbol of symbolsToFetch) {
       try {
         const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
         if (response.ok) {
@@ -1051,7 +1086,7 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
       }
       await new Promise(r => setTimeout(r, 100));
     }
-
+    if (symbolsToFetch.length > 0) setCachedPrices(newPrices);
     setPrices(prev => ({ ...prev, ...newPrices }));
     setLastUpdated(new Date());
     setLoading(false);
@@ -1223,7 +1258,7 @@ const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete
   </div>
 );
 
-const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
+const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
   const fixedDeposit = getFixedDepositAmount(yearData.year);
   const targetROI = Number(yearData.roi) || 0;
   const targetAmount = (prevYearTotal + fixedDeposit) * (1 + targetROI / 100);
@@ -1253,12 +1288,15 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate }) => {
           </h3>
           <div className="text-xs text-stone-400 mt-1">固定存入: <span className="font-bold text-stone-600">${fixedDeposit.toLocaleString()}</span> (美金)</div>
         </div>
-        <div className="text-right">
-          <div className="text-xs text-stone-400">年化目標</div>
-          <div className="flex items-center justify-end gap-1">
-            <input type="number" value={yearData.roi} onChange={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-stone-800 border-b border-stone-200 focus:border-stone-500 outline-none bg-transparent" />
-            <span className="text-sm font-bold text-stone-600">%</span>
+        <div className="flex items-start gap-2">
+          <div className="text-right">
+            <div className="text-xs text-stone-400">年化目標</div>
+            <div className="flex items-center justify-end gap-1">
+              <input type="number" value={yearData.roi} onChange={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-stone-800 border-b border-stone-200 focus:border-stone-500 outline-none bg-transparent" />
+              <span className="text-sm font-bold text-stone-600">%</span>
+            </div>
           </div>
+          {onDelete && <button onClick={() => onDelete(yearData.id)} className="p-1.5 rounded-lg bg-stone-100 text-stone-400 hover:bg-[#FDECEA] hover:text-[#C0392B] transition-all mt-0.5"><X className="w-3.5 h-3.5" /></button>}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4 mb-4 pl-3">
@@ -1661,9 +1699,14 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
 
       if (symbols.length === 0) return;
 
+      const cached = getCachedPrices();
       const newPrices = {};
-      // Use sequential fetching to respect rate limits more reliably
+      const symbolsToFetch = [];
       for (const symbol of symbols) {
+        if (cached[symbol]) { newPrices[symbol] = cached[symbol].price || cached[symbol]; }
+        else { symbolsToFetch.push(symbol); }
+      }
+      for (const symbol of symbolsToFetch) {
         try {
           const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
           if (res.ok) {
@@ -1671,8 +1714,12 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
             if (data.c) newPrices[symbol] = data.c;
           }
         } catch (e) { console.warn(e); }
-        // Tiny delay
         await new Promise(r => setTimeout(r, 50));
+      }
+      if (symbolsToFetch.length > 0) {
+        const cacheUpdate = {};
+        symbolsToFetch.forEach(s => { if (newPrices[s]) cacheUpdate[s] = { price: newPrices[s], change: 0 }; });
+        setCachedPrices(cacheUpdate);
       }
       setPrices(newPrices);
     };
@@ -1843,6 +1890,12 @@ const MealToggleButton = ({ status, onToggle, icon: Icon, label }) => {
 };
 
 const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
+  const goToToday = () => {
+    const today = new Date();
+    setViewDate(today);
+    setSelectedDay(today.getDate());
+    setSelectedDate(today);
+  };
   const [viewDate, setViewDate] = useState(selectedDate);
   const [selectedDay, setSelectedDay] = useState(null);
   useEffect(() => setViewDate(selectedDate), [selectedDate]);
@@ -1917,7 +1970,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
   const selectedTrans = selectedDateStr ? transactions.filter(t => t.date === selectedDateStr) : [];
   return (
     <div className="pb-24 animate-in fade-in duration-300 relative">
-      <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-stone-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronRight className="w-5 h-5" /></button></div></div>
+      <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-stone-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={goToToday} className="px-3 py-2 bg-stone-800 text-white rounded-xl shadow-sm text-xs font-bold hover:bg-stone-700 transition-colors">Today</button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronRight className="w-5 h-5" /></button></div></div>
       <div className={`${GLASS_CARD} p-0 border border-stone-100`}>
         <div className="grid grid-cols-7 bg-stone-50/50 border-b border-stone-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-stone-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
@@ -1980,6 +2033,26 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
           </div>
         </div>
       )}
+      {/* Monthly Total Bar */}
+      {(() => {
+        const monthlyTotal = transactions.filter(t => {
+          const d = new Date(t.date);
+          return d.getFullYear() === viewDate.getFullYear() && d.getMonth() === viewDate.getMonth();
+        }).reduce((sum, t) => sum + Number(t.amount), 0);
+        const txCount = transactions.filter(t => {
+          const d = new Date(t.date);
+          return d.getFullYear() === viewDate.getFullYear() && d.getMonth() === viewDate.getMonth();
+        }).length;
+        return (
+          <div className={`${GLASS_CARD} p-4 mt-4 flex justify-between items-center`}>
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-stone-100 text-stone-500"><BarChart2 className="w-4 h-4" /></div>
+              <div><div className="text-xs text-stone-400 font-bold uppercase">本月合計</div><div className="text-[10px] text-stone-400">{txCount} 筆消費</div></div>
+            </div>
+            <div className="text-xl font-bold text-stone-800 font-mono">${monthlyTotal.toLocaleString()}</div>
+          </div>
+        );
+      })()}
       {/* Add expense FAB - Fixed position */}
       {onAddExpense && <button onClick={onAddExpense} className="fixed bottom-6 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-50"><Plus className="w-6 h-6" /></button>}
     </div>
@@ -2344,7 +2417,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
 
 const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) => { const [config, setConfig] = useState(DEFAULT_PRINCIPAL_CONFIG); const [history, setHistory] = useState([]); const [loading, setLoading] = useState(true); const [snapshotDate, setSnapshotDate] = useState(getTodayString()); useEffect(() => { if (!user) return; const configRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'); onSnapshot(configRef, (s) => s.exists() ? setConfig(s.data()) : setDoc(configRef, DEFAULT_PRINCIPAL_CONFIG)); const historyRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'); const q = query(historyRef, orderBy('date', 'desc')); onSnapshot(q, (s) => { setHistory(s.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); }); }, [user]); const updateItem = (section, group, idx, field, val) => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group][idx][field] = field === 'amount' ? Number(val) : val; setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const addItem = (section, group) => { const newConfig = JSON.parse(JSON.stringify(config)); if (!newConfig[section][group]) newConfig[section][group] = []; newConfig[section][group].push({ name: '', amount: 0 }); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const deleteItem = (section, group, idx) => { requestConfirmation({ message: '確定移除此項目？', onConfirm: () => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group] = newConfig[section][group].filter((_, i) => i !== idx); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); } }); }; const handleAddSnapshot = () => { requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => { const ta = (config.assets.bank || []).reduce((s, i) => s + Number(i.amount), 0) + (config.assets.invest || []).reduce((s, i) => s + Number(i.amount), 0); const tl = (config.liabilities.encumbrance || []).reduce((s, i) => s + Number(i.amount), 0); await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), { date: new Date(snapshotDate).toISOString(), netPrincipal: ta - tl, details: config, createdAt: serverTimestamp() }); } }); }; const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history', id))); return (<div className="pb-24 space-y-6 animate-in fade-in"><PrincipalTrendChart history={history} /><div className="flex flex-col gap-4"><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">存款組成 (Assets)</h3><AssetGroup title="銀行帳戶" items={config.assets.bank} section="assets" groupKey="bank" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /><AssetGroup title="投資項目" items={config.assets.invest} section="assets" groupKey="invest" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">負債組成 (Liabilities)</h3><AssetGroup title="房價圈存" items={config.liabilities.encumbrance} section="liabilities" groupKey="encumbrance" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div></div><div className={`${GLASS_CARD} p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end`}><InputField label="結算日期" type="date" value={snapshotDate} onChange={(e) => setSnapshotDate(e.target.value)} className="w-full sm:flex-1" /><GlassButton onClick={handleAddSnapshot} className="w-full sm:flex-1 py-4 rounded-xl sm:h-[58px]"><Save className="w-5 h-5" /> 結算本期金額</GlassButton></div><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> 歷次結算紀錄</h3><div className="space-y-3">{history.map(rec => (<div key={rec.id} className="bg-white/60 p-4 rounded-xl border border-stone-100 flex justify-between items-center backdrop-blur-sm"><div><div className="font-bold text-stone-800">${rec.netPrincipal.toLocaleString()}</div><div className="text-[10px] text-stone-400">{new Date(rec.date).toLocaleDateString()}</div></div><button onClick={() => handleDeleteHistory(rec.id)}><X className="w-4 h-4 text-stone-300 hover:text-rose-400" /></button></div>))}</div></div></div>); };
 
-const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange, onAddExchangeClick, onEditExchange }) => {
+const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, onDeleteExchange, onAddExchangeClick, onEditExchange }) => {
   const [activeTab, setActiveTab] = useState('goals');
   const sortedGoals = [...goals].sort((a, b) => b.year - a.year);
   const getEffectiveTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0) + (Number(g?.withdrawal) || 0);
@@ -2359,7 +2432,7 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteExchange
       {activeTab === 'goals' ? (
         <div className="space-y-4 animate-in slide-in-from-left-4 duration-300">
           <div className="flex justify-end mb-2"><GlassButton onClick={onAddYear}><Plus className="w-3 h-3" /> 新增年份</GlassButton></div>
-          {sortedGoals.length === 0 ? <div className="text-center text-stone-400 py-10">尚無資料 (從2022開始)</div> : sortedGoals.map((goal, index) => { const prevGoal = sortedGoals[index + 1]; const prevTotal = prevGoal ? getActualTotal(prevGoal) : 0; return <StockGoalCard key={goal.id} yearData={goal} prevYearTotal={prevTotal} onUpdate={onUpdate} />; })}
+          {sortedGoals.length === 0 ? <div className="text-center text-stone-400 py-10">尚無資料 (從2022開始)</div> : sortedGoals.map((goal, index) => { const prevGoal = sortedGoals[index + 1]; const prevTotal = prevGoal ? getActualTotal(prevGoal) : 0; return <StockGoalCard key={goal.id} yearData={goal} prevYearTotal={prevTotal} onUpdate={onUpdate} onDelete={onDeleteYear} />; })}
         </div>
       ) : (
         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
@@ -3261,8 +3334,8 @@ export default function App() {
 
     return { totalBudget: grandTotalBudget, totalUsed: grandTotalUsed, groups: groupsData };
   };
-  const monthlyStats = calculateStats('monthly');
-  const annualStats = calculateStats('annual');
+  const monthlyStats = useMemo(() => calculateStats('monthly'), [transactions, settings, selectedDate]);
+  const annualStats = useMemo(() => calculateStats('annual'), [transactions, settings, selectedDate]);
 
   // Calculate annual total used including ALL monthly spending for the year + Annual spending
   const yearlyTotalStats = useMemo(() => {
@@ -3297,15 +3370,15 @@ export default function App() {
   const handleAddTransaction = (e, overrideTrans = null) => {
     if (e) e.preventDefault();
     const saveTrans = overrideTrans || newTrans;
-    console.log('[DEBUG] handleAddTransaction - editingId:', editingId, 'trans:', saveTrans);
+
     withSubmission(async () => {
       if (editingId) {
-        console.log('[DEBUG] Updating existing transaction:', editingId);
+
         // Clean data: remove ID from body and ensure numeric amount
         const { id, ...updateData } = saveTrans;
         await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...updateData, amount: Number(saveTrans.amount) }, { merge: true });
       } else {
-        console.log('[DEBUG] Creating new transaction');
+
         const { id, ...createData } = saveTrans;
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...createData, amount: Number(saveTrans.amount), createdAt: serverTimestamp() });
       }
@@ -3407,11 +3480,11 @@ export default function App() {
   const deleteMortgageFunding = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', id)));
 
   const handleAddStockGoalYear = async () => {
-    // Since sorted descending (newest first), max year is the first item's year
     const maxYear = stockGoals.length > 0 ? stockGoals[0].year : 2021;
     const nextYear = maxYear + 1;
     await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals'), { year: nextYear, roi: 0, firstrade: 0, ib: 0, withdrawal: 0, createdAt: serverTimestamp() });
   };
+  const handleDeleteStockGoalYear = (id) => requestDelete('確定刪除此年份的存股計畫？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id)));
   const handleUpdateStockGoal = async (id, field, value) => { await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id), { [field]: Number(value) }, { merge: true }); };
 
   const handleAddExchange = (e) => {
@@ -3507,7 +3580,7 @@ export default function App() {
             {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} yearlyTotalStats={yearlyTotalStats} />}
             {/* 新增: Investment Tab View (持股檢視 + 占比計算) */}
             {currentView === 'watchlist' && <InvestmentTabView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
-            {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
+            {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteYear={handleDeleteStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
             {currentView === 'mortgage' && (
               <MortgageView
                 mortgageExpenses={mortgageExpenses}
@@ -3593,14 +3666,14 @@ export default function App() {
                 setSelectedDate={setSelectedDate}
                 deleteTransaction={deleteTransaction}
                 onEdit={(item) => {
-                  console.log('[DEBUG] CalendarView onEdit triggered - item:', item);
+
                   if (!item.id) {
                     alert('錯誤：此交易沒有有效ID，無法編輯。請重新整理頁面後再試。');
                     return;
                   }
                   setNewTrans({ ...item, amount: item.amount });
                   setEditingId(item.id);
-                  console.log('[DEBUG] Set editingId to:', item.id);
+
                   setIsAddTxModalOpen(true);
                 }}
                 onAddExpense={() => setIsAddTxModalOpen(true)}
@@ -3615,6 +3688,15 @@ export default function App() {
                     <h3 className="font-bold text-[#7D6608] text-sm">正在編輯 {selectedDate.getFullYear()} 年度預算</h3>
                     <p className="text-xs text-[#9A7D0A] mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
                   </div>
+                </div>
+                <div className="mb-6">
+                  <button onClick={() => setIsRecurringManagerOpen(true)} className={`w-full ${GLASS_CARD} p-4 flex items-center justify-between hover:border-stone-300 transition-all cursor-pointer`}>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-stone-100 text-stone-500"><ClipboardList className="w-5 h-5" /></div>
+                      <div className="text-left"><h3 className="font-bold text-stone-700 text-sm">固定支出管理</h3><p className="text-xs text-stone-400">設定每月自動入帳的固定項目 ({(settings.recurringItems || []).filter(i => i.active).length} 項啟用中)</p></div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-stone-400" />
+                  </button>
                 </div>
                 <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度預算配置`} groups={settings.monthlyGroups || []} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
                 <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度預算配置`} groups={settings.annualGroups || []} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
