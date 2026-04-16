@@ -1259,6 +1259,13 @@ const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete
 );
 
 const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
+  const [dragStartX, setDragStartX] = useState(null);
+  const handleDragStart = (x) => setDragStartX(x);
+  const handleDragEnd = (x) => {
+    if (dragStartX !== null && Math.abs(dragStartX - x) > 50 && onDelete) onDelete(yearData.id);
+    setDragStartX(null);
+  };
+
   const fixedDeposit = getFixedDepositAmount(yearData.year);
   const targetROI = Number(yearData.roi) || 0;
   const targetAmount = (prevYearTotal + fixedDeposit) * (1 + targetROI / 100);
@@ -1271,7 +1278,15 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
   const errorPercent = targetAmount > 0 ? (diff / targetAmount) * 100 : 0;
 
   return (
-    <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden`}>
+    <div 
+      className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden group/card`}
+      onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+      onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
+      onMouseDown={(e) => { if (e.target.tagName !== 'INPUT') handleDragStart(e.clientX); }}
+      onMouseUp={(e) => { if (e.target.tagName !== 'INPUT') handleDragEnd(e.clientX); }}
+      onMouseLeave={() => setDragStartX(null)}
+    >
+      <div className="absolute inset-x-0 bottom-0 h-1 bg-stone-300 opacity-0 group-hover/card:opacity-20 transition-opacity"></div>
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${isAchieved ? 'bg-emerald-400' : (yearData.year < new Date().getFullYear() ? 'bg-rose-500' : 'bg-stone-300')}`}></div>
       <div className="flex justify-between items-start mb-4 pl-3">
         <div>
@@ -1288,15 +1303,12 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
           </h3>
           <div className="text-xs text-stone-400 mt-1">固定存入: <span className="font-bold text-stone-600">${fixedDeposit.toLocaleString()}</span> (美金)</div>
         </div>
-        <div className="flex items-start gap-2">
-          <div className="text-right">
-            <div className="text-xs text-stone-400">年化目標</div>
-            <div className="flex items-center justify-end gap-1">
-              <input type="number" value={yearData.roi} onChange={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-stone-800 border-b border-stone-200 focus:border-stone-500 outline-none bg-transparent" />
-              <span className="text-sm font-bold text-stone-600">%</span>
-            </div>
+        <div className="text-right">
+          <div className="text-xs text-stone-400">年化目標</div>
+          <div className="flex items-center justify-end gap-1">
+            <input type="number" value={yearData.roi} onChange={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-stone-800 border-b border-stone-200 focus:border-stone-500 outline-none bg-transparent" />
+            <span className="text-sm font-bold text-stone-600">%</span>
           </div>
-          {onDelete && <button onClick={() => onDelete(yearData.id)} className="p-1.5 rounded-lg bg-stone-100 text-stone-400 hover:bg-[#FDECEA] hover:text-[#C0392B] transition-all mt-0.5"><X className="w-3.5 h-3.5" /></button>}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4 mb-4 pl-3">
@@ -1890,12 +1902,6 @@ const MealToggleButton = ({ status, onToggle, icon: Icon, label }) => {
 };
 
 const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
-  const goToToday = () => {
-    const today = new Date();
-    setViewDate(today);
-    setSelectedDay(today.getDate());
-    setSelectedDate(today);
-  };
   const [viewDate, setViewDate] = useState(selectedDate);
   const [selectedDay, setSelectedDay] = useState(null);
   useEffect(() => setViewDate(selectedDate), [selectedDate]);
@@ -1970,7 +1976,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
   const selectedTrans = selectedDateStr ? transactions.filter(t => t.date === selectedDateStr) : [];
   return (
     <div className="pb-24 animate-in fade-in duration-300 relative">
-      <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-stone-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={goToToday} className="px-3 py-2 bg-stone-800 text-white rounded-xl shadow-sm text-xs font-bold hover:bg-stone-700 transition-colors">Today</button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronRight className="w-5 h-5" /></button></div></div>
+      <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-stone-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-stone-100 text-stone-600"><ChevronRight className="w-5 h-5" /></button></div></div>
       <div className={`${GLASS_CARD} p-0 border border-stone-100`}>
         <div className="grid grid-cols-7 bg-stone-50/50 border-b border-stone-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-stone-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
@@ -2033,26 +2039,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
           </div>
         </div>
       )}
-      {/* Monthly Total Bar */}
-      {(() => {
-        const monthlyTotal = transactions.filter(t => {
-          const d = new Date(t.date);
-          return d.getFullYear() === viewDate.getFullYear() && d.getMonth() === viewDate.getMonth();
-        }).reduce((sum, t) => sum + Number(t.amount), 0);
-        const txCount = transactions.filter(t => {
-          const d = new Date(t.date);
-          return d.getFullYear() === viewDate.getFullYear() && d.getMonth() === viewDate.getMonth();
-        }).length;
-        return (
-          <div className={`${GLASS_CARD} p-4 mt-4 flex justify-between items-center`}>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-stone-100 text-stone-500"><BarChart2 className="w-4 h-4" /></div>
-              <div><div className="text-xs text-stone-400 font-bold uppercase">本月合計</div><div className="text-[10px] text-stone-400">{txCount} 筆消費</div></div>
-            </div>
-            <div className="text-xl font-bold text-stone-800 font-mono">${monthlyTotal.toLocaleString()}</div>
-          </div>
-        );
-      })()}
+
       {/* Add expense FAB - Fixed position */}
       {onAddExpense && <button onClick={onAddExpense} className="fixed bottom-6 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-50"><Plus className="w-6 h-6" /></button>}
     </div>
@@ -2266,7 +2253,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
               className={`flex-1 flex flex-col justify-end items-center h-full z-10 group relative ${!isCompareMode ? 'cursor-pointer' : ''}`}
             >
               {/* Value Label moved above the bar */}
-              <div className="mb-2 text-[10px] font-bold text-stone-500 transition-all group-hover:scale-110 group-hover:text-stone-800">
+              <div className="mb-2 text-[10px] font-bold text-stone-500 transition-all group-hover:scale-110 group-hover:text-stone-800 h-4 flex items-end">
                 {isCompareMode ? (monthlyDiffs[idx]?.diff !== 0 && (
                   <span className={`flex items-center gap-0.5 ${monthlyDiffs[idx]?.diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
                     {monthlyDiffs[idx]?.diff > 0 ? '+' : ''}{Math.round(monthlyDiffs[idx]?.diff / 1000)}k
@@ -2276,16 +2263,19 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
                 )}
               </div>
 
-              {/* Bar */}
-              <div className="w-full max-w-[20px] bg-stone-100 rounded-t-lg relative overflow-visible transition-all duration-500" style={{ height: `${maxVal > 0 ? (Math.max(0, val) / maxVal) * 100 : 0}%` }}>
-                <div className={`absolute inset-x-0 bottom-0 top-0 rounded-t-lg transition-all duration-300 ${!isCompareMode && selectedMonth === idx ? 'bg-stone-800 shadow-lg shadow-stone-300' : 'bg-stone-300 group-hover:bg-stone-400'}`}></div>
-                {isCompareMode && (
-                  <div className="absolute inset-x-0 bottom-0 bg-stone-800/20 rounded-t-lg border-t border-stone-500/30" style={{ height: `${maxVal > 0 ? (Math.max(0, compareData[idx]) / maxVal) * 100 : 0}%` }}></div>
-                )}
+              {/* Bar Container - Isolates height computation from flex container shrink algorithm */}
+              <div className="w-full flex-1 flex justify-center items-end relative overflow-hidden">
+                {/* Bar */}
+                <div className="w-full max-w-[20px] bg-stone-100 rounded-t-lg relative overflow-visible transition-all duration-500 flex-none" style={{ height: `${maxVal > 0 ? (Math.max(0, val) / maxVal) * 100 : 0}%` }}>
+                  <div className={`absolute inset-x-0 bottom-0 top-0 rounded-t-lg transition-all duration-300 ${!isCompareMode && selectedMonth === idx ? 'bg-stone-800 shadow-lg shadow-stone-300' : 'bg-stone-300 group-hover:bg-stone-400'}`}></div>
+                  {isCompareMode && (
+                    <div className="absolute inset-x-0 bottom-0 bg-stone-800/20 rounded-t-lg border-t border-stone-500/30" style={{ height: `${maxVal > 0 ? (Math.max(0, compareData[idx]) / maxVal) * 100 : 0}%` }}></div>
+                  )}
+                </div>
               </div>
 
               {/* X Axis Label */}
-              <div className={`mt-2 text-[9px] font-bold transition-colors whitespace-nowrap ${selectedMonth === idx ? 'text-stone-800 scale-110' : 'text-stone-400 group-hover:text-stone-600'}`}>{idx + 1}</div>
+              <div className={`mt-2 text-[9px] font-bold transition-colors whitespace-nowrap h-3 flex items-start ${selectedMonth === idx ? 'text-stone-800 scale-110' : 'text-stone-400 group-hover:text-stone-600'}`}>{idx + 1}</div>
             </div>
           ))}
         </div>
