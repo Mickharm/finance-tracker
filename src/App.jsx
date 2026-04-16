@@ -1230,40 +1230,62 @@ const PartnerYearGroup = ({ year, transactions, onDelete, onEdit }) => {
   );
 };
 
-const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete }) => (
-  <div className={`${GLASS_CARD} p-4 mb-4`}>
-    <div className="flex justify-between items-center mb-3">
-      <h4 className={`font-bold text-stone-700 flex items-center gap-2`}>
-        {section === 'assets' ? <Landmark className="w-4 h-4 text-stone-400" /> : <Building2 className="w-4 h-4 text-stone-400" />}
-        {title}
-      </h4>
-      <button onClick={() => onAdd(section, groupKey)} className="p-1.5 bg-stone-100 rounded-lg text-stone-500 hover:bg-stone-200"><Plus className="w-4 h-4" /></button>
-    </div>
-    <div className="space-y-3">
-      {(items || []).map((item, idx) => (
-        <div key={idx} className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-200 min-w-0">
-          <input value={item.name} onChange={(e) => onUpdate(section, groupKey, idx, 'name', e.target.value)} placeholder="項目名稱" className={`${GLASS_INPUT} flex-1 text-base py-2 px-3`} />
-          <div className="relative w-28 min-w-0">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-stone-400 text-xs">$</span>
-            <input type="text" inputMode="numeric" value={Number(item.amount).toLocaleString()} onChange={(e) => { const v = e.target.value.replace(/,/g, ''); if (!isNaN(v)) onUpdate(section, groupKey, idx, 'amount', v); }} className={`${GLASS_INPUT} w-full text-base py-2 pl-5 pr-2 font-mono text-right text-stone-700 font-bold`} />
-          </div>
-          <button onClick={() => onDelete(section, groupKey, idx)} className="text-stone-300 hover:text-rose-400"><X className="w-3 h-3" /></button>
+const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete, accentColor = 'stone' }) => {
+  const colorMap = { emerald: 'border-l-emerald-400', rose: 'border-l-rose-400', stone: 'border-l-stone-300' };
+  const subtotal = (items || []).reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+  return (
+    <div className={`${GLASS_CARD} p-0 mb-4 border-l-4 ${colorMap[accentColor] || colorMap.stone}`}>
+      <div className="flex justify-between items-center px-4 pt-4 pb-2">
+        <div className="flex items-center gap-2">
+          {section === 'assets' ? <Landmark className="w-4 h-4 text-stone-400" /> : <Building2 className="w-4 h-4 text-stone-400" />}
+          <h4 className="font-bold text-stone-700 text-sm">{title}</h4>
+          <span className="text-[10px] bg-stone-100 text-stone-400 px-1.5 py-0.5 rounded-full font-bold">{(items || []).length}</span>
         </div>
-      ))}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-mono font-bold text-stone-700">${subtotal.toLocaleString()}</span>
+          <button onClick={() => onAdd(section, groupKey)} className="p-1.5 bg-stone-100 rounded-lg text-stone-500 hover:bg-stone-200 transition-colors"><Plus className="w-3.5 h-3.5" /></button>
+        </div>
+      </div>
+      <div className="px-4 pb-4 space-y-2">
+        {(items || []).map((item, idx) => (
+          <div key={idx} className="flex items-center gap-2 group/item min-w-0">
+            <div className="w-1.5 h-1.5 rounded-full bg-stone-300 flex-shrink-0"></div>
+            <input value={item.name} onChange={(e) => onUpdate(section, groupKey, idx, 'name', e.target.value)} placeholder="Name" className="flex-1 text-sm py-1.5 px-2 bg-transparent border-b border-transparent focus:border-stone-300 outline-none text-stone-600 transition-colors" />
+            <div className="relative w-28 min-w-0">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-stone-400 text-[10px]">$</span>
+              <input type="text" inputMode="numeric" value={Number(item.amount).toLocaleString()} onChange={(e) => { const v = e.target.value.replace(/,/g, ''); if (!isNaN(v)) onUpdate(section, groupKey, idx, 'amount', v); }} className="w-full text-sm py-1.5 pl-5 pr-2 font-mono text-right text-stone-700 font-bold bg-transparent border-b border-transparent focus:border-stone-300 outline-none transition-colors" />
+            </div>
+            <button onClick={() => onDelete(section, groupKey, idx)} className="p-1 text-stone-200 hover:text-rose-400 opacity-0 group-hover/item:opacity-100 transition-all"><X className="w-3 h-3" /></button>
+          </div>
+        ))}
+        {(items || []).length === 0 && <div className="text-center text-xs text-stone-300 py-3">No items</div>}
+      </div>
     </div>
-    <div className="mt-3 pt-2 border-t border-stone-100/50 flex justify-between text-xs font-bold text-stone-600">
-      <span>小計</span>
-      <span>${(items || []).reduce((sum, i) => sum + (Number(i.amount) || 0), 0).toLocaleString()}</span>
-    </div>
-  </div>
-);
+  );
+};
 
 const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
   const [dragStartX, setDragStartX] = useState(null);
-  const handleDragStart = (x) => setDragStartX(x);
-  const handleDragEnd = (x) => {
-    if (dragStartX !== null && Math.abs(dragStartX - x) > 50 && onDelete) onDelete(yearData.id);
+  const [dragOffset, setDragOffset] = useState(0);
+
+  const handleDragStart = (x) => { setDragStartX(x); setDragOffset(0); };
+  const handleDragMove = (x) => { if (dragStartX !== null) setDragOffset(x - dragStartX); };
+  const handleDragEnd = () => {
+    if (dragStartX !== null && Math.abs(dragOffset) > 80 && onDelete) onDelete(yearData.id);
     setDragStartX(null);
+    setDragOffset(0);
+  };
+
+  const isDragging = dragStartX !== null && Math.abs(dragOffset) > 5;
+  const swipeProgress = Math.min(Math.abs(dragOffset) / 80, 1);
+  const cardStyle = isDragging ? {
+    transform: `translateX(${dragOffset * 0.4}px) scale(${1 - swipeProgress * 0.04})`,
+    opacity: 1 - swipeProgress * 0.2,
+    transition: 'none'
+  } : {
+    transform: 'translateX(0) scale(1)',
+    opacity: 1,
+    transition: 'transform 0.3s ease, opacity 0.3s ease'
   };
 
   const fixedDeposit = getFixedDepositAmount(yearData.year);
@@ -1278,39 +1300,51 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
   const errorPercent = targetAmount > 0 ? (diff / targetAmount) * 100 : 0;
 
   return (
-    <div 
-      className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden group/card`}
-      onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
-      onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
-      onMouseDown={(e) => { if (e.target.tagName !== 'INPUT') handleDragStart(e.clientX); }}
-      onMouseUp={(e) => { if (e.target.tagName !== 'INPUT') handleDragEnd(e.clientX); }}
-      onMouseLeave={() => setDragStartX(null)}
-    >
-      <div className="absolute inset-x-0 bottom-0 h-1 bg-stone-300 opacity-0 group-hover/card:opacity-20 transition-opacity"></div>
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${isAchieved ? 'bg-emerald-400' : (yearData.year < new Date().getFullYear() ? 'bg-rose-500' : 'bg-stone-300')}`}></div>
-      <div className="flex justify-between items-start mb-4 pl-3">
-        <div>
-          <h3 className="text-lg font-bold text-stone-800 flex items-center gap-2">
-            {yearData.year}年
-            {isAchieved ? (
-              <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold">達成</span>
-            ) : (yearData.year < new Date().getFullYear()) ? (
-              <span className="text-xs bg-rose-50 text-rose-500 px-2 py-0.5 rounded-full font-bold">未達成</span>
-            ) : (
-              <span className="text-xs bg-stone-100 text-stone-400 px-2 py-0.5 rounded-full font-bold">進行中</span>
-            )}
-            {currentWithdrawal > 0 && <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">含提領</span>}
-          </h3>
-          <div className="text-xs text-stone-400 mt-1">固定存入: <span className="font-bold text-stone-600">${fixedDeposit.toLocaleString()}</span> (美金)</div>
-        </div>
-        <div className="text-right">
-          <div className="text-xs text-stone-400">年化目標</div>
-          <div className="flex items-center justify-end gap-1">
-            <input type="number" value={yearData.roi} onChange={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-stone-800 border-b border-stone-200 focus:border-stone-500 outline-none bg-transparent" />
-            <span className="text-sm font-bold text-stone-600">%</span>
+    <div className="relative mb-4">
+      {/* Delete indicator background */}
+      {isDragging && (
+        <div className="absolute inset-0 rounded-3xl flex items-center justify-center" style={{ backgroundColor: `rgba(192, 57, 43, ${swipeProgress * 0.15})` }}>
+          <div className="flex items-center gap-2" style={{ opacity: swipeProgress }}>
+            <X className="w-5 h-5 text-[#C0392B]" />
+            <span className="text-sm font-bold text-[#C0392B]">{swipeProgress >= 1 ? 'Release to Delete' : 'Swipe to Delete'}</span>
           </div>
         </div>
-      </div>
+      )}
+      <div
+        className={`${GLASS_CARD} p-5 relative overflow-hidden`}
+        style={cardStyle}
+        onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+        onTouchMove={(e) => { handleDragMove(e.touches[0].clientX); if (isDragging) e.preventDefault(); }}
+        onTouchEnd={() => handleDragEnd()}
+        onMouseDown={(e) => { if (e.target.tagName !== 'INPUT') handleDragStart(e.clientX); }}
+        onMouseMove={(e) => handleDragMove(e.clientX)}
+        onMouseUp={() => handleDragEnd()}
+        onMouseLeave={() => { setDragStartX(null); setDragOffset(0); }}
+      >
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${isAchieved ? 'bg-emerald-400' : (yearData.year < new Date().getFullYear() ? 'bg-rose-500' : 'bg-stone-300')}`}></div>
+        <div className="flex justify-between items-start mb-4 pl-3">
+          <div>
+            <h3 className="text-lg font-bold text-stone-800 flex items-center gap-2">
+              {yearData.year}年
+              {isAchieved ? (
+                <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold">達成</span>
+              ) : (yearData.year < new Date().getFullYear()) ? (
+                <span className="text-xs bg-rose-50 text-rose-500 px-2 py-0.5 rounded-full font-bold">未達成</span>
+              ) : (
+                <span className="text-xs bg-stone-100 text-stone-400 px-2 py-0.5 rounded-full font-bold">進行中</span>
+              )}
+              {currentWithdrawal > 0 && <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">含提領</span>}
+            </h3>
+            <div className="text-xs text-stone-400 mt-1">固定存入: <span className="font-bold text-stone-600">${fixedDeposit.toLocaleString()}</span> (美金)</div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-stone-400">年化目標</div>
+            <div className="flex items-center justify-end gap-1">
+              <input type="number" value={yearData.roi} onChange={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-stone-800 border-b border-stone-200 focus:border-stone-500 outline-none bg-transparent" />
+              <span className="text-sm font-bold text-stone-600">%</span>
+            </div>
+          </div>
+        </div>
       <div className="grid grid-cols-2 gap-4 mb-4 pl-3">
         <div><label className="text-[10px] text-stone-400 uppercase font-bold">Firstrade (美金)</label><input type="number" value={yearData.firstrade} onChange={(e) => onUpdate(yearData.id, 'firstrade', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
         <div><label className="text-[10px] text-stone-400 uppercase font-bold">IB (美金)</label><input type="number" value={yearData.ib} onChange={(e) => onUpdate(yearData.id, 'ib', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
@@ -1320,7 +1354,8 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
         <div><div className="text-[10px] text-stone-400 mb-0.5 font-bold uppercase">目標金額</div><div className="font-bold text-stone-500 text-sm font-mono">${Math.round(targetAmount).toLocaleString()}</div></div>
         <div className="text-right"><div className="text-[10px] text-stone-400 mb-0.5 font-bold uppercase">實際總資產</div><div className={`font-bold text-lg font-mono ${isAchieved ? 'text-emerald-600' : 'text-stone-700'}`}>${Math.round(currentTotal).toLocaleString()}</div><div className={`text-[10px] font-medium ${isAchieved ? 'text-emerald-500' : 'text-stone-400'}`}>誤差: {diff > 0 ? '+' : ''}{Math.round(diff).toLocaleString()} ({errorPercent.toFixed(2)}%)</div></div>
       </div>
-    </div >
+    </div>
+    </div>
   );
 };
 
@@ -2405,7 +2440,198 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
   );
 };
 
-const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) => { const [config, setConfig] = useState(DEFAULT_PRINCIPAL_CONFIG); const [history, setHistory] = useState([]); const [loading, setLoading] = useState(true); const [snapshotDate, setSnapshotDate] = useState(getTodayString()); useEffect(() => { if (!user) return; const configRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'); onSnapshot(configRef, (s) => s.exists() ? setConfig(s.data()) : setDoc(configRef, DEFAULT_PRINCIPAL_CONFIG)); const historyRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'); const q = query(historyRef, orderBy('date', 'desc')); onSnapshot(q, (s) => { setHistory(s.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); }); }, [user]); const updateItem = (section, group, idx, field, val) => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group][idx][field] = field === 'amount' ? Number(val) : val; setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const addItem = (section, group) => { const newConfig = JSON.parse(JSON.stringify(config)); if (!newConfig[section][group]) newConfig[section][group] = []; newConfig[section][group].push({ name: '', amount: 0 }); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); }; const deleteItem = (section, group, idx) => { requestConfirmation({ message: '確定移除此項目？', onConfirm: () => { const newConfig = JSON.parse(JSON.stringify(config)); newConfig[section][group] = newConfig[section][group].filter((_, i) => i !== idx); setConfig(newConfig); setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig); } }); }; const handleAddSnapshot = () => { requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => { const ta = (config.assets.bank || []).reduce((s, i) => s + Number(i.amount), 0) + (config.assets.invest || []).reduce((s, i) => s + Number(i.amount), 0); const tl = (config.liabilities.encumbrance || []).reduce((s, i) => s + Number(i.amount), 0); await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), { date: new Date(snapshotDate).toISOString(), netPrincipal: ta - tl, details: config, createdAt: serverTimestamp() }); } }); }; const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history', id))); return (<div className="pb-24 space-y-6 animate-in fade-in"><PrincipalTrendChart history={history} /><div className="flex flex-col gap-4"><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">存款組成 (Assets)</h3><AssetGroup title="銀行帳戶" items={config.assets.bank} section="assets" groupKey="bank" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /><AssetGroup title="投資項目" items={config.assets.invest} section="assets" groupKey="invest" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">負債組成 (Liabilities)</h3><AssetGroup title="房價圈存" items={config.liabilities.encumbrance} section="liabilities" groupKey="encumbrance" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} /></div></div><div className={`${GLASS_CARD} p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end`}><InputField label="結算日期" type="date" value={snapshotDate} onChange={(e) => setSnapshotDate(e.target.value)} className="w-full sm:flex-1" /><GlassButton onClick={handleAddSnapshot} className="w-full sm:flex-1 py-4 rounded-xl sm:h-[58px]"><Save className="w-5 h-5" /> 結算本期金額</GlassButton></div><div><h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2"><Clock className="w-3 h-3" /> 歷次結算紀錄</h3><div className="space-y-3">{history.map(rec => (<div key={rec.id} className="bg-white/60 p-4 rounded-xl border border-stone-100 flex justify-between items-center backdrop-blur-sm"><div><div className="font-bold text-stone-800">${rec.netPrincipal.toLocaleString()}</div><div className="text-[10px] text-stone-400">{new Date(rec.date).toLocaleDateString()}</div></div><button onClick={() => handleDeleteHistory(rec.id)}><X className="w-4 h-4 text-stone-300 hover:text-rose-400" /></button></div>))}</div></div></div>); };
+const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) => {
+  const [config, setConfig] = useState(DEFAULT_PRINCIPAL_CONFIG);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [snapshotDate, setSnapshotDate] = useState(getTodayString());
+  const [activeTab, setActiveTab] = useState('edit');
+  const [showAllHistory, setShowAllHistory] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const configRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config');
+    const unsubConfig = onSnapshot(configRef, (s) => s.exists() ? setConfig(s.data()) : setDoc(configRef, DEFAULT_PRINCIPAL_CONFIG));
+    const historyRef = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history');
+    const q = query(historyRef, orderBy('date', 'desc'));
+    const unsubHistory = onSnapshot(q, (s) => {
+      setHistory(s.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    });
+    return () => { unsubConfig(); unsubHistory(); };
+  }, [user]);
+
+  const totalBank = (config.assets.bank || []).reduce((s, i) => s + Number(i.amount), 0);
+  const totalInvest = (config.assets.invest || []).reduce((s, i) => s + Number(i.amount), 0);
+  const totalAssets = totalBank + totalInvest;
+  const totalLiabilities = (config.liabilities.encumbrance || []).reduce((s, i) => s + Number(i.amount), 0);
+  const netWorth = totalAssets - totalLiabilities;
+
+  const updateItem = (section, group, idx, field, val) => {
+    const newConfig = JSON.parse(JSON.stringify(config));
+    newConfig[section][group][idx][field] = field === 'amount' ? Number(val) : val;
+    setConfig(newConfig);
+    setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig);
+  };
+  const addItem = (section, group) => {
+    const newConfig = JSON.parse(JSON.stringify(config));
+    if (!newConfig[section][group]) newConfig[section][group] = [];
+    newConfig[section][group].push({ name: '', amount: 0 });
+    setConfig(newConfig);
+    setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig);
+  };
+  const deleteItem = (section, group, idx) => {
+    requestConfirmation({ message: '確定移除此項目？', onConfirm: () => {
+      const newConfig = JSON.parse(JSON.stringify(config));
+      newConfig[section][group] = newConfig[section][group].filter((_, i) => i !== idx);
+      setConfig(newConfig);
+      setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'principal_config'), newConfig);
+    } });
+  };
+  const handleAddSnapshot = () => {
+    requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => {
+      await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), {
+        date: new Date(snapshotDate).toISOString(), netPrincipal: netWorth, details: config, createdAt: serverTimestamp()
+      });
+    } });
+  };
+  const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history', id)));
+
+  const displayedHistory = showAllHistory ? history : history.slice(0, 5);
+
+  return (
+    <div className="pb-24 space-y-5 animate-in fade-in">
+      {/* Trend Chart */}
+      <PrincipalTrendChart history={history} />
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className={`${GLASS_CARD} p-4 border-l-4 border-l-emerald-400`}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="text-[10px] text-stone-400 font-bold uppercase">總資產</span>
+          </div>
+          <div className="text-xl font-bold text-stone-800 font-mono">${totalAssets.toLocaleString()}</div>
+          <div className="flex flex-col gap-0.5 mt-2">
+            <span className="text-[9px] text-stone-400 font-mono">銀行 ${totalBank.toLocaleString()}</span>
+            <span className="text-[9px] text-stone-400 font-mono">投資 ${totalInvest.toLocaleString()}</span>
+          </div>
+        </div>
+        <div className={`${GLASS_CARD} p-4 border-l-4 border-l-rose-400`}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
+            <span className="text-[10px] text-stone-400 font-bold uppercase">總負債</span>
+          </div>
+          <div className="text-xl font-bold text-stone-800 font-mono">${totalLiabilities.toLocaleString()}</div>
+          <div className="flex flex-col gap-0.5 mt-2">
+            <span className="text-[9px] text-stone-400 font-mono">負債比 {totalAssets > 0 ? ((totalLiabilities / totalAssets) * 100).toFixed(1) : '0'}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Net Worth Bar */}
+      <div className={`${GLASS_CARD} p-4`}>
+        <div className="flex justify-between items-baseline mb-3">
+          <span className="text-xs text-stone-500 font-bold">資產淨值</span>
+          <span className={`text-lg font-mono font-bold ${netWorth >= 0 ? 'text-stone-800' : 'text-rose-600'}`}>${netWorth.toLocaleString()}</span>
+        </div>
+        <div className="h-2.5 bg-stone-100 rounded-full overflow-hidden flex">
+          <div className="bg-gradient-to-r from-emerald-400 to-emerald-300 h-full rounded-full transition-all duration-500" style={{ width: `${totalAssets + totalLiabilities > 0 ? (totalAssets / (totalAssets + totalLiabilities)) * 100 : 50}%` }} />
+        </div>
+        <div className="flex justify-between mt-1.5">
+          <span className="text-[9px] text-emerald-500 font-bold">{totalAssets + totalLiabilities > 0 ? ((totalAssets / (totalAssets + totalLiabilities)) * 100).toFixed(0) : 50}%</span>
+          <span className="text-[9px] text-rose-400 font-bold">{totalAssets + totalLiabilities > 0 ? ((totalLiabilities / (totalAssets + totalLiabilities)) * 100).toFixed(0) : 50}%</span>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2">
+        {[{ key: 'edit', label: '編輯資產' }, { key: 'history', label: '結算紀錄' }].map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.key ? 'bg-stone-800 text-white shadow-lg shadow-stone-300/30' : 'bg-white/60 text-stone-400 border border-stone-100 hover:bg-stone-50'}`}>{tab.label}</button>
+        ))}
+      </div>
+
+      {activeTab === 'edit' ? (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          {/* Assets Section */}
+          <div>
+            <h3 className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-3 ml-1 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> 資產組成 Assets
+            </h3>
+            <AssetGroup title="銀行帳戶" items={config.assets.bank} section="assets" groupKey="bank" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} accentColor="emerald" />
+            <AssetGroup title="投資項目" items={config.assets.invest} section="assets" groupKey="invest" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} accentColor="emerald" />
+          </div>
+          {/* Liabilities Section */}
+          <div>
+            <h3 className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-3 ml-1 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-400"></div> 負債組成 Liabilities
+            </h3>
+            <AssetGroup title="房價圈存" items={config.liabilities.encumbrance} section="liabilities" groupKey="encumbrance" onUpdate={updateItem} onAdd={addItem} onDelete={deleteItem} accentColor="rose" />
+          </div>
+          {/* Snapshot Action */}
+          <div className={`${GLASS_CARD} p-5`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-xl bg-stone-100 text-stone-500"><Save className="w-5 h-5" /></div>
+              <div>
+                <h3 className="font-bold text-stone-700 text-sm">結算當前資產</h3>
+                <p className="text-[10px] text-stone-400">將目前資產配置儲存為歷史紀錄</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <InputField label="結算日期" type="date" value={snapshotDate} onChange={(e) => setSnapshotDate(e.target.value)} className="flex-1" />
+              <button onClick={handleAddSnapshot} className="px-6 py-3 bg-stone-800 text-white rounded-xl font-bold text-sm hover:bg-stone-700 transition-colors shadow-lg shadow-stone-300/30 self-end">結算</button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3 animate-in fade-in duration-200">
+          {displayedHistory.length === 0 ? (
+            <div className={`${GLASS_CARD} flex flex-col items-center justify-center h-48 text-stone-300 border-dashed`}>
+              <Clock className="w-8 h-8 mb-2 opacity-30" />
+              <p className="text-sm">尚無結算紀錄</p>
+            </div>
+          ) : (
+            <>
+              {displayedHistory.map((rec, idx) => {
+                const prevRec = history[history.indexOf(rec) + 1];
+                const growth = prevRec ? rec.netPrincipal - prevRec.netPrincipal : 0;
+                const growthPct = prevRec && prevRec.netPrincipal !== 0 ? (growth / Math.abs(prevRec.netPrincipal)) * 100 : 0;
+                return (
+                  <div key={rec.id} className={`${GLASS_CARD} p-4 group`}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="flex flex-col items-center mt-1">
+                          <div className={`w-2.5 h-2.5 rounded-full ${idx === 0 ? 'bg-stone-800' : 'bg-stone-300'}`}></div>
+                          {idx < displayedHistory.length - 1 && <div className="w-px h-8 bg-stone-200 mt-1"></div>}
+                        </div>
+                        <div>
+                          <div className="text-xs text-stone-400 font-medium mb-0.5">{new Date(rec.date).toLocaleDateString('zh-TW', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+                          <div className="text-lg font-bold text-stone-800 font-mono">${rec.netPrincipal.toLocaleString()}</div>
+                          {prevRec && growth !== 0 && (
+                            <div className={`flex items-center gap-1 mt-1 text-[10px] font-bold ${growth > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                              {growth > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                              <span>{growth > 0 ? '+' : ''}{growth.toLocaleString()} ({growthPct.toFixed(1)}%)</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button onClick={() => handleDeleteHistory(rec.id)} className="p-1.5 text-stone-200 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  </div>
+                );
+              })}
+              {history.length > 5 && (
+                <button onClick={() => setShowAllHistory(!showAllHistory)} className="w-full py-2.5 text-xs text-stone-400 font-bold hover:text-stone-600 transition-colors">
+                  {showAllHistory ? '收起' : `展開全部 (${history.length} 筆)`}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, onDeleteExchange, onAddExchangeClick, onEditExchange }) => {
   const [activeTab, setActiveTab] = useState('goals');
@@ -2776,6 +3002,8 @@ export default function App() {
   const transactionSubsRef = useRef({});
   const transactionDataPartsRef = useRef({});
   const [extraYears, setExtraYears] = useState([]);
+  const incomeSubsRef = useRef({});
+  const incomeDataPartsRef = useRef({});
 
   // Drawer drag gesture for hamburger menu
   const sidebarRef = useRef(null);
@@ -3100,7 +3328,7 @@ export default function App() {
     };
 
     // createSub('transactions', setTransactions); // Managed separately
-    createSub('incomes', setIncomes, 'incomes');
+    // incomes lazy loaded separately below
     createSub('salary_history', setSalaryHistory, 'salaryHistory');
     createSub('partner_savings', setPartnerTransactions, 'partnerTransactions');
     createSub('mortgage_expenses', setMortgageExpenses, 'mortgageExpenses');
@@ -3115,6 +3343,9 @@ export default function App() {
       Object.values(transactionSubsRef.current).forEach(u => u());
       transactionSubsRef.current = {};
       transactionDataPartsRef.current = {};
+      Object.values(incomeSubsRef.current).forEach(u => u());
+      incomeSubsRef.current = {};
+      incomeDataPartsRef.current = {};
     };
   }, [user]);
 
@@ -3134,7 +3365,8 @@ export default function App() {
       const q = query(
         collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'),
         where('date', '>=', start),
-        where('date', '<=', end)
+        where('date', '<=', end),
+        orderBy('date', 'desc')
       );
 
       transactionSubsRef.current[y] = onSnapshot(q, (snapshot) => {
@@ -3143,26 +3375,62 @@ export default function App() {
           if (transactionDataPartsRef.current) {
             transactionDataPartsRef.current[y] = docs;
 
-            // Merge and Update State
-            const allDocs = Object.values(transactionDataPartsRef.current).flat();
-            // Defensive Sort: Handle potentially numeric, string, or Text dates
-            allDocs.sort((a, b) => {
-              const valA = a.date;
-              const valB = b.date;
-              const strA = (valA && typeof valA === 'object' && valA.toDate) ? valA.toDate().toISOString() : String(valA || '');
-              const strB = (valB && typeof valB === 'object' && valB.toDate) ? valB.toDate().toISOString() : String(valB || '');
-              return strB.localeCompare(strA);
-            });
-            setTransactions(allDocs);
-            // Mark transactions as loaded
+            // K-way merge: each partition pre-sorted desc by Firestore orderBy
+            const parts = Object.entries(transactionDataPartsRef.current)
+              .sort(([a], [b]) => Number(b) - Number(a))
+              .map(([, p]) => p);
+            const indices = parts.map(() => 0);
+            const merged = [];
+            while (true) {
+              let bestIdx = -1;
+              let bestDate = '';
+              for (let i = 0; i < parts.length; i++) {
+                if (indices[i] < parts[i].length) {
+                  const d = String(parts[i][indices[i]].date || '');
+                  if (bestIdx === -1 || d > bestDate) { bestIdx = i; bestDate = d; }
+                }
+              }
+              if (bestIdx === -1) break;
+              merged.push(parts[bestIdx][indices[bestIdx]]);
+              indices[bestIdx]++;
+            }
+            setTransactions(merged);
             setLoadingStates(prev => ({ ...prev, transactions: true }));
           }
         } catch (err) {
-          console.error("SafeSort Crash Prevented:", err);
+          console.error("Merge Error:", err);
         }
       });
     });
   }, [user, selectedDate.getFullYear(), extraYears]);
+
+  // 2b. Incomes Lazy Loader (same pattern as transactions)
+  useEffect(() => {
+    if (!user) return;
+    const year = selectedDate.getFullYear();
+    const currentYear = new Date().getFullYear();
+    const years = Array.from(new Set([year, currentYear]));
+
+    years.forEach(y => {
+      if (incomeSubsRef.current[y]) return;
+      const start = `${y}-01-01`;
+      const end = `${y}-12-31`;
+      const q = query(
+        collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes'),
+        where('date', '>=', start),
+        where('date', '<=', end),
+        orderBy('date', 'desc')
+      );
+      incomeSubsRef.current[y] = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        incomeDataPartsRef.current[y] = docs;
+        const allIncomes = Object.values(incomeDataPartsRef.current).flat();
+        allIncomes.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+        setIncomes(allIncomes);
+        setLoadingStates(prev => ({ ...prev, incomes: true }));
+      });
+    });
+  }, [user, selectedDate.getFullYear()]);
 
   const requestHistory = useCallback((year) => {
     setExtraYears(prev => {
