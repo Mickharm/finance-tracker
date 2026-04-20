@@ -2996,6 +2996,7 @@ export default function App() {
   const [extraYears, setExtraYears] = useState([]);
   const incomeSubsRef = useRef({});
   const incomeDataPartsRef = useRef({});
+  const generalSubsRef = useRef({}); // Track general subscriptions
 
   // Drawer drag gesture for hamburger menu
   const sidebarRef = useRef(null);
@@ -3297,13 +3298,13 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 1. General Data Listeners (Run once per user)
+  // 1. General Data Listeners (Lazy Loader)
   useEffect(() => {
     if (!user) return;
-    const unsubs = [];
     const createSub = (col, setter, loadingKey, order = 'date', dir = 'desc') => {
+      if (generalSubsRef.current[col]) return; // Already subscribed
       const q = query(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col), orderBy(order, dir));
-      unsubs.push(onSnapshot(q, (s) => {
+      generalSubsRef.current[col] = onSnapshot(q, (s) => {
         const rawData = s.docs.map(d => ({ id: d.id, ...d.data() }));
         const seen = new Set();
         const uniqueData = [];
@@ -3314,24 +3315,32 @@ export default function App() {
           }
         });
         setter(uniqueData);
-        // Mark this collection as loaded
         if (loadingKey) setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
-      }, (error) => console.error(`Error fetching ${col}:`, error)));
+      }, (error) => console.error(`Error fetching ${col}:`, error));
     };
 
-    // createSub('transactions', setTransactions); // Managed separately
-    // incomes lazy loaded separately below
-    createSub('salary_history', setSalaryHistory, 'salaryHistory');
-    createSub('partner_savings', setPartnerTransactions, 'partnerTransactions');
-    createSub('mortgage_expenses', setMortgageExpenses, 'mortgageExpenses');
-    createSub('mortgage_funding', setMortgageFunding, 'mortgageFunding');
-    createSub('mortgage_analysis', setMortgageAnalysis, 'mortgageAnalysis', 'createdAt', 'asc');
-    createSub('stock_goals', setStockGoals, 'stockGoals', 'year', 'desc');
-    createSub('usd_exchanges', setUsdExchanges, 'usdExchanges');
+    if (currentView === 'income') {
+      createSub('salary_history', setSalaryHistory, 'salaryHistory');
+    }
+    if (currentView === 'partner') {
+      createSub('partner_savings', setPartnerTransactions, 'partnerTransactions');
+    }
+    if (currentView === 'mortgage') {
+      createSub('mortgage_expenses', setMortgageExpenses, 'mortgageExpenses');
+      createSub('mortgage_funding', setMortgageFunding, 'mortgageFunding');
+      createSub('mortgage_analysis', setMortgageAnalysis, 'mortgageAnalysis', 'createdAt', 'asc');
+    }
+    if (currentView === 'stock_goals') {
+      createSub('stock_goals', setStockGoals, 'stockGoals', 'year', 'desc');
+      createSub('usd_exchanges', setUsdExchanges, 'usdExchanges');
+    }
+  }, [user, currentView]);
 
+  // Clean up on user logout/unmount
+  useEffect(() => {
     return () => {
-      unsubs.forEach(u => u());
-      // Cleanup transactions on user switch/unmount
+      Object.values(generalSubsRef.current).forEach(u => u());
+      generalSubsRef.current = {};
       Object.values(transactionSubsRef.current).forEach(u => u());
       transactionSubsRef.current = {};
       transactionDataPartsRef.current = {};
@@ -3463,7 +3472,7 @@ export default function App() {
     });
 
     return () => unsubSettings();
-  }, [user, selectedDate]);
+  }, [user, selectedDate.getFullYear()]);
 
   // Recurring Check
   useEffect(() => {
@@ -3775,7 +3784,7 @@ export default function App() {
       <LoadingScreen progress={loadingProgress} appPhase={appPhase} />
 
       {/* Main App Content - only show after loading complete */}
-      {appPhase === 'ready' && (
+      {(appPhase === 'fadeOut' || appPhase === 'ready') && (
         <>
           {/* Sidebar Menu */}
           <div ref={drawerContainerRef} className="fixed inset-0 z-50 flex" style={{ pointerEvents: isMenuOpen ? 'auto' : 'none' }}>
