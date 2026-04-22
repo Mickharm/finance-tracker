@@ -265,12 +265,12 @@ const ModalWrapper = ({ title, onClose, children }) => {
 };
 
 const LoadingScreen = ({ progress, isComplete, onDone }) => {
-  const [displayProgress, setDisplayProgress] = useState(0);
+  const [displayProgress, setDisplayProgress] = useState(15);
   const [statusText, setStatusText] = useState('載入資料中...');
   const doneCalledRef = useRef(false);
 
   useEffect(() => {
-    setDisplayProgress(isComplete ? 100 : progress);
+    setDisplayProgress(prev => Math.max(prev, isComplete ? 100 : progress));
   }, [progress, isComplete]);
 
   useEffect(() => {

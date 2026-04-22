@@ -44,9 +44,9 @@
       border-radius: 9999px; overflow: hidden; backdrop-filter: blur(4px);
     }
     #pre-loader .pl-bar-fill {
-      height: 100%; width: 30%; border-radius: 9999px;
+      height: 100%; width: 0%; border-radius: 9999px;
       background: linear-gradient(to right, #a8a29e, #57534e);
-      animation: pl-bar 1.5s ease-in-out infinite;
+      animation: pl-bar-grow 2s ease-out forwards;
     }
     #pre-loader .pl-text {
       font-size: 0.75rem; color: #a8a29e; margin-top: 0.75rem;
@@ -56,10 +56,9 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
-    @keyframes pl-bar {
-      0% { width: 15%; margin-left: 0; }
-      50% { width: 50%; margin-left: 25%; }
-      100% { width: 15%; margin-left: 85%; }
+    @keyframes pl-bar-grow {
+      0% { width: 0%; }
+      100% { width: 15%; }
     }
   </style>
 </head>
