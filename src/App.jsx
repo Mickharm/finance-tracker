@@ -264,51 +264,43 @@ const ModalWrapper = ({ title, onClose, children }) => {
   );
 };
 
-const LoadingScreen = ({ progress, appPhase }) => {
-  const [shouldRender, setShouldRender] = useState(true);
-  const displayProgress = appPhase === 'fadeOut' || appPhase === 'ready' ? 100 : progress;
-  const isFadingOut = appPhase === 'fadeOut' || appPhase === 'ready';
+const LoadingScreen = ({ progress, isComplete, onDone }) => {
+  const [displayProgress, setDisplayProgress] = useState(0);
+  const [statusText, setStatusText] = useState('載入資料中...');
+  const doneCalledRef = useRef(false);
 
-  const handleTransitionEnd = () => {
-    if (isFadingOut) {
-      setShouldRender(false);
+  useEffect(() => {
+    setDisplayProgress(isComplete ? 100 : progress);
+  }, [progress, isComplete]);
+
+  useEffect(() => {
+    if (isComplete && !doneCalledRef.current) {
+      doneCalledRef.current = true;
+      setStatusText('完成');
+      const timer = setTimeout(() => {
+        onDone();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-  };
-
-  if (!shouldRender) return null;
+  }, [isComplete, onDone]);
 
   return (
-    <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F8F5F0] transition-opacity duration-500 ease-out ${isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      onTransitionEnd={handleTransitionEnd}
-    >
-      {/* Background decorations */}
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F8F5F0]">
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#F1FAEE]/40 rounded-full blur-[80px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#FDECEA]/35 rounded-full blur-[80px] pointer-events-none"></div>
       <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-[#FEF9E7]/30 rounded-full blur-[100px] pointer-events-none"></div>
-
-      {/* Content */}
       <div className="relative z-10 flex flex-col items-center">
-        {/* Logo */}
         <div className="w-20 h-20 rounded-2xl bg-white/80 backdrop-blur-xl shadow-lg shadow-stone-200/50 flex items-center justify-center mb-8 animate-pulse">
           <Wallet className="w-10 h-10 text-stone-600" />
         </div>
-
-        {/* Title */}
         <h1 className="text-xl font-bold text-stone-700 mb-6 tracking-tight">記帳助手</h1>
-
-        {/* Progress Bar */}
         <div className="w-48 h-1.5 bg-stone-200/60 rounded-full overflow-hidden backdrop-blur-sm">
           <div
-            className="h-full bg-gradient-to-r from-stone-400 to-stone-600 rounded-full transition-all duration-300 ease-out"
+            className="h-full bg-gradient-to-r from-stone-400 to-stone-600 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${Math.min(displayProgress, 100)}%` }}
           />
         </div>
-
-        {/* Status Text */}
-        <p className="text-xs text-stone-400 mt-3 font-mono">
-          {isFadingOut ? '完成' : '載入資料中...'}
-        </p>
+        <p className="text-xs text-stone-400 mt-3 font-mono">{statusText}</p>
       </div>
     </div>
   );
@@ -3217,34 +3209,26 @@ export default function App() {
     usdExchanges: false,
   });
 
-  // App Phase: 'loading' -> 'fadeOut' -> 'ready'
+  // App Phase: 'loading' -> 'ready' (hard cut, no fade)
   const [appPhase, setAppPhase] = useState('loading');
 
-  // Check if HomeView required data is loaded (settings + transactions)
   const isDataReady = loadingStates.auth && loadingStates.settings && loadingStates.transactions;
 
-  // Calculate loading progress based on actual states
   const loadingProgress = useMemo(() => {
-    const states = Object.values(loadingStates);
-    const loaded = states.filter(Boolean).length;
-    return (loaded / states.length) * 100;
-  }, [loadingStates]);
+    const coreStates = [loadingStates.auth, loadingStates.settings, loadingStates.transactions];
+    const loaded = coreStates.filter(Boolean).length;
+    return (loaded / coreStates.length) * 100;
+  }, [loadingStates.auth, loadingStates.settings, loadingStates.transactions]);
 
-  // Phase transitions
+  // Remove HTML pre-loader on mount
   useEffect(() => {
-    if (appPhase === 'loading' && isDataReady) {
-      // Data ready -> start fade out
-      setAppPhase('fadeOut');
-    }
-  }, [appPhase, isDataReady]);
+    const preLoader = document.getElementById('pre-loader');
+    if (preLoader) preLoader.remove();
+  }, []);
 
-  useEffect(() => {
-    if (appPhase === 'fadeOut') {
-      // Wait for fade out animation to complete, then show main content
-      const timer = setTimeout(() => setAppPhase('ready'), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [appPhase]);
+  const handleLoadingDone = useCallback(() => {
+    setAppPhase('ready');
+  }, []);
 
   // Recurring Manager State
   const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
@@ -3780,11 +3764,13 @@ export default function App() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#FDECEA]/40 rounded-full blur-[80px] pointer-events-none z-0"></div>
       <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-[#FEF9E7]/35 rounded-full blur-[100px] pointer-events-none z-0"></div>
 
-      {/* Loading Screen */}
-      <LoadingScreen progress={loadingProgress} appPhase={appPhase} />
+      {/* Loading Screen - completely covers viewport until done, then unmounts */}
+      {appPhase === 'loading' && (
+        <LoadingScreen progress={loadingProgress} isComplete={isDataReady} onDone={handleLoadingDone} />
+      )}
 
-      {/* Main App Content - only show after loading complete */}
-      {(appPhase === 'fadeOut' || appPhase === 'ready') && (
+      {/* Main App Content - only renders after LoadingScreen unmounts */}
+      {appPhase === 'ready' && (
         <>
           {/* Sidebar Menu */}
           <div ref={drawerContainerRef} className="fixed inset-0 z-50 flex" style={{ pointerEvents: isMenuOpen ? 'auto' : 'none' }}>
