@@ -173,6 +173,30 @@ const getFixedDepositAmount = (year) => {
 };
 
 
+const ToastContext = React.createContext({ showToast: () => {} });
+const useToast = () => React.useContext(ToastContext);
+
+const ToastProvider = ({ children }) => {
+  const [toasts, setToasts] = useState([]);
+  const showToast = useCallback((message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 2500);
+  }, []);
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] flex flex-col gap-2 pointer-events-none w-[90%] max-w-xs">
+        {toasts.map(t => (
+          <div key={t.id} className={`pointer-events-auto px-4 py-3 rounded-2xl shadow-lg backdrop-blur-xl text-sm font-bold animate-in slide-in-from-top-4 fade-in duration-300 ${t.type === 'error' ? 'bg-rose-500/90 text-white' : t.type === 'warning' ? 'bg-amber-500/90 text-white' : 'bg-stone-800/90 text-white'}`}>
+            {t.message}
+          </div>
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+};
+
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確認", confirmText = "確定", confirmColor = "bg-stone-800" }) => {
   if (!isOpen) return null;
   return (
@@ -1305,7 +1329,7 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
         <div className="absolute inset-0 rounded-3xl flex items-center justify-center" style={{ backgroundColor: `rgba(192, 57, 43, ${swipeProgress * 0.15})` }}>
           <div className="flex items-center gap-2" style={{ opacity: swipeProgress }}>
             <X className="w-5 h-5 text-[#C0392B]" />
-            <span className="text-sm font-bold text-[#C0392B]">{swipeProgress >= 1 ? 'Release to Delete' : 'Swipe to Delete'}</span>
+            <span className="text-sm font-bold text-[#C0392B]">{swipeProgress >= 1 ? '放開以刪除' : '左滑刪除'}</span>
           </div>
         </div>
       )}
@@ -1339,15 +1363,15 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
           <div className="text-right">
             <div className="text-xs text-stone-400">年化目標</div>
             <div className="flex items-center justify-end gap-1">
-              <input type="number" value={yearData.roi} onChange={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-stone-800 border-b border-stone-200 focus:border-stone-500 outline-none bg-transparent" />
+              <input type="number" defaultValue={yearData.roi} onBlur={(e) => onUpdate(yearData.id, 'roi', e.target.value)} className="w-12 text-right font-bold text-stone-800 border-b border-stone-200 focus:border-stone-500 outline-none bg-transparent" />
               <span className="text-sm font-bold text-stone-600">%</span>
             </div>
           </div>
         </div>
       <div className="grid grid-cols-2 gap-4 mb-4 pl-3">
-        <div><label className="text-[10px] text-stone-400 uppercase font-bold">Firstrade (美金)</label><input type="number" value={yearData.firstrade} onChange={(e) => onUpdate(yearData.id, 'firstrade', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
-        <div><label className="text-[10px] text-stone-400 uppercase font-bold">IB (美金)</label><input type="number" value={yearData.ib} onChange={(e) => onUpdate(yearData.id, 'ib', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
-        <div className="col-span-2 relative"><label className="text-[10px] text-amber-400 uppercase font-bold">提領/調節 (美金)</label><input type="number" value={yearData.withdrawal} onChange={(e) => onUpdate(yearData.id, 'withdrawal', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-amber-100 focus:border-amber-400 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div><label className="text-[10px] text-stone-400 uppercase font-bold">Firstrade (美金)</label><input type="number" defaultValue={yearData.firstrade} onBlur={(e) => onUpdate(yearData.id, 'firstrade', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div><label className="text-[10px] text-stone-400 uppercase font-bold">IB (美金)</label><input type="number" defaultValue={yearData.ib} onBlur={(e) => onUpdate(yearData.id, 'ib', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div className="col-span-2 relative"><label className="text-[10px] text-amber-400 uppercase font-bold">提領/調節 (美金)</label><input type="number" defaultValue={yearData.withdrawal} onBlur={(e) => onUpdate(yearData.id, 'withdrawal', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-amber-100 focus:border-amber-400 outline-none py-1 bg-transparent" placeholder="0" /></div>
       </div>
       <div className="bg-stone-50/50 rounded-xl p-3 pl-4 flex justify-between items-center">
         <div><div className="text-[10px] text-stone-400 mb-0.5 font-bold uppercase">目標金額</div><div className="font-bold text-stone-500 text-sm font-mono">${Math.round(targetAmount).toLocaleString()}</div></div>
@@ -1642,7 +1666,7 @@ const PersonCard = ({ name, owner, incomes, total, history, icon: Icon, onAddSal
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-sm font-mono font-bold ${theme.text}`}>+${Number(inc.amount).toLocaleString()}</span>
-                    <button onClick={(e) => { e.stopPropagation(); onDeleteIncome(inc.id); }} className="text-stone-300 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); onDeleteIncome(inc.id); }} className="text-stone-300 hover:text-rose-400 p-1 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -1665,6 +1689,8 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
   const totalAnnualUsed = yearlyTotalStats ? yearlyTotalStats.totalUsed : (monthlyStats.totalUsed + annualStats.totalUsed);
   const totalRemaining = totalAnnualBudget - totalAnnualUsed;
   const isOverBudget = totalRemaining < 0;
+  const currentMonth = new Date().getMonth() + 1;
+  const monthlyAvgSpending = currentMonth > 0 ? Math.round(totalAnnualUsed / currentMonth) : 0;
 
   return (
     <div className="space-y-8 pb-24 animate-in fade-in duration-500">
@@ -1687,6 +1713,10 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
             <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-[#E57373]' : 'text-[#52B788]'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
             <div className={`text-base sm:text-lg font-bold font-mono truncate ${isOverBudget ? 'text-[#C0392B]' : 'text-[#2D6A4F]'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
           </div>
+        </div>
+        <div className="bg-stone-50/50 rounded-xl p-3 mt-3 flex justify-between items-center">
+          <span className="text-[10px] text-stone-400 font-bold uppercase">月均支出 ({currentMonth}月)</span>
+          <span className="text-sm font-bold text-stone-700 font-mono">${monthlyAvgSpending.toLocaleString()}</span>
         </div>
       </div>
 
@@ -2075,7 +2105,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
       )}
 
       {/* Add expense FAB - Fixed position */}
-      {onAddExpense && <button onClick={onAddExpense} className="fixed bottom-6 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-50"><Plus className="w-6 h-6" /></button>}
+      {onAddExpense && <button onClick={() => onAddExpense(selectedDateStr || toLocalISOString(viewDate))} className="fixed bottom-6 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-50"><Plus className="w-6 h-6" /></button>}
     </div>
   );
 };
@@ -2599,7 +2629,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
                           )}
                         </div>
                       </div>
-                      <button onClick={() => handleDeleteHistory(rec.id)} className="p-1.5 text-stone-200 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all"><X className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => handleDeleteHistory(rec.id)} className="p-1.5 text-stone-300 hover:text-rose-400 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-all"><X className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
                 );
@@ -2696,13 +2726,33 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
   const [localGroups, setLocalGroups] = useState(groups);
   const [newGroupName, setNewGroupName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [editingSelection, setEditingSelection] = useState(null); // { gIdx, iIdx }
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [editingSelection, setEditingSelection] = useState(null);
+  const saveTimerRef = useRef(null);
 
   useEffect(() => setLocalGroups(groups), [groups]);
 
-  const handleSaveWrapper = async () => { setIsSaving(true); await onSave(localGroups); setTimeout(() => setIsSaving(false), 1000); };
-  const addGroup = () => { if (newGroupName) setLocalGroups([...localGroups, { name: newGroupName, items: [] }]); setNewGroupName(''); };
-  const deleteGroup = (i) => setLocalGroups(localGroups.filter((_, idx) => idx !== i));
+  // Auto-save with debounce when localGroups changes (after user edits)
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      setIsSaving(true);
+      await onSave(localGroups);
+      setHasUnsavedChanges(false);
+      setTimeout(() => setIsSaving(false), 800);
+    }, 1500);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [localGroups, hasUnsavedChanges]);
+
+  const updateLocalGroups = (newGroups) => {
+    setLocalGroups(newGroups);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSaveWrapper = async () => { setIsSaving(true); await onSave(localGroups); setHasUnsavedChanges(false); setTimeout(() => setIsSaving(false), 1000); };
+  const addGroup = () => { if (newGroupName) { updateLocalGroups([...localGroups, { name: newGroupName, items: [] }]); } setNewGroupName(''); };
+  const deleteGroup = (i) => updateLocalGroups(localGroups.filter((_, idx) => idx !== i));
 
   const handleItemSubmit = (gIdx) => {
     const nameInput = document.getElementById(`${idPrefix}-n-${gIdx}`);
@@ -2716,13 +2766,13 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
       // Update existing
       const g = [...localGroups];
       g[gIdx].items[editingSelection.iIdx] = { name, budget };
-      setLocalGroups(g);
+      updateLocalGroups(g);
       setEditingSelection(null);
     } else {
       // Add new
       const g = [...localGroups];
       g[gIdx].items.push({ name, budget });
-      setLocalGroups(g);
+      updateLocalGroups(g);
     }
     nameInput.value = '';
     budgetInput.value = '';
@@ -2743,7 +2793,7 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
   const delItem = (gi, ii) => {
     const g = [...localGroups];
     g[gi].items = g[gi].items.filter((_, i) => i !== ii);
-    setLocalGroups(g);
+    updateLocalGroups(g);
     if (editingSelection && editingSelection.gIdx === gi && editingSelection.iIdx === ii) {
       setEditingSelection(null);
       document.getElementById(`${idPrefix}-n-${gi}`).value = '';
@@ -2755,7 +2805,7 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
     <div className="mb-10 animate-in fade-in">
       <div className="flex justify-between items-end mb-4 border-b border-stone-100 pb-2">
         <h3 className="text-lg font-bold text-stone-700">{title}</h3>
-        <button onClick={handleSaveWrapper} className={`text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 font-bold ${isSaving ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-800 text-white hover:bg-stone-700'}`}>{isSaving ? <><Check className="w-3 h-3" /> 已儲存</> : '儲存變更'}</button>
+        <button onClick={handleSaveWrapper} className={`text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 font-bold ${isSaving ? 'bg-emerald-50 text-emerald-600' : hasUnsavedChanges ? 'bg-amber-500 text-white hover:bg-amber-600 animate-pulse' : 'bg-stone-800 text-white hover:bg-stone-700'}`}>{isSaving ? <><Check className="w-3 h-3" /> 已儲存</> : hasUnsavedChanges ? '儲存變更' : <><Check className="w-3 h-3" /> 已儲存</>}</button>
       </div>
       <div className="space-y-4">
         {localGroups.map((group, gIdx) => (
@@ -2976,7 +3026,9 @@ const RecurringConfirmModal = ({ isOpen, onClose, items, onConfirm, onSkip }) =>
 };
 
 
-export default function App() {
+
+function AppContent() {
+  const { showToast } = useToast();
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -3512,7 +3564,7 @@ export default function App() {
       await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true });
 
       setIsRecurringConfirmOpen(false);
-      alert('已完成批量入帳');
+      showToast('已完成批量入帳');
     });
   };
 
@@ -3601,7 +3653,7 @@ export default function App() {
   const withSubmission = async (action) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    try { await action(); } catch (e) { console.error(e); alert('發生錯誤: ' + e.message); } finally { setIsSubmitting(false); }
+    try { await action(); } catch (e) { console.error(e); showToast('發生錯誤: ' + e.message, 'error'); } finally { setIsSubmitting(false); }
   };
 
   const requestConfirmation = ({ message, title = '確認', confirmText = '確定', confirmColor = 'bg-stone-800', onConfirm }) => {
@@ -3913,7 +3965,7 @@ export default function App() {
                 onEdit={(item) => {
 
                   if (!item.id) {
-                    alert('錯誤：此交易沒有有效ID，無法編輯。請重新整理頁面後再試。');
+                    showToast('錯誤：此交易沒有有效ID，無法編輯', 'error');
                     return;
                   }
                   setNewTrans({ ...item, amount: item.amount });
@@ -3921,7 +3973,10 @@ export default function App() {
 
                   setIsAddTxModalOpen(true);
                 }}
-                onAddExpense={() => setIsAddTxModalOpen(true)}
+                onAddExpense={(dateStr) => {
+                  if (dateStr) setNewTrans(prev => ({ ...prev, date: dateStr }));
+                  setIsAddTxModalOpen(true);
+                }}
                 onRequestHistory={requestHistory}
               />
             )}
@@ -3956,7 +4011,7 @@ export default function App() {
           {/* --- Modals --- */}
           {
             isAddTxModalOpen && (
-              <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
+              <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
                 {/* 檢查是否有設定預算群組，若無則提示 */}
                 {((settings.monthlyGroups || []).length === 0 && (settings.annualGroups || []).length === 0) ? (
                   <div className="text-center py-10">
@@ -4137,7 +4192,7 @@ export default function App() {
           {/* Other Modals... (Same structure) */}
           {
             isAddMortgageExpModalOpen && (
-              <ModalWrapper title={mortgageExpType === 'down_payment' ? '新增頭期雜支' : '新增雜支紀錄'} onClose={() => setIsAddMortgageExpModalOpen(false)}>
+              <ModalWrapper title={mortgageExpType === 'down_payment' ? '新增頭期雜支' : '新增雜支紀錄'} onClose={() => { setIsAddMortgageExpModalOpen(false); setEditingId(null); }}>
                 <form onSubmit={handleAddMortgageExp} className="space-y-4">
                   <InputField label="項目名稱" value={newMortgageExp.name} onChange={e => setNewMortgageExp({ ...newMortgageExp, name: e.target.value })} autoFocus required />
                   <InputField label="金額" type="number" value={newMortgageExp.amount} onChange={e => setNewMortgageExp({ ...newMortgageExp, amount: e.target.value })} required />
@@ -4152,7 +4207,7 @@ export default function App() {
 
           {
             isAddMortgageFundingModalOpen && (
-              <ModalWrapper title="新增頭期款來源" onClose={() => setIsAddMortgageFundingModalOpen(false)}>
+              <ModalWrapper title="新增頭期款來源" onClose={() => { setIsAddMortgageFundingModalOpen(false); setEditingId(null); }}>
                 <form onSubmit={handleAddMortgageFunding} className="space-y-4">
                   <InputField label="資金來源" value={newMortgageFunding.source} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, source: e.target.value })} placeholder=" " autoFocus required />
                   <InputField label="股票代碼 (選填)" value={newMortgageFunding.symbol} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, symbol: e.target.value })} placeholder=" " />
@@ -4171,7 +4226,7 @@ export default function App() {
 
           {
             isAddMortgageAnalysisModalOpen && (
-              <ModalWrapper title="新增划算試算項目" onClose={() => setIsAddMortgageAnalysisModalOpen(false)}>
+              <ModalWrapper title="新增划算試算項目" onClose={() => { setIsAddMortgageAnalysisModalOpen(false); setEditingId(null); }}>
                 <form onSubmit={handleAddMortgageAnalysis} className="space-y-4">
                   <InputField label="項目名稱" value={newMortgageAnalysis.name} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, name: e.target.value })} autoFocus required />
                   <InputField label="金額" type="number" value={newMortgageAnalysis.amount} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, amount: e.target.value })} required />
@@ -4259,7 +4314,7 @@ export default function App() {
                 await confirmModal.onConfirm();
               } catch (e) {
                 console.error("Action Failed:", e);
-                alert("操作失敗: " + e.message);
+                showToast("操作失敗: " + e.message, 'error');
               } finally {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
               }
@@ -4288,5 +4343,13 @@ export default function App() {
       )
       }
     </div >
+  );
+}
+
+export default function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }
