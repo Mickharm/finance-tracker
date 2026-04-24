@@ -1,0 +1,25 @@
+{
+  "name": "記帳助手",
+  "short_name": "記帳助手",
+  "description": "個人財務記帳與資產管理",
+  "start_url": "/finance-tracker/",
+  "scope": "/finance-tracker/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8F5F0",
+  "theme_color": "#F8F5F0",
+  "icons": [
+    {
+      "src": "/finance-tracker/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/finance-tracker/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -173,6 +173,11 @@ const getFixedDepositAmount = (year) => {
 };
 
 
+// Haptic feedback — iOS 16.4+ PWA standalone 支援 Web Vibration API
+const haptic = (pattern = 10) => {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(pattern);
+};
+
 const ToastContext = React.createContext({ showToast: () => {} });
 const useToast = () => React.useContext(ToastContext);
 
@@ -186,9 +191,12 @@ const ToastProvider = ({ children }) => {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] flex flex-col gap-2 pointer-events-none w-[90%] max-w-xs">
+      <div
+        className="fixed left-1/2 -translate-x-1/2 z-[70] flex flex-col-reverse gap-2 pointer-events-none w-[90%] max-w-xs"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}
+      >
         {toasts.map(t => (
-          <div key={t.id} className={`pointer-events-auto px-4 py-3 rounded-2xl shadow-lg backdrop-blur-xl text-sm font-bold animate-in slide-in-from-top-4 fade-in duration-300 ${t.type === 'error' ? 'bg-rose-500/90 text-white' : t.type === 'warning' ? 'bg-amber-500/90 text-white' : 'bg-stone-800/90 text-white'}`}>
+          <div key={t.id} className={`pointer-events-auto px-4 py-3 rounded-2xl shadow-lg backdrop-blur-xl text-sm font-bold animate-in slide-in-from-bottom-4 fade-in duration-300 ${t.type === 'error' ? 'bg-rose-500/90 text-white' : t.type === 'warning' ? 'bg-amber-500/90 text-white' : 'bg-stone-800/90 text-white'}`}>
             {t.message}
           </div>
         ))}
@@ -340,7 +348,22 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, requir
     <div className={`space-y-1.5 w-full ${className}`}>
       {label && <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">{label}</label>}
       <div className="relative w-full min-w-0">
-        <input type={type} value={value} onChange={onChange} placeholder={placeholder} required={required} autoFocus={autoFocus} onFocus={handleFocus} className={GLASS_INPUT} {...props} />
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required={required}
+          autoFocus={autoFocus}
+          onFocus={handleFocus}
+          className={GLASS_INPUT}
+          inputMode={type === 'number' ? 'decimal' : undefined}
+          autoComplete={type === 'number' ? 'off' : undefined}
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          {...props}
+        />
         {children}
       </div>
     </div>
@@ -3206,33 +3229,46 @@ function AppContent() {
 
   const [currentView, setCurrentView] = useState('home');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
+  const [transitionClass, setTransitionClass] = useState('page-enter-fade');
 
+  const TAB_ITEMS = [
+    { id: 'home',          label: '總覽', icon: Home },
+    { id: 'calendar',      label: '日曆', icon: Calendar },
+    { id: 'income',        label: '收入', icon: DollarSign },
+    { id: 'visualization', label: '分析', icon: BarChart2 },
+    { id: 'more',          label: '更多', icon: Menu },
+  ];
+  const MORE_ITEMS = [
+    { id: 'watchlist',   label: '定投名單', icon: Layers },
+    { id: 'stock_goals', label: '存股計畫', icon: Target },
+    { id: 'partner',     label: '佳欣儲蓄', icon: Users },
+    { id: 'principal',   label: '資產淨值', icon: PieChart },
+    { id: 'mortgage',    label: '房產投資', icon: Building2 },
+    { id: 'settings',    label: '預算設定', icon: SettingsIcon },
+  ];
+  const TAB_ORDER = ['home', 'calendar', 'income', 'visualization'];
 
   const handleViewChange = (viewId) => {
+    if (viewId === 'more') { haptic(10); setIsMoreSheetOpen(true); return; }
+    const prevIdx = TAB_ORDER.indexOf(currentView);
+    const nextIdx = TAB_ORDER.indexOf(viewId);
+    setTransitionClass(
+      prevIdx !== -1 && nextIdx !== -1
+        ? (nextIdx > prevIdx ? 'page-enter-right' : 'page-enter-left')
+        : 'page-enter-fade'
+    );
+    haptic(10);
     setCurrentView(viewId);
     setIsMenuOpen(false);
+    setIsMoreSheetOpen(false);
   };
 
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTo(0, 0);
   }, [currentView]);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const lastSeen = localStorage.getItem('lastSeen');
-        const now = Date.now();
-        if (lastSeen && (now - Number(lastSeen) > 900000)) {
-          window.location.reload();
-        }
-        localStorage.setItem('lastSeen', now);
-      } else {
-        localStorage.setItem('lastSeen', Date.now());
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  // 移除強制 reload：Firestore onSnapshot 會自動 re-sync；reload 會摧毀 UI state
 
   const [transactions, setTransactions] = useState([]);
   const [incomes, setIncomes] = useState([]);
@@ -3824,56 +3860,56 @@ function AppContent() {
       {/* Main App Content - only renders after LoadingScreen unmounts */}
       {appPhase === 'ready' && (
         <>
-          {/* Sidebar Menu */}
-          <div ref={drawerContainerRef} className="fixed inset-0 z-50 flex" style={{ pointerEvents: isMenuOpen ? 'auto' : 'none' }}>
-            <div ref={sidebarRef} className="w-64 bg-white/95 backdrop-blur-xl h-full shadow-2xl p-6 relative border-r border-stone-100 will-change-transform" style={{ transform: isMenuOpen ? 'translateX(0)' : 'translateX(-256px)', transition: 'transform 0.3s ease-out' }}>
-              <button onClick={() => setIsMenuOpen(false)} className="absolute top-4 right-4 p-2 bg-stone-100 rounded-full text-stone-400 hover:bg-stone-200"><X className="w-4 h-4" /></button>
-              <div className="mb-8 mt-2 px-2"><h1 className="text-xl font-bold text-stone-700 flex items-center gap-2"><img src={icon} className="w-8 h-8 rounded-lg shadow-md" alt="Logo" /> 記帳助手</h1><p className="text-xs text-stone-400 mt-1 pl-1">v1.0.0(Mick)</p></div>
-              <div className="space-y-6">
-                {MENU_SECTIONS.map(section => (
-                  <div key={section.title}>
-                    <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 px-2">{section.title}</h3>
-                    <div className="space-y-1">
-                      {section.items.map(item => (
-                        <button key={item.id} onClick={() => handleViewChange(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all ${currentView === item.id ? 'bg-stone-800 text-white shadow-lg shadow-stone-300/50' : 'text-stone-500 hover:bg-stone-100'}`}>
-                          <item.icon className={`w-4 h-4 ${currentView === item.id ? 'text-indigo-300' : ''}`} />
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+          {/* ── 「更多」底部抽屜 */}
+          {isMoreSheetOpen && (
+            <div
+              className="fixed inset-0 z-50 flex items-end justify-center"
+              style={{ maxWidth: '28rem', left: '50%', transform: 'translateX(-50%)' }}
+            >
+              <div className="absolute inset-0 bg-stone-900/30 backdrop-blur-sm" onClick={() => setIsMoreSheetOpen(false)} />
+              <div className="relative w-full bg-white/95 backdrop-blur-xl rounded-t-[2rem] shadow-2xl animate-in slide-in-from-bottom duration-300">
+                <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-stone-300" /></div>
+                <div className="px-5 pt-2 pb-1"><h2 className="text-sm font-bold text-stone-400 uppercase tracking-wider">更多功能</h2></div>
+                <div className="grid grid-cols-3 gap-3 p-4">
+                  {MORE_ITEMS.map(item => (
+                    <button key={item.id} onClick={() => handleViewChange(item.id)}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all active:scale-95 ${currentView === item.id ? 'bg-stone-800 text-white shadow-lg' : 'bg-stone-50 text-stone-600 hover:bg-stone-100'}`}>
+                      <item.icon className={`w-5 h-5 ${currentView === item.id ? 'text-indigo-300' : 'text-stone-500'}`} />
+                      <span className="text-xs font-bold">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="tab-bar-safe" />
               </div>
             </div>
-            <div ref={backdropRef} className="flex-1 bg-stone-900/20 backdrop-blur-sm will-change-[opacity]" style={{ opacity: isMenuOpen ? 1 : 0, transition: 'opacity 0.3s ease-out' }} onClick={() => setIsMenuOpen(false)}></div>
-          </div >
+          )}
 
-          <header className="bg-white/60 backdrop-blur-md px-4 py-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20 animate-in fade-in duration-300">
-            <div onClick={() => setIsMenuOpen(true)} className="p-2 glass-button rounded-xl cursor-pointer hover:bg-white/20 transition-all active:scale-95 z-20">
-              <Menu className="w-5 h-5 text-stone-600" />
+          {/* ── Header */}
+          <header className="bg-white/60 backdrop-blur-md px-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20 animate-in fade-in duration-300 header-safe safe-x" style={{ paddingBottom: '0.75rem' }}>
+            <div className="flex items-center gap-2 shrink-0">
+              <img src={icon} className="w-7 h-7 rounded-lg shadow-sm" alt="Logo" />
             </div>
-            <div className="flex-1 flex justify-center z-10">
-              <h1 className="text-base font-bold text-stone-700 tracking-wide flex items-center gap-2">
-                {MENU_SECTIONS.flatMap(s => s.items).find(i => i.id === currentView)?.icon && React.createElement(MENU_SECTIONS.flatMap(s => s.items).find(i => i.id === currentView).icon, { className: "w-4 h-4 text-stone-500" })}
-                {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label}
+            <div className="flex-1 flex justify-center">
+              <h1 className="text-base font-bold text-stone-700 tracking-wide flex items-center gap-1.5">
+                {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.icon &&
+                  React.createElement(MENU_ITEMS_FLAT.find(i => i.id === currentView).icon, { className: "w-4 h-4 text-stone-400" })}
+                {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label ||
+                  MORE_ITEMS.find(i => i.id === currentView)?.label}
               </h1>
             </div>
-            <div className="w-auto min-w-[36px] flex justify-end z-20">
-              {(currentView === 'home' || currentView === 'income' || currentView === 'settings') ? (
+            <div className="w-auto min-w-[36px] flex justify-end shrink-0">
+              {(currentView === 'home' || currentView === 'income' || currentView === 'settings') && (
                 <div className="flex items-center bg-white/40 backdrop-blur-md rounded-full px-1 py-0.5 border border-white/20 shadow-sm">
-                  <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-white/50 rounded-full transition-colors"><ChevronLeft className="w-3 h-3 text-stone-600" /></button>
+                  <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-white/50 rounded-full transition-colors active:scale-95"><ChevronLeft className="w-3 h-3 text-stone-600" /></button>
                   <span className="text-xs font-bold text-stone-700 mx-1 font-mono whitespace-nowrap">{currentView === 'home' ? `${selectedDate.getMonth() + 1} 月` : `${selectedDate.getFullYear()} 年`}</span>
-                  {/* Note: Settings usually annual? If monthly, show month? Settings is 'Annual Configuration' mostly? Assumed Year. Home is Month? */}
-                  {/* Original logic: if income -> Year, else -> Month. Home shows Month. Settings should probably be Year? */}
-                  {/* But settings has config_2025. So Year makes sense. */}
-                  {/* Correct Logic: if (income OR settings) -> Year Navigator. if (home) -> Month Navigator. */}
-                  <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-white/50 rounded-full transition-colors"><ChevronRight className="w-3 h-3 text-stone-600" /></button>
+                  <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-white/50 rounded-full transition-colors active:scale-95"><ChevronRight className="w-3 h-3 text-stone-600" /></button>
                 </div>
-              ) : null}
+              )}
             </div>
           </header>
 
-          <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10">
+          <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}>
+            <div key={currentView} className={transitionClass}>
             {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} yearlyTotalStats={yearlyTotalStats} />}
             {/* 新增: Investment Tab View (持股檢視 + 占比計算) */}
             {currentView === 'watchlist' && <InvestmentTabView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
@@ -4002,9 +4038,48 @@ function AppContent() {
                 <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度預算配置`} groups={settings.annualGroups || []} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
               </div>
             )}
+            </div>{/* /page-transition-wrapper */}
           </main>
 
-          {currentView === 'home' && (<button onClick={() => setIsAddTxModalOpen(true)} className="absolute bottom-8 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-30"><Plus className="w-6 h-6" /></button>)}
+          {/* ── Context-aware FAB */}
+          {(currentView === 'home' || currentView === 'calendar' || currentView === 'income' || currentView === 'partner') && (
+            <button
+              onClick={() => {
+                haptic([20, 40, 20]);
+                if (currentView === 'income') {
+                  setNewIncome(prev => ({ ...prev, amount: '', category: '薪水', note: '', date: getTodayString() }));
+                  setIsAddIncomeModalOpen(true);
+                } else if (currentView === 'partner') {
+                  setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
+                  setIsAddPartnerTxModalOpen(true);
+                } else {
+                  setIsAddTxModalOpen(true);
+                }
+              }}
+              className="fixed right-5 bg-stone-800 text-white rounded-full shadow-2xl shadow-stone-400/40 flex items-center justify-center hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-30"
+              style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.75rem)', width: '3.25rem', height: '3.25rem' }}
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* ── Bottom Tab Bar */}
+          <nav className="tab-bar tab-bar-safe safe-x">
+            <div className="flex items-center justify-around px-2 pt-2">
+              {TAB_ITEMS.map(tab => {
+                const isActive = tab.id === 'more' ? MORE_ITEMS.some(m => m.id === currentView) : currentView === tab.id;
+                return (
+                  <button key={tab.id} onClick={() => handleViewChange(tab.id)}
+                    className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all active:scale-90 min-w-[3.5rem] ${isActive ? 'text-stone-800' : 'text-stone-400'}`}>
+                    <div className={`p-1.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-stone-100' : ''}`}>
+                      <tab.icon className={`w-5 h-5 transition-all duration-200 ${isActive ? 'text-stone-800' : 'text-stone-400'}`} />
+                    </div>
+                    <span className={`text-[10px] font-bold tracking-tight transition-all duration-200 ${isActive ? 'text-stone-800' : 'text-stone-400'}`}>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
 
 
 
