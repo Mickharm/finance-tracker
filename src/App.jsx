@@ -229,18 +229,20 @@ const ModalWrapper = ({ title, onClose, children }) => {
     const modal = modalRef.current;
     if (!modal) return;
 
-    // 1. On focus: scroll input into view inside the modal's own scroll area
+    // Single source of truth: scroll focused input into view inside modal
+    // Delay ensures keyboard has finished animating before we reposition
     const handleFocusIn = (e) => {
       const el = e.target;
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
         setTimeout(() => {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 150);
+        }, 300);
       }
     };
     modal.addEventListener('focusin', handleFocusIn);
 
-    // 2. Visual Viewport resize: resize modal to fit above keyboard
+    // Visual Viewport resize: push modal up so it sits above the software keyboard.
+    // Only adjust marginBottom — do NOT touch maxHeight to avoid layout thrash / jitter.
     const vv = window.visualViewport;
     let rafId = null;
     const handleResize = () => {
@@ -249,29 +251,15 @@ const ModalWrapper = ({ title, onClose, children }) => {
       rafId = requestAnimationFrame(() => {
         if (!modal) return;
         const keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
-        if (keyboardHeight > 50) {
-          // Cap the modal height to visual viewport, leaving some breathing room
-          modal.style.maxHeight = `${vv.height * 0.85}px`;
-          // Push the modal up via bottom margin
-          modal.style.marginBottom = `${keyboardHeight}px`;
-        } else {
-          modal.style.maxHeight = '';
-          modal.style.marginBottom = '';
-        }
+        modal.style.marginBottom = keyboardHeight > 50 ? `${keyboardHeight}px` : '';
       });
     };
 
-    if (vv) {
-      vv.addEventListener('resize', handleResize);
-      vv.addEventListener('scroll', handleResize);
-    }
+    if (vv) vv.addEventListener('resize', handleResize);
 
     return () => {
       modal.removeEventListener('focusin', handleFocusIn);
-      if (vv) {
-        vv.removeEventListener('resize', handleResize);
-        vv.removeEventListener('scroll', handleResize);
-      }
+      if (vv) vv.removeEventListener('resize', handleResize);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
@@ -282,7 +270,7 @@ const ModalWrapper = ({ title, onClose, children }) => {
       <div
         ref={modalRef}
         className="relative w-full max-h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-10 animate-in slide-in-from-bottom duration-300 overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl"
-        style={{ transition: 'max-height 0.25s ease-out, margin-bottom 0.25s ease-out' }}
+        style={{ transition: 'margin-bottom 0.2s ease-out' }}
       >
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-stone-800 tracking-tight pl-2">{title}</h3>
@@ -339,11 +327,8 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
 };
 
 const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, autoFocus = false, children, className = "", ...props }) => {
-  const handleFocus = (e) => {
-    setTimeout(() => {
-      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 350);
-  };
+  // scrollIntoView is handled centrally by ModalWrapper's focusin listener.
+  // Removed per-field handler to prevent double-fire jitter.
   return (
     <div className={`space-y-1.5 w-full ${className}`}>
       {label && <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">{label}</label>}
@@ -355,7 +340,6 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, requir
           placeholder={placeholder}
           required={required}
           autoFocus={autoFocus}
-          onFocus={handleFocus}
           className={GLASS_INPUT}
           inputMode={type === 'number' ? 'decimal' : undefined}
           autoComplete={type === 'number' ? 'off' : undefined}
@@ -3880,12 +3864,12 @@ function AppContent() {
             </div>
           )}
 
-          {/* ── Header */}
-          <header className="bg-white/60 backdrop-blur-md px-4 flex items-center justify-between sticky top-0 z-20 border-b border-white/20 animate-in fade-in duration-300 header-safe safe-x" style={{ paddingBottom: '0.75rem' }}>
+          {/* ── Header (fixed positioning avoids sticky-in-flex glitch) */}
+          <header className="bg-white/70 backdrop-blur-xl px-6 flex items-center justify-between fixed top-0 left-0 right-0 z-20 border-b border-white/30 animate-in fade-in duration-300 header-safe max-w-md mx-auto" style={{ paddingBottom: '0.75rem' }}>
             <div className="flex items-center gap-2 shrink-0">
               <img src={icon} className="w-7 h-7 rounded-lg shadow-sm" alt="Logo" />
             </div>
-            <div className="flex-1 flex justify-center min-w-0 px-2">
+            <div className="flex-1 flex justify-center min-w-0 px-3">
               <h1 className="text-base font-bold text-stone-700 tracking-wide flex items-center gap-1.5 truncate">
                 {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.icon &&
                   React.createElement(MENU_ITEMS_FLAT.find(i => i.id === currentView).icon, { className: "w-4 h-4 text-stone-400" })}
@@ -3903,6 +3887,9 @@ function AppContent() {
               )}
             </div>
           </header>
+
+          {/* Spacer to compensate for fixed header height (header-safe + ~3.5rem content) */}
+          <div className="shrink-0 header-safe" style={{ paddingBottom: '3.5rem' }} />
 
           <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}>
             <div key={currentView} className={transitionClass}>
