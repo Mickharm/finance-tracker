@@ -2,4 +2,71 @@
 
 /* ─── Viewport / Safe-area ────────────────────────────────────────────── */
 html, body {
-  /* 100dvh = Dynamic
+  /* 100dvh = Dynamic Viewport Height，跟隨 iOS Safari URL bar 收合 */
+  min-height: 100dvh;
+  /* fallback for older browsers */
+  min-height: -webkit-fill-available;
+  overscroll-behavior: none; /* 停用整頁 pull-to-refresh，避免 standalone 模式誤觸 */
+}
+
+/* Safe-area utility classes（搭配 viewport-fit=cover） */
+@supports (padding: max(0px)) {
+  .safe-top    { padding-top:    max(0px, env(safe-area-inset-top)); }
+  .safe-bottom { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+  .safe-x      {
+    padding-left:  env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  /* Header 頂部安全區（Dynamic Island / 瀏海） */
+  .header-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  /* Tab Bar 底部安全區（Home Indicator） */
+  .tab-bar-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Page Transitions ────────────────────────────────────────────────── */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter-right {
+  animation: slideInRight 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+.page-enter-left {
+  animation: slideInLeft 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+.page-enter-fade {
+  animation: fadeSlideIn 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* ─── Tab Bar ─────────────────────────────────────────────────────────── */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 28rem; /* max-w-md */
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+}
