@@ -2127,8 +2127,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
         </div>
       )}
 
-      {/* Add expense FAB - Fixed position */}
-      {onAddExpense && <button onClick={() => onAddExpense(selectedDateStr || toLocalISOString(viewDate))} className="fixed bottom-6 right-6 w-14 h-14 bg-stone-800 rounded-full shadow-2xl shadow-stone-400/50 flex items-center justify-center text-white hover:bg-stone-900 hover:scale-105 transition-all active:scale-95 z-50"><Plus className="w-6 h-6" /></button>}
+      {/* 移除原本的 FAB，改用全域的 Context-aware FAB */}
     </div>
   );
 };
@@ -3235,11 +3234,11 @@ function AppContent() {
   const TAB_ITEMS = [
     { id: 'home',          label: '總覽', icon: Home },
     { id: 'calendar',      label: '日曆', icon: Calendar },
-    { id: 'income',        label: '收入', icon: DollarSign },
     { id: 'visualization', label: '分析', icon: BarChart2 },
     { id: 'more',          label: '更多', icon: Menu },
   ];
   const MORE_ITEMS = [
+    { id: 'income',      label: '收入管理', icon: DollarSign },
     { id: 'watchlist',   label: '定投名單', icon: Layers },
     { id: 'stock_goals', label: '存股計畫', icon: Target },
     { id: 'partner',     label: '佳欣儲蓄', icon: Users },
@@ -3247,7 +3246,7 @@ function AppContent() {
     { id: 'mortgage',    label: '房產投資', icon: Building2 },
     { id: 'settings',    label: '預算設定', icon: SettingsIcon },
   ];
-  const TAB_ORDER = ['home', 'calendar', 'income', 'visualization'];
+  const TAB_ORDER = ['home', 'calendar', 'visualization'];
 
   const handleViewChange = (viewId) => {
     if (viewId === 'more') { haptic(10); setIsMoreSheetOpen(true); return; }
@@ -3862,24 +3861,21 @@ function AppContent() {
         <>
           {/* ── 「更多」底部抽屜 */}
           {isMoreSheetOpen && (
-            <div
-              className="fixed inset-0 z-50 flex items-end justify-center"
-              style={{ maxWidth: '28rem', left: '50%', transform: 'translateX(-50%)' }}
-            >
-              <div className="absolute inset-0 bg-stone-900/30 backdrop-blur-sm" onClick={() => setIsMoreSheetOpen(false)} />
-              <div className="relative w-full bg-white/95 backdrop-blur-xl rounded-t-[2rem] shadow-2xl animate-in slide-in-from-bottom duration-300">
-                <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-stone-300" /></div>
-                <div className="px-5 pt-2 pb-1"><h2 className="text-sm font-bold text-stone-400 uppercase tracking-wider">更多功能</h2></div>
-                <div className="grid grid-cols-3 gap-3 p-4">
+            <div className="fixed inset-0 z-[60] flex items-end justify-center">
+              <div className="absolute inset-0 bg-stone-900/30 backdrop-blur-sm transition-opacity" onClick={() => setIsMoreSheetOpen(false)} />
+              <div className="relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-t-[2.5rem] shadow-2xl animate-in slide-in-from-bottom duration-300 border-t border-stone-200">
+                <div className="flex justify-center pt-4 pb-2"><div className="w-12 h-1.5 rounded-full bg-stone-300" /></div>
+                <div className="px-6 pt-2 pb-3"><h2 className="text-sm font-bold text-stone-400 uppercase tracking-wider">更多功能</h2></div>
+                <div className="grid grid-cols-3 gap-3 p-5 pt-2">
                   {MORE_ITEMS.map(item => (
                     <button key={item.id} onClick={() => handleViewChange(item.id)}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all active:scale-95 ${currentView === item.id ? 'bg-stone-800 text-white shadow-lg' : 'bg-stone-50 text-stone-600 hover:bg-stone-100'}`}>
-                      <item.icon className={`w-5 h-5 ${currentView === item.id ? 'text-indigo-300' : 'text-stone-500'}`} />
+                      className={`flex flex-col items-center gap-3 p-4 rounded-3xl transition-all active:scale-95 ${currentView === item.id ? 'bg-stone-800 text-white shadow-lg shadow-stone-400/30' : 'bg-stone-100/70 text-stone-600 hover:bg-stone-200 border border-stone-200/50'}`}>
+                      <item.icon className={`w-6 h-6 ${currentView === item.id ? 'text-stone-100' : 'text-stone-500'}`} />
                       <span className="text-xs font-bold">{item.label}</span>
                     </button>
                   ))}
                 </div>
-                <div className="tab-bar-safe" />
+                <div className="tab-bar-safe pb-8" />
               </div>
             </div>
           )}
@@ -3889,8 +3885,8 @@ function AppContent() {
             <div className="flex items-center gap-2 shrink-0">
               <img src={icon} className="w-7 h-7 rounded-lg shadow-sm" alt="Logo" />
             </div>
-            <div className="flex-1 flex justify-center">
-              <h1 className="text-base font-bold text-stone-700 tracking-wide flex items-center gap-1.5">
+            <div className="flex-1 flex justify-center min-w-0 px-2">
+              <h1 className="text-base font-bold text-stone-700 tracking-wide flex items-center gap-1.5 truncate">
                 {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.icon &&
                   React.createElement(MENU_ITEMS_FLAT.find(i => i.id === currentView).icon, { className: "w-4 h-4 text-stone-400" })}
                 {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label ||
