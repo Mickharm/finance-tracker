@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 serviceAccountKey.json
+
+# Local Claude Code preview/dev config
+.claude/
