@@ -81,8 +81,8 @@ const LEDGER_ID = 'Mick';
 
 // Liquid-glass tokens: saturated backdrop blur (refraction) + crisp top-edge
 // specular highlight + layered depth shadow. Used app-wide for one consistent material.
-const GLASS_CARD = "bg-white/35 backdrop-blur-2xl backdrop-saturate-150 border border-white/45 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),0_12px_38px_-14px_rgba(80,75,70,0.22)] rounded-3xl relative overflow-hidden group";
-const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/30 backdrop-blur-md backdrop-saturate-150 border border-white/50 focus:bg-white/70 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45)]";
+const GLASS_CARD = "bg-gradient-to-br from-white/50 to-white/28 backdrop-blur-2xl backdrop-saturate-[1.7] border border-white/60 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.85),inset_0_-6px_14px_-8px_rgba(255,255,255,0.3),0_14px_42px_-14px_rgba(80,75,70,0.32)] rounded-3xl relative overflow-hidden group";
+const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/35 backdrop-blur-md backdrop-saturate-[1.7] border border-white/60 focus:bg-white/75 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.7)]";
 
 const COLOR_VARIANTS = {
   slate: {
@@ -3758,11 +3758,11 @@ function AppContent() {
   // --- Main Render ---
   return (
     <div className="flex flex-col h-screen bg-[#F8F5F0] text-stone-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
-      {/* Background Blobs - very soft pastel tints (kept faint so the glass reads transparent, not tinted) */}
-      <div className="absolute top-[-12%] left-[-12%] w-[60%] h-[45%] bg-[#CFEADD]/35 rounded-full blur-[90px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-12%] right-[-12%] w-[60%] h-[45%] bg-[#F3DBE0]/30 rounded-full blur-[90px] pointer-events-none z-0"></div>
-      <div className="absolute top-[35%] left-[10%] w-[70%] h-[36%] bg-[#F5EAD2]/28 rounded-full blur-[100px] pointer-events-none z-0"></div>
-      <div className="absolute top-[12%] right-[-5%] w-[45%] h-[30%] bg-[#D6E5F2]/28 rounded-full blur-[90px] pointer-events-none z-0"></div>
+      {/* Background Blobs - soft pastel tints; enough colour for the glass to refract, kept gentle */}
+      <div className="absolute top-[-12%] left-[-12%] w-[60%] h-[45%] bg-[#C4E7D6]/50 rounded-full blur-[85px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-12%] right-[-12%] w-[60%] h-[45%] bg-[#F2D2D9]/45 rounded-full blur-[85px] pointer-events-none z-0"></div>
+      <div className="absolute top-[35%] left-[10%] w-[70%] h-[36%] bg-[#F5E7C8]/40 rounded-full blur-[95px] pointer-events-none z-0"></div>
+      <div className="absolute top-[12%] right-[-5%] w-[45%] h-[30%] bg-[#CFE0F0]/42 rounded-full blur-[85px] pointer-events-none z-0"></div>
 
       {/* Loading Screen - completely covers viewport until done, then unmounts */}
       {appPhase === 'loading' && (
@@ -4013,7 +4013,7 @@ function AppContent() {
                     {/* Ultimate Quick-Add Section */}
                     
                     {/* Amount Input (Main focus) */}
-                    <div className="mb-4">
+                    <div className="mb-6">
                       <CalculatorInput
                         value={newTrans.amount}
                         onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
@@ -4021,8 +4021,8 @@ function AppContent() {
                     </div>
 
                     {/* Note Input (Always visible) */}
-                    <div className="mb-4">
-                      <div className="w-full relative mb-2">
+                    <div className="mb-6">
+                      <div className="w-full relative mb-2.5">
                         <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="輸入備註 (選填)..." />
                         <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-300 pointer-events-none z-10" />
                       </div>
@@ -4089,10 +4089,10 @@ function AppContent() {
                       })()}
                     </div>
 
-                    <div className="border-t border-stone-100 my-4"></div>
+                    <div className="border-t border-stone-100 my-5"></div>
 
                     {/* Group & Category Grids */}
-                    <div className="space-y-4 mb-4">
+                    <div className="space-y-5 mb-2">
                       {/* Group Flow (Horizontal Scroll) */}
                       {(() => {
                         const monthlyGroups = (settings.monthlyGroups || []).map(g => ({ ...g, budgetType: 'monthly' }));
@@ -4140,13 +4140,13 @@ function AppContent() {
                         const items = currentGroup?.items || [];
                         if (items.length === 0) return null;
                         return (
-                          <div className="grid grid-cols-3 gap-2 mt-3">
+                          <div className="grid grid-cols-3 gap-2.5 mt-4">
                             {items.map(item => (
                               <button
                                 key={item.name}
                                 type="button"
                                 onClick={() => setNewTrans({ ...newTrans, category: item.name })}
-                                className={`py-3 px-2 rounded-xl text-xs font-bold transition-all active:scale-95 text-center truncate ${
+                                className={`py-3.5 px-2 rounded-xl text-xs font-bold transition-all active:scale-95 text-center truncate ${
                                   newTrans.category === item.name
                                     ? 'bg-stone-800 text-white shadow-md shadow-stone-800/20'
                                     : 'bg-stone-50 text-stone-600 hover:bg-stone-100'
@@ -4161,7 +4161,7 @@ function AppContent() {
                     </div>
 
                     {/* Payer & Date (secondary — defaults to 士程 / today) */}
-                    <div className="border-t border-stone-100 my-4"></div>
+                    <div className="border-t border-stone-100 my-5"></div>
                     <div className="flex gap-3 mb-1">
                       <div className="flex-1">
                         <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-1.5 ml-1">付款人</label>
