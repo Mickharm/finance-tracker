@@ -30,7 +30,7 @@ import {
   Building2, Clock, ToggleLeft, ToggleRight, ClipboardList, Calculator,
   Coins, Receipt, CheckCircle2, Check, ArrowRightLeft, PenTool, Hash, FileText,
   TrendingUp, TrendingDown, RefreshCw, Layers, Search, Lock,
-  UtensilsCrossed, Sun, Moon
+  UtensilsCrossed
 } from 'lucide-react';
 import icon from './assets/icon.png';
 
@@ -170,6 +170,50 @@ const getFixedDepositAmount = (year) => {
   if (year >= 2022 && year <= 2029) return 20000;
   if (year >= 2040) return 30000;
   return 0;
+};
+
+// Safe arithmetic evaluator for the calculator pad (replaces eval()).
+// Supports + - * / with standard precedence; no parentheses needed (the pad can't produce them).
+const evalArithmetic = (expr) => {
+  const clean = String(expr).replace(/,/g, '').replace(/[+\-*/]$/, '').trim();
+  if (!clean) return 0;
+  const tokens = clean.match(/(\d+\.?\d*|\.\d+|[+\-*/])/g);
+  if (!tokens) return 0;
+
+  const nums = [];
+  const ops = [];
+  let expectNumber = true;
+  for (const tk of tokens) {
+    if (tk.length === 1 && '+-*/'.includes(tk)) {
+      if (expectNumber) {
+        if (tk === '-') { nums.push(0); ops.push('-'); expectNumber = false; } // unary minus
+      } else {
+        ops.push(tk);
+        expectNumber = true;
+      }
+    } else {
+      nums.push(parseFloat(tk));
+      expectNumber = false;
+    }
+  }
+  if (nums.length === 0) return 0;
+
+  // First pass: resolve * and /
+  const n2 = [nums[0]];
+  const o2 = [];
+  for (let i = 0; i < ops.length; i++) {
+    const val = nums[i + 1] ?? 0;
+    if (ops[i] === '*') n2[n2.length - 1] *= val;
+    else if (ops[i] === '/') n2[n2.length - 1] = val === 0 ? 0 : n2[n2.length - 1] / val;
+    else { o2.push(ops[i]); n2.push(val); }
+  }
+
+  // Second pass: resolve + and -
+  let result = n2[0];
+  for (let i = 0; i < o2.length; i++) {
+    result = o2[i] === '+' ? result + n2[i + 1] : result - n2[i + 1];
+  }
+  return Number.isFinite(result) ? result : 0;
 };
 
 
@@ -370,14 +414,10 @@ const CalculatorInput = ({ value, onChange, label }) => {
       setExpression('');
       onChange('0');
     } else if (btn === '=') {
-      try {
-        const cleanExpression = displayValue.replace(/[+\-*/]$/, '');
-        // eslint-disable-next-line no-eval
-        const result = Math.round(eval(cleanExpression.replace(/,/g, '')) || 0);
-        newVal = result.toString();
-        setExpression('');
-        onChange(newVal);
-      } catch (e) { newVal = '0'; }
+      const result = Math.round(evalArithmetic(displayValue));
+      newVal = result.toString();
+      setExpression('');
+      onChange(newVal);
     } else if (btn === '⌫') {
       newVal = String(displayValue).slice(0, -1) || '0';
       if (!isNaN(Number(newVal)) && !expression) onChange(newVal);
@@ -2086,7 +2126,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                         <div className="flex flex-col">
                           <div className="flex items-center gap-1.5 align-baseline">
                             <span className="text-sm font-bold text-stone-700 leading-tight">{t.note || t.category}</span>
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${t.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-stone-100 text-stone-500'}`}>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${t.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-600'}`}>
                               {t.payer === 'partner' ? '佳欣' : '士程'}
                             </span>
                           </div>
@@ -2917,7 +2957,7 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-stone-700 truncate">{item.name}</span>
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${item.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-stone-100 text-stone-500'}`}>{item.payer === 'partner' ? '佳欣' : '士程'}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${item.payer === 'partner' ? 'bg-rose-100 text-rose-500' : 'bg-blue-100 text-blue-600'}`}>{item.payer === 'partner' ? '佳欣' : '士程'}</span>
                     </div>
                     <span className="text-xs text-stone-400">每月 {item.day || 1} 日 • ${Number(item.amount).toLocaleString()} • {item.group}-{item.category}</span>
                   </div>
@@ -3681,8 +3721,9 @@ function AppContent() {
   const requestDelete = (message, action) => requestConfirmation({ message, title: '確認刪除', confirmText: '刪除', confirmColor: 'bg-rose-500', onConfirm: action });
 
   // --- Handlers ---
-  const handleAddTransaction = (e, overrideTrans = null) => {
+  const handleAddTransaction = (e, options = {}) => {
     if (e) e.preventDefault();
+    const { overrideTrans = null, keepOpen = false } = options;
     const saveTrans = overrideTrans || newTrans;
 
     withSubmission(async () => {
@@ -3696,9 +3737,16 @@ function AppContent() {
         const { id, ...createData } = saveTrans;
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...createData, amount: Number(saveTrans.amount), createdAt: serverTimestamp() });
       }
+      haptic(15);
+      // Clear amount + note for the next entry; keep group/category/payer/date as-is
       setNewTrans(prev => ({ ...prev, amount: '0', note: '' }));
-      setIsAddTxModalOpen(false);
-      setEditingId(null);
+      if (keepOpen && !editingId) {
+        showToast('已記一筆，可繼續輸入');
+      } else {
+        showToast(editingId ? '已更新支出' : '已記一筆');
+        setIsAddTxModalOpen(false);
+        setEditingId(null);
+      }
     });
   };
   const deleteTransaction = (id) => requestDelete("確定刪除此筆支出紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', id)));
@@ -3711,6 +3759,8 @@ function AppContent() {
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes'), { ...newIncome, amount: Number(newIncome.amount), createdAt: serverTimestamp() });
       }
+      haptic(15);
+      showToast(editingId ? '已更新收入' : '已入帳');
       setNewIncome(prev => ({ ...prev, amount: '', note: '' }));
       setIsAddIncomeModalOpen(false);
       setEditingId(null);
@@ -3726,6 +3776,8 @@ function AppContent() {
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history'), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount), createdAt: serverTimestamp() });
       }
+      haptic(15);
+      showToast(editingId ? '已更新調薪' : '已儲存調薪');
       setNewSalaryRecord(prev => ({ ...prev, amount: '', note: '' }));
       setIsAddSalaryModalOpen(false);
       setEditingId(null);
@@ -3741,6 +3793,8 @@ function AppContent() {
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings'), { ...newPartnerTx, amount: Number(newPartnerTx.amount), createdAt: serverTimestamp() });
       }
+      haptic(15);
+      showToast(editingId ? '已更新紀錄' : '已儲存紀錄');
       setNewPartnerTx(prev => ({ ...prev, amount: '', note: '' }));
       setIsAddPartnerTxModalOpen(false);
       setEditingId(null);
@@ -3756,6 +3810,8 @@ function AppContent() {
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses'), { ...newMortgageExp, amount: Number(newMortgageExp.amount), type: mortgageExpType, createdAt: serverTimestamp() });
       }
+      haptic(15);
+      showToast(editingId ? '已更新項目' : '已儲存項目');
       setNewMortgageExp({ name: '', amount: '', date: getTodayString(), note: '', brand: '', type: mortgageExpType });
       setIsAddMortgageExpModalOpen(false);
       setEditingId(null);
@@ -3771,6 +3827,8 @@ function AppContent() {
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis'), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount), createdAt: serverTimestamp() });
       }
+      haptic(15);
+      showToast(editingId ? '已更新項目' : '已儲存項目');
       setNewMortgageAnalysis({ name: '', amount: '' });
       setIsAddMortgageAnalysisModalOpen(false);
       setEditingId(null);
@@ -3786,6 +3844,8 @@ function AppContent() {
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding'), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount), createdAt: serverTimestamp() });
       }
+      haptic(15);
+      showToast(editingId ? '已更新來源' : '已儲存來源');
       setNewMortgageFunding({ source: '', amount: '', shares: '', rate: '', date: getTodayString(), note: '' });
       setIsAddMortgageFundingModalOpen(false);
       setEditingId(null);
@@ -3808,6 +3868,8 @@ function AppContent() {
       } else {
         await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges'), { ...newExchange, createdAt: serverTimestamp() });
       }
+      haptic(15);
+      showToast(editingId ? '已更新換匯' : '已儲存換匯');
       setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' });
       setEditingId(null);
       setIsAddExchangeModalOpen(false);
@@ -4028,7 +4090,7 @@ function AppContent() {
           {(currentView === 'home' || currentView === 'calendar' || currentView === 'income' || currentView === 'partner') && (
             <button
               onClick={() => {
-                haptic([20, 40, 20]);
+                haptic(10);
                 if (currentView === 'income') {
                   setNewIncome(prev => ({ ...prev, amount: '', category: '薪水', note: '', date: getTodayString() }));
                   setIsAddIncomeModalOpen(true);
@@ -4239,7 +4301,14 @@ function AppContent() {
                       })()}
                     </div>
 
-                    <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl shadow-xl shadow-stone-300/50 mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                    <div className="mt-4 space-y-2">
+                      {!editingId && (
+                        <GlassButton type="button" variant="ghost" disabled={isSubmitting} onClick={() => handleAddTransaction(null, { keepOpen: true })} className="w-full py-3.5 text-sm rounded-2xl">
+                          {isSubmitting ? '處理中...' : '儲存並再記一筆'}
+                        </GlassButton>
+                      )}
+                      <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                    </div>
                   </form>
                 )}
               </ModalWrapper>
