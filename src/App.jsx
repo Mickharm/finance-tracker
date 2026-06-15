@@ -81,8 +81,8 @@ const LEDGER_ID = 'Mick';
 
 // Liquid-glass tokens: saturated backdrop blur (refraction) + crisp top-edge
 // specular highlight + layered depth shadow. Used app-wide for one consistent material.
-const GLASS_CARD = "bg-gradient-to-br from-white/55 to-white/25 backdrop-blur-2xl backdrop-saturate-200 border border-white/70 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.9),inset_0_-1px_1px_rgba(255,255,255,0.25),0_14px_42px_-12px_rgba(80,75,70,0.32)] rounded-3xl relative overflow-hidden group";
-const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/35 backdrop-blur-md backdrop-saturate-200 border border-white/65 focus:bg-white/80 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.75)]";
+const GLASS_CARD = "bg-white/35 backdrop-blur-2xl backdrop-saturate-150 border border-white/45 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),0_12px_38px_-14px_rgba(80,75,70,0.22)] rounded-3xl relative overflow-hidden group";
+const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/30 backdrop-blur-md backdrop-saturate-150 border border-white/50 focus:bg-white/70 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45)]";
 
 const COLOR_VARIANTS = {
   slate: {
@@ -541,8 +541,8 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
 
   let statusColor = theme.bar;
   if (!isOverBudget && total > 0) {
-    if (remainingPercentage < 20) statusColor = 'bg-[#E08577]';
-    else if (remainingPercentage < 50) statusColor = 'bg-[#E0A23E]';
+    if (remainingPercentage < 20) statusColor = 'bg-[#E59A8E]';
+    else if (remainingPercentage < 50) statusColor = 'bg-[#E8BE6E]';
     else statusColor = theme.bar;
   }
 
@@ -602,8 +602,8 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
 
   let statusBarColor = theme.bar;
   if (!isOverBudget && group.budget > 0) {
-    if (remainingPercentage < 20) statusBarColor = 'bg-[#E08577]';
-    else if (remainingPercentage < 50) statusBarColor = 'bg-[#E0A23E]';
+    if (remainingPercentage < 20) statusBarColor = 'bg-[#E59A8E]';
+    else if (remainingPercentage < 50) statusBarColor = 'bg-[#E8BE6E]';
     else statusBarColor = theme.bar; // Theme Color
   }
 
@@ -637,7 +637,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
             </div>
             <div className={`w-full bg-stone-100/50 rounded-full h-1 overflow-hidden`}>
               <div className={`h-full transition-all duration-500 ${!itemIsOver && item.budget > 0
-                ? (itemPercent < 20 ? 'bg-[#E08577]' : itemPercent < 50 ? 'bg-[#E0A23E]' : theme.bar)
+                ? (itemPercent < 20 ? 'bg-[#E59A8E]' : itemPercent < 50 ? 'bg-[#E8BE6E]' : theme.bar)
                 : theme.bar
                 }`} style={{ width: `${itemPercent}%` }} />
             </div>
@@ -1003,12 +1003,12 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
               {summary.pnl >= 0 ? '+' : ''}{summary.pnlPercent.toFixed(2)}%
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-stone-50/50 rounded-xl p-3">
+          <div className="grid grid-cols-2 gap-3 mb-4 pt-3 border-t border-stone-200/40">
+            <div>
               <div className="text-[10px] text-stone-400 font-bold uppercase mb-1">總成本</div>
               <div className="text-sm font-bold text-stone-700 tabular-nums">${summary.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
             </div>
-            <div className={`rounded-xl p-3 ${summary.pnl >= 0 ? 'bg-[#F1FAEE]/50' : 'bg-[#FDECEA]/50'}`}>
+            <div className="text-right">
               <div className={`text-[10px] font-bold uppercase mb-1 ${summary.pnl >= 0 ? 'text-[#52B788]' : 'text-[#E57373]'}`}>總損益</div>
               <div className={`text-sm font-bold tabular-nums ${summary.pnl >= 0 ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>{summary.pnl >= 0 ? '+' : ''}${summary.pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
             </div>
@@ -1622,16 +1622,16 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
           </div>
         </div>
         <div className="flex flex-row gap-4 w-full">
-          <div className="bg-stone-50/50 rounded-xl p-3 flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden">
             <div className="text-[10px] text-stone-400 font-bold uppercase mb-1">已花費</div>
             <div className="text-base sm:text-lg font-bold text-stone-700 tabular-nums truncate">${totalAnnualUsed.toLocaleString()}</div>
           </div>
-          <div className={`rounded-xl p-3 flex-1 overflow-hidden ${isOverBudget ? 'bg-[#FDECEA]/50' : 'bg-[#F1FAEE]/50'}`}>
+          <div className="flex-1 overflow-hidden text-right">
             <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-[#E57373]' : 'text-[#52B788]'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
             <div className={`text-base sm:text-lg font-bold tabular-nums truncate ${isOverBudget ? 'text-[#C0392B]' : 'text-[#2D6A4F]'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
           </div>
         </div>
-        <div className="bg-stone-50/50 rounded-xl p-3 mt-3 flex justify-between items-center">
+        <div className="mt-3 pt-3 border-t border-stone-200/40 flex justify-between items-center">
           <span className="text-[10px] text-stone-400 font-bold uppercase">月均支出 ({currentMonth}月)</span>
           <span className="text-sm font-bold text-stone-700 tabular-nums">${monthlyAvgSpending.toLocaleString()}</span>
         </div>
@@ -3758,11 +3758,11 @@ function AppContent() {
   // --- Main Render ---
   return (
     <div className="flex flex-col h-screen bg-[#F8F5F0] text-stone-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
-      {/* Background Blobs - pastel accents that the glass surfaces refract (richer = more visible glass) */}
-      <div className="absolute top-[-12%] left-[-12%] w-[60%] h-[45%] bg-[#A9E0C4]/70 rounded-full blur-[70px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-12%] right-[-12%] w-[60%] h-[45%] bg-[#F6C9D1]/65 rounded-full blur-[70px] pointer-events-none z-0"></div>
-      <div className="absolute top-[35%] left-[10%] w-[70%] h-[36%] bg-[#F5E3B0]/55 rounded-full blur-[90px] pointer-events-none z-0"></div>
-      <div className="absolute top-[12%] right-[-5%] w-[45%] h-[30%] bg-[#BCD9F0]/55 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      {/* Background Blobs - very soft pastel tints (kept faint so the glass reads transparent, not tinted) */}
+      <div className="absolute top-[-12%] left-[-12%] w-[60%] h-[45%] bg-[#CFEADD]/35 rounded-full blur-[90px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-12%] right-[-12%] w-[60%] h-[45%] bg-[#F3DBE0]/30 rounded-full blur-[90px] pointer-events-none z-0"></div>
+      <div className="absolute top-[35%] left-[10%] w-[70%] h-[36%] bg-[#F5EAD2]/28 rounded-full blur-[100px] pointer-events-none z-0"></div>
+      <div className="absolute top-[12%] right-[-5%] w-[45%] h-[30%] bg-[#D6E5F2]/28 rounded-full blur-[90px] pointer-events-none z-0"></div>
 
       {/* Loading Screen - completely covers viewport until done, then unmounts */}
       {appPhase === 'loading' && (
@@ -4176,13 +4176,13 @@ function AppContent() {
                       </div>
                     </div>
 
-                    <div className="mt-4 space-y-2">
+                    <div className="mt-4 flex gap-2.5">
                       {!editingId && (
-                        <GlassButton type="button" variant="ghost" disabled={isSubmitting} onClick={() => handleAddTransaction(null, { keepOpen: true })} className="w-full py-3.5 text-sm rounded-2xl">
+                        <GlassButton type="button" variant="ghost" disabled={isSubmitting} onClick={() => handleAddTransaction(null, { keepOpen: true })} className="flex-1 py-4 text-sm rounded-2xl whitespace-nowrap">
                           {isSubmitting ? '處理中...' : '儲存並再記一筆'}
                         </GlassButton>
                       )}
-                      <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl shadow-xl shadow-stone-300/50">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
+                      <GlassButton type="submit" disabled={isSubmitting} className={`${editingId ? 'w-full' : 'flex-1'} py-4 text-base rounded-2xl shadow-xl shadow-stone-300/50 whitespace-nowrap`}>{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
                     </div>
                   </form>
                 )}
