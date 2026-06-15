@@ -4,11 +4,12 @@ import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   signInAnonymously,
-  onAuthStateChanged,
-  signInWithCustomToken
+  onAuthStateChanged
 } from 'firebase/auth';
 import {
-  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   collection,
   addDoc,
   query,
@@ -45,7 +46,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+// Persistent local cache: onSnapshot serves cached docs from IndexedDB instantly
+// on app restart, then syncs from the server in the background. This is the main
+// reason cold-starts can show the home screen near-instantly.
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
 const appId = 'finance-tracker-production';
 const FINNHUB_API_KEY = 'd58c17hr01qptoarifpgd58c17hr01qptoarifq0';
 const PRICE_CACHE_KEY = 'finnhub_price_cache';
@@ -343,7 +349,7 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
       setStatusText('完成');
       const timer = setTimeout(() => {
         onDone();
-      }, 600);
+      }, 350);
       return () => clearTimeout(timer);
     }
   }, [isComplete, onDone]);
@@ -369,6 +375,14 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
     </div>
   );
 };
+
+// Shown while a secondary tab's data is still loading (distinguishes "loading" from "empty").
+const ViewLoader = ({ label = '載入中...' }) => (
+  <div className="flex flex-col items-center justify-center py-20 text-stone-400 animate-in fade-in duration-300">
+    <RefreshCw className="w-6 h-6 animate-spin mb-3 text-stone-300" />
+    <span className="text-sm font-bold">{label}</span>
+  </div>
+);
 
 const InputField = ({ label, type = "text", value, onChange, placeholder, required = false, autoFocus = false, children, className = "", ...props }) => {
   // scrollIntoView is handled centrally by ModalWrapper's focusin listener.
@@ -1799,7 +1813,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
   );
 };
 
-const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, deleteMortgageExp, deleteMortgageAnalysis, deleteMortgageFunding, setMortgageExpType, setIsAddMortgageExpModalOpen, setIsAddMortgageAnalysisModalOpen, setIsAddMortgageFundingModalOpen, onEditExp, onEditAnalysis, onEditFunding }) => {
+const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, deleteMortgageExp, deleteMortgageAnalysis, deleteMortgageFunding, setMortgageExpType, setIsAddMortgageExpModalOpen, setIsAddMortgageAnalysisModalOpen, setIsAddMortgageFundingModalOpen, onEditExp, onEditAnalysis, onEditFunding, loading = false }) => {
   const downPaymentExp = mortgageExpenses.filter(e => e.type === 'down_payment');
   const applianceExp = mortgageExpenses.filter(e => e.type === 'misc_appliances');
   const totalDownPaymentExp = downPaymentExp.reduce((sum, i) => sum + Number(i.amount), 0);
@@ -1849,6 +1863,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
     fetchFundingPrices();
   }, [mortgageFunding]);
 
+  if (loading) return <ViewLoader label="載入房產資料..." />;
   return (
     <div className="pb-24 space-y-6 animate-in fade-in duration-500">
       <StandardList
@@ -2156,7 +2171,8 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
   );
 };
 
-const IncomeView = ({ incomes, salaryHistory, onAddSalary, onDeleteSalary, onDeleteIncome, onAddIncome, onEditSalary, selectedDate }) => {
+const IncomeView = ({ incomes, salaryHistory, onAddSalary, onDeleteSalary, onDeleteIncome, onAddIncome, onEditSalary, selectedDate, loading = false }) => {
+  if (loading) return <ViewLoader label="載入收入資料..." />;
   const currentYear = selectedDate.getFullYear();
   const yearlyIncomes = incomes.filter(i => new Date(i.date).getFullYear() === currentYear);
   const myselfIncomes = yearlyIncomes.filter(i => i.owner === 'myself');
@@ -2176,12 +2192,13 @@ const IncomeView = ({ incomes, salaryHistory, onAddSalary, onDeleteSalary, onDel
   );
 };
 
-const PartnerView = ({ partnerTransactions, onDelete, onAdd, onEdit }) => {
+const PartnerView = ({ partnerTransactions, onDelete, onAdd, onEdit, loading = false }) => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const groupedTransactions = useMemo(() => { const groups = {}; partnerTransactions.forEach(tx => { const year = new Date(tx.date).getFullYear(); if (!groups[year]) groups[year] = []; groups[year].push(tx); }); return Object.entries(groups).sort((a, b) => b[0] - a[0]); }, [partnerTransactions]);
   const totalSavings = partnerTransactions.filter(t => t.type === 'saving').reduce((sum, t) => sum + Number(t.amount), 0);
   const totalExpenses = partnerTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
   const balance = totalSavings - totalExpenses;
+  if (loading) return <ViewLoader label="載入儲蓄資料..." />;
   return (
     <div className="space-y-6 pb-24 animate-in fade-in">
       <CleanSummaryCard title="佳欣儲蓄總覽" value={balance.toLocaleString()} subValue={`投入 $${totalSavings.toLocaleString()} - 支出 $${totalExpenses.toLocaleString()}`} icon={PiggyBank} trend={balance > 0 ? '正成長' : '負成長'} variant="emerald" />
@@ -2693,12 +2710,13 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
   );
 };
 
-const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, onDeleteExchange, onAddExchangeClick, onEditExchange }) => {
+const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, onDeleteExchange, onAddExchangeClick, onEditExchange, loading = false }) => {
   const [activeTab, setActiveTab] = useState('goals');
   const sortedGoals = [...goals].sort((a, b) => b.year - a.year);
   const getEffectiveTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0) + (Number(g?.withdrawal) || 0);
   const getActualTotal = (g) => (Number(g?.firstrade) || 0) + (Number(g?.ib) || 0);
 
+  if (loading) return <ViewLoader label="載入存股資料..." />;
   return (
     <div className="pb-24 animate-in fade-in">
       <div className="flex bg-stone-100 p-1 rounded-xl mb-6">
@@ -3358,37 +3376,24 @@ function AppContent() {
   const [newMortgageFunding, setNewMortgageFunding] = useState({ source: '', amount: '', symbol: '', shares: '', rate: '', date: getTodayString(), note: '' }); // Added symbol
   const [newExchange, setNewExchange] = useState({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' });
 
-  // --- Auth & Firestore ---
-  // --- Auth & Firestore ---
+  // --- Auth ---
+  // Rely on the persisted session: onAuthStateChanged fires immediately with the
+  // restored user on restart (no network round-trip). Only sign in anonymously
+  // when there is genuinely no session, avoiding a redundant cold-start auth call.
   useEffect(() => {
-    const initAuth = async () => {
-      // Check if already signed in
-      if (auth.currentUser) return;
-
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          // If no custom token, check if we can restore session, otherwise anonymous
-          /* parse checking session persistence is handled automatically by Firebase SDK */
-          if (!auth.currentUser) {
-            console.log("No user session, signing in anonymously");
-            await signInAnonymously(auth);
-          }
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        if (u.uid !== user?.uid) setUser(u);
+        setLoadingStates(prev => ({ ...prev, auth: true }));
+      } else {
+        try {
+          await signInAnonymously(auth);
+          // onAuthStateChanged will fire again with the new user
+        } catch (e) {
+          console.warn('Anonymous sign-in failed:', e);
+          setLoadingStates(prev => ({ ...prev, auth: true }));
         }
-      } catch (e) {
-        console.warn("Auth check failed, falling back to anonymous:", e);
-        if (!auth.currentUser) await signInAnonymously(auth);
       }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      // Only update user state if it actually changed to avoid re-renders
-      if (u?.uid !== user?.uid) {
-        setUser(u);
-      }
-      // Mark auth as loaded
-      setLoadingStates(prev => ({ ...prev, auth: true }));
     });
     return () => unsubscribe();
   }, []);
@@ -3414,22 +3419,27 @@ function AppContent() {
       }, (error) => console.error(`Error fetching ${col}:`, error));
     };
 
-    if (currentView === 'income') {
+    // Prefetch every secondary collection once the home screen is ready, so other
+    // tabs open with data already in hand instead of flashing an empty state.
+    // Before "ready" we don't compete with the critical home load; if the user
+    // somehow navigates first, the matching currentView still triggers its load.
+    const prefetch = appPhase === 'ready';
+    if (prefetch || currentView === 'income') {
       createSub('salary_history', setSalaryHistory, 'salaryHistory');
     }
-    if (currentView === 'partner') {
+    if (prefetch || currentView === 'partner') {
       createSub('partner_savings', setPartnerTransactions, 'partnerTransactions');
     }
-    if (currentView === 'mortgage') {
+    if (prefetch || currentView === 'mortgage') {
       createSub('mortgage_expenses', setMortgageExpenses, 'mortgageExpenses');
       createSub('mortgage_funding', setMortgageFunding, 'mortgageFunding');
       createSub('mortgage_analysis', setMortgageAnalysis, 'mortgageAnalysis', 'createdAt', 'asc');
     }
-    if (currentView === 'stock_goals') {
+    if (prefetch || currentView === 'stock_goals') {
       createSub('stock_goals', setStockGoals, 'stockGoals', 'year', 'desc');
       createSub('usd_exchanges', setUsdExchanges, 'usdExchanges');
     }
-  }, [user, currentView]);
+  }, [user, currentView, appPhase]);
 
   // Clean up on user logout/unmount
   useEffect(() => {
@@ -3958,9 +3968,10 @@ function AppContent() {
             {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} yearlyTotalStats={yearlyTotalStats} />}
             {/* 新增: Investment Tab View (持股檢視 + 占比計算) */}
             {currentView === 'watchlist' && <InvestmentTabView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
-            {currentView === 'stock_goals' && <StockGoalView goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteYear={handleDeleteStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
+            {currentView === 'stock_goals' && <StockGoalView loading={!loadingStates.stockGoals} goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteYear={handleDeleteStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
             {currentView === 'mortgage' && (
               <MortgageView
+                loading={!loadingStates.mortgageExpenses}
                 mortgageExpenses={mortgageExpenses}
                 mortgageAnalysis={mortgageAnalysis}
                 mortgageFunding={mortgageFunding}
@@ -3995,6 +4006,7 @@ function AppContent() {
             {currentView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} onEdit={(t) => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} />}
             {currentView === 'income' && (
               <IncomeView
+                loading={!loadingStates.incomes}
                 incomes={incomes}
                 salaryHistory={salaryHistory}
                 onAddSalary={(own) => { setNewSalaryRecord(prev => ({ ...prev, owner: own })); setIsAddSalaryModalOpen(true); }}
@@ -4019,6 +4031,7 @@ function AppContent() {
             )}
             {currentView === 'partner' && (
               <PartnerView
+                loading={!loadingStates.partnerTransactions}
                 partnerTransactions={partnerTransactions}
                 onDelete={deletePartnerTx}
                 onAdd={(item = null) => {
