@@ -364,7 +364,7 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
             style={{ width: `${Math.min(displayProgress, 100)}%` }}
           />
         </div>
-        <p className="text-xs text-stone-400 mt-3 font-mono">{statusText}</p>
+        <p className="text-xs text-stone-400 mt-3 tabular-nums">{statusText}</p>
       </div>
     </div>
   );
@@ -475,10 +475,10 @@ const CalculatorInput = ({ value, onChange, label }) => {
       {label && <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider ml-1">{label}</label>}
       <div className="bg-stone-50/80 rounded-2xl p-4 border border-stone-100">
         <div className="text-right mb-4 overflow-x-auto scrollbar-hide">
-          <div className="text-3xl font-bold text-stone-800 font-mono tracking-tight whitespace-nowrap">
+          <div className="text-3xl font-bold text-stone-800 tabular-nums tracking-tight whitespace-nowrap">
             {formatDisplay(displayValue)}
           </div>
-          {expression && <div className="text-xs text-stone-400 font-mono h-4 opacity-0">.</div>}
+          {expression && <div className="text-xs text-stone-400 tabular-nums h-4 opacity-0">.</div>}
         </div>
         <div className="grid grid-cols-4 gap-2">
           {buttons.flat().map((btn, idx) => (
@@ -540,7 +540,7 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
         {showDetails && (
           <div className="flex items-baseline gap-1 text-right">
             <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-[#E57373]' : 'text-stone-400'}`}>{isOverBudget ? '已超支' : '剩餘'}</span>
-            <span className={`font-mono font-bold ${isOverBudget ? 'text-[#C0392B]' : 'text-stone-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
+            <span className={`tabular-nums font-bold ${isOverBudget ? 'text-[#C0392B]' : 'text-stone-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         )}
       </div>
@@ -568,13 +568,13 @@ const PrincipalTrendChart = ({ history }) => {
   const points = data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return `${x},${y}`; }).join(' ');
   const currentNet = values[values.length - 1]; const prevNet = values.length > 1 ? values[values.length - 2] : currentNet; const growth = currentNet - prevNet;
   return (
-    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">歷史資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-stone-800 font-mono tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><polyline points={points} fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return (<circle key={i} cx={x} cy={y} r={i === data.length - 1 ? 2 : 1} className={i === data.length - 1 ? "fill-stone-800" : "fill-white stroke-stone-400 stroke-[0.5]"} />); })}</svg></div><div className="flex justify-between text-[10px] text-stone-400 font-mono mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
+    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">歷史資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-stone-800 tabular-nums tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><polyline points={points} fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return (<circle key={i} cx={x} cy={y} r={i === data.length - 1 ? 2 : 1} className={i === data.length - 1 ? "fill-stone-800" : "fill-white stroke-stone-400 stroke-[0.5]"} />); })}</svg></div><div className="flex justify-between text-[10px] text-stone-400 tabular-nums mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
   );
 };
 
 const CleanSummaryCard = ({ title, value, subValue, icon: Icon, trend, variant = 'slate' }) => {
   const theme = COLOR_VARIANTS[variant] || COLOR_VARIANTS.slate;
-  return (<div className={`${GLASS_CARD} p-6 mb-6 ${theme.glow}`}><div className="flex justify-between items-start mb-2"><div className={`p-2 rounded-xl ${theme.iconBg} ${theme.iconText}`}>{Icon ? <Icon className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}</div>{trend && <span className={`bg-stone-50/50 text-stone-500 text-[10px] px-2 py-1 rounded-full font-bold`}>{trend}</span>}</div><div><h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">{title}</h2><div className="text-3xl font-bold text-stone-800 font-mono tracking-tight">${value}</div>{subValue && <div className="text-xs text-stone-400 mt-1">{subValue}</div>}</div></div>);
+  return (<div className={`${GLASS_CARD} p-6 mb-6 ${theme.glow}`}><div className="flex justify-between items-start mb-2"><div className={`p-2 rounded-xl ${theme.iconBg} ${theme.iconText}`}>{Icon ? <Icon className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}</div>{trend && <span className={`bg-stone-50/50 text-stone-500 text-[10px] px-2 py-1 rounded-full font-bold`}>{trend}</span>}</div><div><h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">{title}</h2><div className="text-3xl font-bold text-stone-800 tabular-nums tracking-tight">${value}</div>{subValue && <div className="text-xs text-stone-400 mt-1">{subValue}</div>}</div></div>);
 };
 
 const GroupCard = ({ group, colorTheme = 'slate' }) => {
@@ -602,7 +602,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
           </div>
           <div className="text-right flex items-baseline gap-1">
             <span className="text-[10px] text-stone-400">剩餘</span>
-            <span className={`text-sm font-mono font-bold ${isOverBudget ? 'text-[#C0392B]' : 'text-stone-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
+            <span className={`text-sm tabular-nums font-bold ${isOverBudget ? 'text-[#C0392B]' : 'text-stone-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         </div>
         <div className={`w-full bg-stone-100/50 rounded-full h-1.5 overflow-hidden`}>
@@ -617,7 +617,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
           <div key={idx}>
             <div className="flex justify-between text-xs mb-1.5 font-medium text-stone-500">
               <span>{item.name}</span>
-              <span className={`font-mono ${itemIsOver ? 'text-[#C0392B]' : 'text-stone-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
+              <span className={`tabular-nums ${itemIsOver ? 'text-[#C0392B]' : 'text-stone-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
             </div>
             <div className={`w-full bg-stone-100/50 rounded-full h-1 overflow-hidden`}>
               <div className={`h-full transition-all duration-500 ${!itemIsOver && item.budget > 0
@@ -657,7 +657,7 @@ const HoldingsStockCard = ({ stock, onAddPurchase, onDeletePurchase, onDeleteSto
             )}
           </div>
           <div className="flex items-center gap-3 text-xs text-stone-400">
-            <span className="font-mono">{totalShares} 股</span>
+            <span className="tabular-nums">{totalShares} 股</span>
             <span>均價 ${avgCost.toFixed(2)}</span>
             <span>現價 ${currentPrice ? currentPrice.toFixed(2) : '---'}</span>
           </div>
@@ -665,10 +665,10 @@ const HoldingsStockCard = ({ stock, onAddPurchase, onDeletePurchase, onDeleteSto
         <div className="flex items-center gap-2">
           {currentPrice > 0 && (
             <div className="text-right">
-              <div className={`text-sm font-bold font-mono ${isUp ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>
+              <div className={`text-sm font-bold tabular-nums ${isUp ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>
                 {isUp ? '+' : ''}{pnlPercent.toFixed(2)}%
               </div>
-              <div className={`text-[10px] font-mono ${isUp ? 'text-[#52B788]' : 'text-[#E57373]'}`}>
+              <div className={`text-[10px] tabular-nums ${isUp ? 'text-[#52B788]' : 'text-[#E57373]'}`}>
                 {isUp ? '+' : ''}${pnl.toFixed(0)}
               </div>
             </div>
@@ -681,8 +681,8 @@ const HoldingsStockCard = ({ stock, onAddPurchase, onDeletePurchase, onDeleteSto
       {/* Market Value Bar */}
       {currentPrice > 0 && (
         <div className="mt-3 flex justify-between items-center text-[10px] text-stone-400">
-          <span>市值 <span className="font-mono font-bold text-stone-600">${marketValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
-          <span>成本 <span className="font-mono">${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
+          <span>市值 <span className="tabular-nums font-bold text-stone-600">${marketValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
+          <span>成本 <span className="tabular-nums">${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
         </div>
       )}
       {isExpanded && (
@@ -700,12 +700,12 @@ const HoldingsStockCard = ({ stock, onAddPurchase, onDeletePurchase, onDeleteSto
               {stock.purchases.map(p => (
                 <div key={p.id} className="flex justify-between items-center text-xs bg-stone-50/50 rounded-lg px-3 py-2">
                   <div className="flex items-center gap-3">
-                    <span className="text-stone-400 font-mono">{p.date}</span>
+                    <span className="text-stone-400 tabular-nums">{p.date}</span>
                     <span className="font-bold text-stone-600">{p.shares} 股</span>
                     <span className="text-stone-400">@${Number(p.price).toFixed(2)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-stone-500">${(Number(p.shares) * Number(p.price)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    <span className="tabular-nums text-stone-500">${(Number(p.shares) * Number(p.price)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                     <button onClick={(e) => { e.stopPropagation(); onDeletePurchase(p.id); }} className="text-stone-300 hover:text-[#C0392B] p-0.5">
                       <X className="w-3 h-3" />
                     </button>
@@ -756,7 +756,7 @@ const HoldingsGroupCard = ({ group, prices, onAddStock, onDeleteStock, onAddPurc
           <div>
             <h3 className="text-sm font-bold text-stone-700 tracking-tight">{group.name}</h3>
             <span className="text-[10px] text-stone-400 font-medium">
-              {group.stocks.length} 檔 · 市值 <span className="font-mono">${groupStats.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              {group.stocks.length} 檔 · 市值 <span className="tabular-nums">${groupStats.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
             </span>
           </div>
         </div>
@@ -835,7 +835,7 @@ const HoldingsDonutChart = ({ data }) => {
           <div key={i} className="flex items-center gap-2 text-xs">
             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
             <span className="text-stone-600 truncate flex-1">{d.label}</span>
-            <span className="font-mono text-stone-500 text-[10px]">{(d.value / total * 100).toFixed(1)}%</span>
+            <span className="tabular-nums text-stone-500 text-[10px]">{(d.value / total * 100).toFixed(1)}%</span>
           </div>
         ))}
       </div>
@@ -988,7 +988,7 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
           <div className="flex justify-between items-end px-1">
             <div>
               <h2 className="text-xl font-bold text-stone-800">持股檢視</h2>
-              <p className="text-xs text-stone-400 font-mono mt-1">{holdingsLastUpdated ? `最後更新: ${holdingsLastUpdated.toLocaleTimeString()}` : '更新中...'}</p>
+              <p className="text-xs text-stone-400 tabular-nums mt-1">{holdingsLastUpdated ? `最後更新: ${holdingsLastUpdated.toLocaleTimeString()}` : '更新中...'}</p>
             </div>
             <button onClick={() => fetchHoldingsPrices(holdingsGroups)} className="p-2 rounded-xl bg-white shadow-sm border border-stone-100 text-[#5A7099]">
               <RefreshCw className={`w-5 h-5 ${holdingsLoading ? 'animate-spin' : ''}`} />
@@ -1001,7 +1001,7 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <div className="text-xs text-stone-400 uppercase font-bold mb-1">總持有市值</div>
-                  <div className="text-2xl font-bold text-stone-800 font-mono">${portfolioSummary.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                  <div className="text-2xl font-bold text-stone-800 tabular-nums">${portfolioSummary.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
                 </div>
                 <span className={`text-sm font-bold px-2.5 py-1 rounded-xl ${portfolioSummary.pnl >= 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>
                   {portfolioSummary.pnl >= 0 ? '+' : ''}{portfolioSummary.pnlPercent.toFixed(2)}%
@@ -1010,11 +1010,11 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="bg-stone-50/50 rounded-xl p-3">
                   <div className="text-[10px] text-stone-400 font-bold uppercase mb-1">總成本</div>
-                  <div className="text-sm font-bold text-stone-700 font-mono">${portfolioSummary.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                  <div className="text-sm font-bold text-stone-700 tabular-nums">${portfolioSummary.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
                 </div>
                 <div className={`rounded-xl p-3 ${portfolioSummary.pnl >= 0 ? 'bg-[#F1FAEE]/50' : 'bg-[#FDECEA]/50'}`}>
                   <div className={`text-[10px] font-bold uppercase mb-1 ${portfolioSummary.pnl >= 0 ? 'text-[#52B788]' : 'text-[#E57373]'}`}>總損益</div>
-                  <div className={`text-sm font-bold font-mono ${portfolioSummary.pnl >= 0 ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>
+                  <div className={`text-sm font-bold tabular-nums ${portfolioSummary.pnl >= 0 ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>
                     {portfolioSummary.pnl >= 0 ? '+' : ''}${portfolioSummary.pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </div>
                 </div>
@@ -1079,7 +1079,7 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
             {newPurchase.shares && newPurchase.price && (
               <div className="bg-stone-50 rounded-xl p-3 text-center">
                 <span className="text-[10px] text-stone-400 uppercase font-bold">總金額</span>
-                <div className="text-lg font-bold text-stone-800 font-mono">${(Number(newPurchase.shares) * Number(newPurchase.price)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                <div className="text-lg font-bold text-stone-800 tabular-nums">${(Number(newPurchase.shares) * Number(newPurchase.price)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
               </div>
             )}
             <GlassButton onClick={() => addPurchaseToStock(purchaseModal.symbol)} className="w-full py-4">
@@ -1103,7 +1103,7 @@ const WatchlistGroup = ({ group, onUpdateStock, onDeleteStock, onDeleteGroup, on
   return (
     <div className={`${GLASS_CARD} p-5 hover:border-indigo-300 transition-all duration-300 mb-4 ${theme.glow}`}>
       <div className="flex justify-between items-center mb-4"><div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}><div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div><div><h3 className="text-sm font-bold text-stone-700 tracking-tight">{group.name}</h3><span className="text-[10px] text-stone-400 font-medium">佔總預算 {groupPercentage.toFixed(1)}%</span></div></div><div className="flex items-center gap-2"><button onClick={(e) => { e.stopPropagation(); onDeleteGroup(); }} className="p-1.5 rounded-lg bg-stone-100 text-stone-400 hover:bg-rose-50 hover:text-rose-500 transition-all"><X className="w-3.5 h-3.5" /></button></div></div>
-      {isExpanded && (<div className="space-y-4 animate-in slide-in-from-top-1 duration-200 border-t border-stone-100/50 pt-3">{group.items.map((stock, idx) => { const priceData = prices[stock.symbol]; const budget = Number(stock.budget) || 0; const price = priceData ? priceData.price : 0; const shares = price > 0 ? Math.floor(budget / price) : 0; const isUp = priceData?.change >= 0; const stockPercentage = groupTotalBudget > 0 ? (budget / groupTotalBudget) * 100 : 0; return (<div key={idx} className="flex flex-col gap-2 border-b border-stone-100/50 last:border-0 pb-3 last:pb-0"><div className="flex justify-between items-center"><div><div className="flex items-center gap-2"><span className="font-bold text-stone-800 text-base">{stock.symbol}</span><span className="text-[10px] text-stone-400 bg-stone-100 px-1.5 rounded">佔比 {stockPercentage.toFixed(1)}%</span>{priceData && (<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${isUp ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>{isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}{priceData.change.toFixed(2)}%</span>)}</div><div className="text-xs text-stone-400 font-mono mt-0.5">現價: ${price > 0 ? price.toFixed(2) : '---'}</div></div><button onClick={() => onDeleteStock(group.id, idx)} className="text-stone-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div><div className="bg-stone-50/50 rounded-xl p-3 flex items-center gap-3"><div className="flex-1"><label className="text-[10px] text-stone-400 font-bold uppercase block mb-1">定投預算 (USD)</label><input type="number" value={stock.budget} onChange={(e) => onUpdateStock(group.id, idx, 'budget', e.target.value)} className="w-full bg-white/50 border border-stone-200 rounded-lg px-2 py-1 text-sm font-bold text-stone-700 outline-none focus:border-indigo-300" placeholder="500" /></div><div className="text-right"><div className="text-[10px] text-stone-400 font-bold uppercase mb-1">可購股數</div><div className="text-xl font-bold text-indigo-600 font-mono">{shares} <span className="text-xs text-stone-400 font-sans">股</span></div></div></div></div>); })}<div className="mt-2 pt-2 border-t border-stone-100/50"><div className="flex gap-2"><input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdd()} placeholder="輸入代碼" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} /><button onClick={handleAdd} className="bg-stone-800 text-white px-4 rounded-xl hover:bg-stone-700 font-bold text-xs shadow-lg"><Plus className="w-4 h-4" /></button></div></div></div>)}
+      {isExpanded && (<div className="space-y-4 animate-in slide-in-from-top-1 duration-200 border-t border-stone-100/50 pt-3">{group.items.map((stock, idx) => { const priceData = prices[stock.symbol]; const budget = Number(stock.budget) || 0; const price = priceData ? priceData.price : 0; const shares = price > 0 ? Math.floor(budget / price) : 0; const isUp = priceData?.change >= 0; const stockPercentage = groupTotalBudget > 0 ? (budget / groupTotalBudget) * 100 : 0; return (<div key={idx} className="flex flex-col gap-2 border-b border-stone-100/50 last:border-0 pb-3 last:pb-0"><div className="flex justify-between items-center"><div><div className="flex items-center gap-2"><span className="font-bold text-stone-800 text-base">{stock.symbol}</span><span className="text-[10px] text-stone-400 bg-stone-100 px-1.5 rounded">佔比 {stockPercentage.toFixed(1)}%</span>{priceData && (<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${isUp ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>{isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}{priceData.change.toFixed(2)}%</span>)}</div><div className="text-xs text-stone-400 tabular-nums mt-0.5">現價: ${price > 0 ? price.toFixed(2) : '---'}</div></div><button onClick={() => onDeleteStock(group.id, idx)} className="text-stone-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div><div className="bg-stone-50/50 rounded-xl p-3 flex items-center gap-3"><div className="flex-1"><label className="text-[10px] text-stone-400 font-bold uppercase block mb-1">定投預算 (USD)</label><input type="number" value={stock.budget} onChange={(e) => onUpdateStock(group.id, idx, 'budget', e.target.value)} className="w-full bg-white/50 border border-stone-200 rounded-lg px-2 py-1 text-sm font-bold text-stone-700 outline-none focus:border-indigo-300" placeholder="500" /></div><div className="text-right"><div className="text-[10px] text-stone-400 font-bold uppercase mb-1">可購股數</div><div className="text-xl font-bold text-indigo-600 tabular-nums">{shares} <span className="text-xs text-stone-400 font-sans">股</span></div></div></div></div>); })}<div className="mt-2 pt-2 border-t border-stone-100/50"><div className="flex gap-2"><input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdd()} placeholder="輸入代碼" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} /><button onClick={handleAdd} className="bg-stone-800 text-white px-4 rounded-xl hover:bg-stone-700 font-bold text-xs shadow-lg"><Plus className="w-4 h-4" /></button></div></div></div>)}
     </div>
   );
 };
@@ -1190,7 +1190,7 @@ const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
   return (
     <div className="pb-24 space-y-6 animate-in fade-in">
       <div className="flex justify-between items-end mb-2 px-2">
-        <div><h2 className="text-xl font-bold text-stone-800">投資名單</h2><p className="text-xs text-stone-400 font-mono mt-1">{lastUpdated ? `最後更新: ${lastUpdated.toLocaleTimeString()}` : '更新中...'}</p></div>
+        <div><h2 className="text-xl font-bold text-stone-800">投資名單</h2><p className="text-xs text-stone-400 tabular-nums mt-1">{lastUpdated ? `最後更新: ${lastUpdated.toLocaleTimeString()}` : '更新中...'}</p></div>
         <button onClick={() => fetchAllPrices(groups)} className={`p-2 rounded-xl bg-white shadow-sm border border-stone-100 text-indigo-600`}><RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
       </div>
       <div className="mb-4">
@@ -1232,7 +1232,7 @@ const SalaryHistoryCard = ({ history, owner, onAdd, onDelete, onEdit, embedded =
               return (
                 <div key={rec.id} onClick={() => onEdit && onEdit(rec)} className="flex justify-between items-center text-sm border-b border-stone-100 last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-stone-100/50 px-1 rounded transition-colors">
                   <div className="flex flex-col">
-                    <span className="font-mono font-bold text-stone-700">${Number(rec.amount).toLocaleString()}</span>
+                    <span className="tabular-nums font-bold text-stone-700">${Number(rec.amount).toLocaleString()}</span>
                     <span className="text-[10px] text-stone-400">{rec.date}</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1253,7 +1253,7 @@ const SalaryHistoryCard = ({ history, owner, onAdd, onDelete, onEdit, embedded =
       )}
       {!isExpanded && history.length > 0 && (
         <div className="mt-2 text-xs text-stone-400 pl-11 flex justify-between items-center">
-          <span>目前: <span className="font-mono text-stone-600 font-bold">${Number(history[0].amount).toLocaleString()}</span></span>
+          <span>目前: <span className="tabular-nums text-stone-600 font-bold">${Number(history[0].amount).toLocaleString()}</span></span>
           {history.length > 1 && (() => {
             const grow = ((history[0].amount - history[history.length - 1].amount) / history[history.length - 1].amount) * 100;
             return <span className={`text-[10px] ${grow >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>總成長 {grow.toFixed(0)}%</span>
@@ -1278,7 +1278,7 @@ const PartnerYearGroup = ({ year, transactions, onDelete, onEdit }) => {
           <div className={`p-1.5 rounded-lg ${isExpanded ? 'bg-white shadow-sm text-stone-600' : 'text-stone-400'}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
           <span className="font-bold text-stone-700 text-sm">{year}年度</span>
         </div>
-        <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${yearStats.net >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>{yearStats.net > 0 ? '+' : ''}${yearStats.net.toLocaleString()}</span></div>
+        <div className="flex items-center gap-3"><span className={`tabular-nums font-bold text-sm ${yearStats.net >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>{yearStats.net > 0 ? '+' : ''}${yearStats.net.toLocaleString()}</span></div>
       </div>
       {isExpanded && (<div className="p-2 space-y-2">{transactions.map(tx => (
         <div key={tx.id} onClick={() => onEdit(tx)} className="flex justify-between items-center p-3 bg-white/50 rounded-xl border border-stone-100 hover:border-stone-200 transition-all group cursor-pointer">
@@ -1286,7 +1286,7 @@ const PartnerYearGroup = ({ year, transactions, onDelete, onEdit }) => {
             <div className={`p-2 rounded-xl ${tx.type === 'saving' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>{tx.type === 'saving' ? <ArrowUpCircle className="w-4 h-4" /> : <ArrowDownCircle className="w-4 h-4" />}</div>
             <div className="flex flex-col"><span className="font-bold text-stone-700 text-xs">{tx.type === 'saving' ? '存入' : '支出'}</span><span className="text-[10px] text-stone-400 flex items-center gap-1">{tx.date} {tx.note && `• ${tx.note}`}</span></div>
           </div>
-          <div className="flex items-center gap-3"><span className={`font-mono font-bold text-sm ${tx.type === 'saving' ? 'text-emerald-600' : 'text-rose-500'}`}>{tx.type === 'saving' ? '+' : '-'}${Number(tx.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); onDelete(tx.id); }} className="text-stone-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div>
+          <div className="flex items-center gap-3"><span className={`tabular-nums font-bold text-sm ${tx.type === 'saving' ? 'text-emerald-600' : 'text-rose-500'}`}>{tx.type === 'saving' ? '+' : '-'}${Number(tx.amount).toLocaleString()}</span><button onClick={(e) => { e.stopPropagation(); onDelete(tx.id); }} className="text-stone-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div>
         </div>
       ))}</div>)}
     </div>
@@ -1305,7 +1305,7 @@ const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete
           <span className="text-[10px] bg-stone-100 text-stone-400 px-1.5 py-0.5 rounded-full font-bold">{(items || []).length}</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-mono font-bold text-stone-700">${subtotal.toLocaleString()}</span>
+          <span className="text-sm tabular-nums font-bold text-stone-700">${subtotal.toLocaleString()}</span>
           <button onClick={() => onAdd(section, groupKey)} className="p-1.5 bg-stone-100 rounded-lg text-stone-500 hover:bg-stone-200 transition-colors"><Plus className="w-3.5 h-3.5" /></button>
         </div>
       </div>
@@ -1316,7 +1316,7 @@ const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete
             <input value={item.name} onChange={(e) => onUpdate(section, groupKey, idx, 'name', e.target.value)} placeholder="Name" className="flex-1 text-sm py-1.5 px-2 bg-transparent border-b border-transparent focus:border-stone-300 outline-none text-stone-600 transition-colors min-w-0" />
             <div className="relative w-36 flex-shrink-0">
               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-stone-400 text-[10px]">$</span>
-              <input type="text" inputMode="numeric" value={Number(item.amount).toLocaleString()} onChange={(e) => { const v = e.target.value.replace(/,/g, ''); if (!isNaN(v)) onUpdate(section, groupKey, idx, 'amount', v); }} className="w-full text-sm py-1.5 pl-5 pr-2 font-mono text-right text-stone-700 font-bold bg-transparent border-b border-transparent focus:border-stone-300 outline-none transition-colors" />
+              <input type="text" inputMode="numeric" value={Number(item.amount).toLocaleString()} onChange={(e) => { const v = e.target.value.replace(/,/g, ''); if (!isNaN(v)) onUpdate(section, groupKey, idx, 'amount', v); }} className="w-full text-sm py-1.5 pl-5 pr-2 tabular-nums text-right text-stone-700 font-bold bg-transparent border-b border-transparent focus:border-stone-300 outline-none transition-colors" />
             </div>
             <button onClick={() => onDelete(section, groupKey, idx)} className="p-1 text-stone-300 hover:text-rose-400 transition-all flex-shrink-0"><X className="w-3 h-3" /></button>
           </div>
@@ -1416,13 +1416,13 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
           </div>
         </div>
       <div className="grid grid-cols-2 gap-4 mb-4 pl-3">
-        <div><label className="text-[10px] text-stone-400 uppercase font-bold">Firstrade (美金)</label><input type="number" defaultValue={yearData.firstrade} onBlur={(e) => onUpdate(yearData.id, 'firstrade', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
-        <div><label className="text-[10px] text-stone-400 uppercase font-bold">IB (美金)</label><input type="number" defaultValue={yearData.ib} onBlur={(e) => onUpdate(yearData.id, 'ib', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
-        <div className="col-span-2 relative"><label className="text-[10px] text-amber-400 uppercase font-bold">提領/調節 (美金)</label><input type="number" defaultValue={yearData.withdrawal} onBlur={(e) => onUpdate(yearData.id, 'withdrawal', e.target.value)} className="w-full font-mono font-bold text-stone-700 border-b border-amber-100 focus:border-amber-400 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div><label className="text-[10px] text-stone-400 uppercase font-bold">Firstrade (美金)</label><input type="number" defaultValue={yearData.firstrade} onBlur={(e) => onUpdate(yearData.id, 'firstrade', e.target.value)} className="w-full tabular-nums font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div><label className="text-[10px] text-stone-400 uppercase font-bold">IB (美金)</label><input type="number" defaultValue={yearData.ib} onBlur={(e) => onUpdate(yearData.id, 'ib', e.target.value)} className="w-full tabular-nums font-bold text-stone-700 border-b border-stone-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div className="col-span-2 relative"><label className="text-[10px] text-amber-400 uppercase font-bold">提領/調節 (美金)</label><input type="number" defaultValue={yearData.withdrawal} onBlur={(e) => onUpdate(yearData.id, 'withdrawal', e.target.value)} className="w-full tabular-nums font-bold text-stone-700 border-b border-amber-100 focus:border-amber-400 outline-none py-1 bg-transparent" placeholder="0" /></div>
       </div>
       <div className="bg-stone-50/50 rounded-xl p-3 pl-4 flex justify-between items-center">
-        <div><div className="text-[10px] text-stone-400 mb-0.5 font-bold uppercase">目標金額</div><div className="font-bold text-stone-500 text-sm font-mono">${Math.round(targetAmount).toLocaleString()}</div></div>
-        <div className="text-right"><div className="text-[10px] text-stone-400 mb-0.5 font-bold uppercase">實際總資產</div><div className={`font-bold text-lg font-mono ${isAchieved ? 'text-emerald-600' : 'text-stone-700'}`}>${Math.round(currentTotal).toLocaleString()}</div><div className={`text-[10px] font-medium ${isAchieved ? 'text-emerald-500' : 'text-stone-400'}`}>誤差: {diff > 0 ? '+' : ''}{Math.round(diff).toLocaleString()} ({errorPercent.toFixed(2)}%)</div></div>
+        <div><div className="text-[10px] text-stone-400 mb-0.5 font-bold uppercase">目標金額</div><div className="font-bold text-stone-500 text-sm tabular-nums">${Math.round(targetAmount).toLocaleString()}</div></div>
+        <div className="text-right"><div className="text-[10px] text-stone-400 mb-0.5 font-bold uppercase">實際總資產</div><div className={`font-bold text-lg tabular-nums ${isAchieved ? 'text-emerald-600' : 'text-stone-700'}`}>${Math.round(currentTotal).toLocaleString()}</div><div className={`text-[10px] font-medium ${isAchieved ? 'text-emerald-500' : 'text-stone-400'}`}>誤差: {diff > 0 ? '+' : ''}{Math.round(diff).toLocaleString()} ({errorPercent.toFixed(2)}%)</div></div>
       </div>
     </div>
     </div>
@@ -1444,7 +1444,7 @@ const ExchangeItem = ({ item, onDelete, onEdit }) => {
         <div className="flex items-center gap-2">
           <div className={`px-2 py-1 rounded-lg font-bold text-xs ${accountTheme.bg} ${accountTheme.text} border ${accountTheme.border}`}>{isFT ? 'Firstrade' : 'IB'}</div>
           <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isSell ? 'bg-[#E8D3D1]/60 text-[#A65E62]' : 'bg-[#D1E6E1]/60 text-[#2F7567]'}`}>{isSell ? '賣出' : '買入'}</span>
-          <span className="text-base font-bold text-stone-800 font-mono">${Number(item.usdAmount).toLocaleString()}</span>
+          <span className="text-base font-bold text-stone-800 tabular-nums">${Number(item.usdAmount).toLocaleString()}</span>
         </div>
         <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="text-stone-300 hover:text-rose-400 transition-all p-1"><X className="w-4 h-4" /></button>
       </div>
@@ -1453,7 +1453,7 @@ const ExchangeItem = ({ item, onDelete, onEdit }) => {
         {formatDetailedDate(item.date)} • 匯率 {Number(item.rate).toFixed(2)}
       </div>
       {/* Row 3: TWD Amount */}
-      <div className={`text-sm font-mono font-bold mt-1 ${isSell ? 'text-[#A65E62]' : 'text-[#2F7567]'}`}>
+      <div className={`text-sm tabular-nums font-bold mt-1 ${isSell ? 'text-[#A65E62]' : 'text-[#2F7567]'}`}>
         {isSell ? '+' : '-'} NT$ {twdAmount.toLocaleString()}
       </div>
     </div>
@@ -1480,7 +1480,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
             {!isExpanded && totalLabel && (
               <div className="text-xs text-stone-400 flex items-center gap-2 mt-0.5">
                 <span>{totalLabel}: </span>
-                <span className="font-mono font-bold text-stone-600">${totalValue.toLocaleString()}</span>
+                <span className="tabular-nums font-bold text-stone-600">${totalValue.toLocaleString()}</span>
               </div>
             )}
           </div>
@@ -1506,7 +1506,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
           {totalLabel && (
             <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center">
               <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">{totalLabel}</span>
-              <span className="text-xl font-bold text-stone-800 font-mono">${totalValue.toLocaleString()}</span>
+              <span className="text-xl font-bold text-stone-800 tabular-nums">${totalValue.toLocaleString()}</span>
             </div>
           )}
         </div>
@@ -1564,12 +1564,12 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
         <div className="grid grid-cols-2 gap-3 mb-4 animate-in slide-in-from-top-2 duration-200">
           <div className="bg-stone-50/80 p-3 rounded-xl border border-stone-100">
             <div className="text-xs text-stone-400 mb-1">下期 ({currentStatus?.id}期)</div>
-            <div className="text-lg font-bold text-stone-800 font-mono">${currentStatus?.amount.toLocaleString()}</div>
+            <div className="text-lg font-bold text-stone-800 tabular-nums">${currentStatus?.amount.toLocaleString()}</div>
             <div className="text-[10px] text-stone-400">利率 {currentStatus?.rate}%</div>
           </div>
           <div className="bg-stone-50/80 p-3 rounded-xl border border-stone-100">
             <div className="text-xs text-stone-400 mb-1">累計已還款</div>
-            <div className="text-lg font-bold text-stone-800 font-mono">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</div>
+            <div className="text-lg font-bold text-stone-800 tabular-nums">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</div>
           </div>
         </div>
       )}
@@ -1578,11 +1578,11 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
         <div className="flex justify-between items-center px-2 pb-2">
           <div className="flex flex-col">
             <span className="text-[10px] text-stone-400 uppercase font-bold">下期金額</span>
-            <span className="font-mono font-bold text-stone-600 text-sm">${currentStatus?.amount.toLocaleString()}</span>
+            <span className="tabular-nums font-bold text-stone-600 text-sm">${currentStatus?.amount.toLocaleString()}</span>
           </div>
           <div className="flex flex-col items-end">
             <span className="text-[10px] text-stone-400 uppercase font-bold">累計已還</span>
-            <span className="font-mono font-bold text-stone-600 text-sm">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</span>
+            <span className="tabular-nums font-bold text-stone-600 text-sm">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</span>
           </div>
         </div>
       )}
@@ -1603,9 +1603,9 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
                   {rows.map(row => (
                     <div key={row.id} className={`grid grid-cols-5 text-xs px-3 py-2 border-b border-stone-100 last:border-0 items-center ${row.isPaid ? 'bg-[#F1FAEE]/40' : 'hover:bg-stone-50/30'}`}>
                       <span>{row.isPaid ? <CheckCircle2 className="w-3 h-3 text-[#52B788]" /> : <span className="w-3 h-3 rounded-full border border-stone-200 block"></span>}</span>
-                      <span className={`font-mono ${row.isPaid ? 'text-[#2D6A4F] font-bold' : 'text-stone-500'}`}>{row.date.getMonth() + 1}月</span>
+                      <span className={`tabular-nums ${row.isPaid ? 'text-[#2D6A4F] font-bold' : 'text-stone-500'}`}>{row.date.getMonth() + 1}月</span>
                       <span className="text-center text-stone-400">#{row.id}</span>
-                      <span className={`text-right font-bold font-mono ${row.isPaid ? 'text-[#2D6A4F]' : 'text-stone-700'}`}>${row.amount.toLocaleString()}</span>
+                      <span className={`text-right font-bold tabular-nums ${row.isPaid ? 'text-[#2D6A4F]' : 'text-stone-700'}`}>${row.amount.toLocaleString()}</span>
                       <span className="text-right text-stone-400">{row.rate}%</span>
                     </div>
                   ))}
@@ -1643,7 +1643,7 @@ const IncomeTrendChart = ({ incomes, variant }) => {
           </div>
         ))}
       </div>
-      <div className="flex justify-between mt-1 text-[9px] text-stone-300 font-mono px-0.5">
+      <div className="flex justify-between mt-1 text-[9px] text-stone-300 tabular-nums px-0.5">
         <span>1</span><span>6</span><span>12</span>
       </div>
     </div>
@@ -1671,7 +1671,7 @@ const PersonCard = ({ name, owner, incomes, total, history, icon: Icon, onAddSal
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-stone-800 tracking-tight font-mono">${total.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-stone-800 tracking-tight tabular-nums">${total.toLocaleString()}</div>
             {isExpanded ? <ChevronUp className="w-4 h-4 text-stone-300 ml-auto mt-1" /> : <ChevronDown className="w-4 h-4 text-stone-300 ml-auto mt-1" />}
           </div>
         </div>
@@ -1712,7 +1712,7 @@ const PersonCard = ({ name, owner, incomes, total, history, icon: Icon, onAddSal
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-sm font-mono font-bold ${theme.text}`}>+${Number(inc.amount).toLocaleString()}</span>
+                    <span className={`text-sm tabular-nums font-bold ${theme.text}`}>+${Number(inc.amount).toLocaleString()}</span>
                     <button onClick={(e) => { e.stopPropagation(); onDeleteIncome(inc.id); }} className="text-stone-300 hover:text-rose-400 p-1 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <X className="w-3 h-3" />
                     </button>
@@ -1748,22 +1748,22 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-xs font-bold text-stone-400 uppercase tracking-widest">年度總預算</h2>
-            <div className="text-xl sm:text-2xl font-bold text-stone-800 font-mono break-all line-clamp-1">${totalAnnualBudget.toLocaleString()}</div>
+            <div className="text-xl sm:text-2xl font-bold text-stone-800 tabular-nums break-all line-clamp-1">${totalAnnualBudget.toLocaleString()}</div>
           </div>
         </div>
         <div className="flex flex-row gap-4 w-full">
           <div className="bg-stone-50/50 rounded-xl p-3 flex-1 overflow-hidden">
             <div className="text-[10px] text-stone-400 font-bold uppercase mb-1">已花費</div>
-            <div className="text-base sm:text-lg font-bold text-stone-700 font-mono truncate">${totalAnnualUsed.toLocaleString()}</div>
+            <div className="text-base sm:text-lg font-bold text-stone-700 tabular-nums truncate">${totalAnnualUsed.toLocaleString()}</div>
           </div>
           <div className={`rounded-xl p-3 flex-1 overflow-hidden ${isOverBudget ? 'bg-[#FDECEA]/50' : 'bg-[#F1FAEE]/50'}`}>
             <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-[#E57373]' : 'text-[#52B788]'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
-            <div className={`text-base sm:text-lg font-bold font-mono truncate ${isOverBudget ? 'text-[#C0392B]' : 'text-[#2D6A4F]'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
+            <div className={`text-base sm:text-lg font-bold tabular-nums truncate ${isOverBudget ? 'text-[#C0392B]' : 'text-[#2D6A4F]'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
           </div>
         </div>
         <div className="bg-stone-50/50 rounded-xl p-3 mt-3 flex justify-between items-center">
           <span className="text-[10px] text-stone-400 font-bold uppercase">月均支出 ({currentMonth}月)</span>
-          <span className="text-sm font-bold text-stone-700 font-mono">${monthlyAvgSpending.toLocaleString()}</span>
+          <span className="text-sm font-bold text-stone-700 tabular-nums">${monthlyAvgSpending.toLocaleString()}</span>
         </div>
       </div>
 
@@ -1873,7 +1873,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
               {item.brand && <span className="text-[10px] bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded mt-1 inline-block">{item.brand}</span>}
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-stone-700">${Number(item.amount).toLocaleString()}</span>
+              <span className="tabular-nums font-bold text-stone-700">${Number(item.amount).toLocaleString()}</span>
             </div>
           </div>
         )}
@@ -1894,7 +1894,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
         itemRenderer={(item) => (
           <div className="flex justify-between items-center py-1">
             <span className="text-sm text-stone-600 font-medium">{item.name}</span>
-            <span className="font-mono font-bold text-stone-800">${Number(item.amount).toLocaleString()}</span>
+            <span className="tabular-nums font-bold text-stone-800">${Number(item.amount).toLocaleString()}</span>
           </div>
         )}
       />
@@ -1935,7 +1935,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
                   {item.source || '資金來源'}
                   {item.symbol && <span className="ml-1 text-[10px] bg-indigo-100 text-indigo-600 px-1 rounded">{item.symbol}</span>}
                 </span>
-                <span className="font-mono font-bold text-emerald-600">${itemTotal.toLocaleString()}</span>
+                <span className="tabular-nums font-bold text-emerald-600">${itemTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xs text-stone-400">
                 <span>{hasShares ? `${Number(item.shares).toLocaleString()}股 x $${Number(item.amount).toLocaleString()}` : `$${Number(item.amount).toLocaleString()}`}{rate !== 1 && ` (匯率 ${rate})`}</span>
@@ -1975,7 +1975,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, del
               {item.note && <span className="text-xs text-stone-500 block mt-1">{item.note}</span>}
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-stone-700">${Number(item.amount).toLocaleString()}</span>
+              <span className="tabular-nums font-bold text-stone-700">${Number(item.amount).toLocaleString()}</span>
             </div>
           </div>
         )}
@@ -2106,7 +2106,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold font-mono text-stone-800">${selectedTrans.reduce((s, t) => s + Number(t.amount), 0).toLocaleString()}</div>
+                <div className="text-lg font-bold tabular-nums text-stone-800">${selectedTrans.reduce((s, t) => s + Number(t.amount), 0).toLocaleString()}</div>
               </div>
             </div>
 
@@ -2135,7 +2135,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-sm font-mono font-medium text-stone-600">-${Number(t.amount).toLocaleString()}</span>
+                      <span className="text-sm tabular-nums font-medium text-stone-600">-${Number(t.amount).toLocaleString()}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteTransaction(t.id); }}
                         className="p-1 text-stone-300 hover:text-rose-500 transition-colors"
@@ -2399,7 +2399,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
               <div key={item.month} className="flex justify-between items-center text-sm border-b border-stone-50 last:border-0 pb-2 last:pb-0">
                 <span className="text-stone-500 w-8">{item.month}月</span>
                 <div className="flex-1 px-4 text-xs text-gray-400 text-center">${item.base.toLocaleString()} vs ${item.compare.toLocaleString()}</div>
-                <span className={`font-mono font-bold ${item.diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{item.diff > 0 ? '+' : ''}{item.diff.toLocaleString()}</span>
+                <span className={`tabular-nums font-bold ${item.diff > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{item.diff > 0 ? '+' : ''}{item.diff.toLocaleString()}</span>
               </div>
             ))}
           </div>
@@ -2475,7 +2475,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
                               <span className="text-stone-600 font-medium">{item.name}</span>
                               <div className="flex items-center gap-2">
                                 <div className="w-16 bg-stone-200 rounded-full h-1 overflow-hidden"><div className="h-full bg-stone-400 rounded-full" style={{ width: `${item.percent}%` }} /></div>
-                                <span className="font-mono text-stone-600 w-12 text-right">${item.value.toLocaleString()}</span>
+                                <span className="tabular-nums text-stone-600 w-12 text-right">${item.value.toLocaleString()}</span>
                               </div>
                             </div>
                           ))}
@@ -2501,7 +2501,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
                       <span className="text-xs text-stone-400">{formatDetailedDate(t.date)} {t.note && `• ${t.note}`}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-mono font-bold text-stone-800">${Number(t.amount).toLocaleString()}</span>
+                      <span className="tabular-nums font-bold text-stone-800">${Number(t.amount).toLocaleString()}</span>
                       {/* Delete removed in Analysis View */}
                     </div>
                   </div>
@@ -2586,10 +2586,10 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
             <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
             <span className="text-[10px] text-stone-400 font-bold uppercase">總資產</span>
           </div>
-          <div className="text-xl font-bold text-stone-800 font-mono">${totalAssets.toLocaleString()}</div>
+          <div className="text-xl font-bold text-stone-800 tabular-nums">${totalAssets.toLocaleString()}</div>
           <div className="flex flex-col gap-0.5 mt-2">
-            <span className="text-[9px] text-stone-400 font-mono">銀行 ${totalBank.toLocaleString()}</span>
-            <span className="text-[9px] text-stone-400 font-mono">投資 ${totalInvest.toLocaleString()}</span>
+            <span className="text-[9px] text-stone-400 tabular-nums">銀行 ${totalBank.toLocaleString()}</span>
+            <span className="text-[9px] text-stone-400 tabular-nums">投資 ${totalInvest.toLocaleString()}</span>
           </div>
         </div>
         <div className={`${GLASS_CARD} p-4 border-l-4 border-l-rose-400`}>
@@ -2597,9 +2597,9 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
             <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
             <span className="text-[10px] text-stone-400 font-bold uppercase">總負債</span>
           </div>
-          <div className="text-xl font-bold text-stone-800 font-mono">${totalLiabilities.toLocaleString()}</div>
+          <div className="text-xl font-bold text-stone-800 tabular-nums">${totalLiabilities.toLocaleString()}</div>
           <div className="flex flex-col gap-0.5 mt-2">
-            <span className="text-[9px] text-stone-400 font-mono">負債比 {totalAssets > 0 ? ((totalLiabilities / totalAssets) * 100).toFixed(1) : '0'}%</span>
+            <span className="text-[9px] text-stone-400 tabular-nums">負債比 {totalAssets > 0 ? ((totalLiabilities / totalAssets) * 100).toFixed(1) : '0'}%</span>
           </div>
         </div>
       </div>
@@ -2666,7 +2666,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
                         </div>
                         <div>
                           <div className="text-xs text-stone-400 font-medium mb-0.5">{new Date(rec.date).toLocaleDateString('zh-TW', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
-                          <div className="text-lg font-bold text-stone-800 font-mono">${rec.netPrincipal.toLocaleString()}</div>
+                          <div className="text-lg font-bold text-stone-800 tabular-nums">${rec.netPrincipal.toLocaleString()}</div>
                           {prevRec && growth !== 0 && (
                             <div className={`flex items-center gap-1 mt-1 text-[10px] font-bold ${growth > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                               {growth > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -2717,7 +2717,7 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, on
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#B4C4DE] rounded-full -mr-10 -mt-10 blur-xl opacity-40"></div>
             <div className="relative z-10">
               <div className="text-xs text-stone-400 uppercase font-bold mb-1">淨持有美金</div>
-              <div className="text-2xl font-bold text-stone-800 font-mono">
+              <div className="text-2xl font-bold text-stone-800 tabular-nums">
                 ${(() => {
                   const buyTotal = exchanges.filter(e => e.type !== 'sell').reduce((sum, e) => sum + Number(e.usdAmount), 0);
                   const sellTotal = exchanges.filter(e => e.type === 'sell').reduce((sum, e) => sum + Number(e.usdAmount), 0);
@@ -2730,7 +2730,7 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, on
           {/* Buy/Sell Summary Cards */}
           <div className="grid grid-cols-2 gap-3">
             <div className={`${GLASS_CARD} p-4 border-l-4 border-[#4DA391]`}>
-              <div className="text-lg font-bold text-[#2F7567] font-mono">${(() => {
+              <div className="text-lg font-bold text-[#2F7567] tabular-nums">${(() => {
                 const buyRecords = exchanges.filter(e => e.type !== 'sell');
                 return buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
               })()}</div>
@@ -2742,7 +2742,7 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, on
               })()}</div>
             </div>
             <div className={`${GLASS_CARD} p-4 border-l-4 border-[#C48286]`}>
-              <div className="text-lg font-bold text-[#A65E62] font-mono">${(() => {
+              <div className="text-lg font-bold text-[#A65E62] tabular-nums">${(() => {
                 const sellRecords = exchanges.filter(e => e.type === 'sell');
                 return sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
               })()}</div>
@@ -2865,7 +2865,7 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
                 <div key={iIdx} onClick={() => handleEditItem(gIdx, iIdx)} className={`flex justify-between items-center text-sm border-b border-stone-50 last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-stone-50 p-2 rounded transition-colors ${editingSelection?.gIdx === gIdx && editingSelection?.iIdx === iIdx ? 'bg-blue-50 ring-1 ring-blue-100' : ''}`}>
                   <span className="text-stone-500 font-medium">{item.name}</span>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-stone-700 font-bold bg-stone-100 px-2 py-0.5 rounded-md">${Number(item.budget).toLocaleString()}</span>
+                    <span className="tabular-nums text-stone-700 font-bold bg-stone-100 px-2 py-0.5 rounded-md">${Number(item.budget).toLocaleString()}</span>
                     <button onClick={(e) => { e.stopPropagation(); delItem(gIdx, iIdx); }} className="text-stone-200 hover:text-rose-400"><X className="w-3 h-3" /></button>
                   </div>
                 </div>
@@ -3043,13 +3043,13 @@ const RecurringConfirmModal = ({ isOpen, onClose, items, onConfirm, onSkip }) =>
       <div className="space-y-4">
         <div className="text-center py-4">
           <div className="text-sm text-stone-500 mb-1">檢測到新的月份，是否加入以下固定支出？</div>
-          <div className="text-2xl font-bold text-stone-800 font-mono">${total.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-stone-800 tabular-nums">${total.toLocaleString()}</div>
         </div>
         <div className="space-y-2 bg-stone-50 p-3 rounded-xl max-h-[40vh] overflow-y-auto">
           {items.map(item => (
             <div key={item.id} className="flex justify-between items-center text-sm border-b border-stone-100 last:border-0 pb-2 last:pb-0">
               <span className="text-stone-600 font-medium">{item.name}</span>
-              <span className="font-mono font-bold text-stone-700">${Number(item.amount).toLocaleString()}</span>
+              <span className="tabular-nums font-bold text-stone-700">${Number(item.amount).toLocaleString()}</span>
             </div>
           ))}
         </div>
@@ -3891,7 +3891,7 @@ function AppContent() {
 
   // --- Main Render ---
   return (
-    <div className="flex flex-col h-screen bg-[#F8F5F0] text-stone-800 font-mono overflow-hidden max-w-md mx-auto relative shadow-2xl">
+    <div className="flex flex-col h-screen bg-[#F8F5F0] text-stone-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
       {/* Background Blobs - Soft pastel accents */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#F1FAEE]/50 rounded-full blur-[80px] pointer-events-none z-0"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#FDECEA]/40 rounded-full blur-[80px] pointer-events-none z-0"></div>
@@ -3943,7 +3943,7 @@ function AppContent() {
               {(currentView === 'home' || currentView === 'income' || currentView === 'settings') && (
                 <div className="flex items-center bg-white/40 backdrop-blur-md rounded-full px-1 py-0.5 border border-white/20 shadow-sm">
                   <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-white/50 rounded-full transition-colors active:scale-95"><ChevronLeft className="w-3 h-3 text-stone-600" /></button>
-                  <span className="text-xs font-bold text-stone-700 mx-1 font-mono whitespace-nowrap">{currentView === 'home' ? `${selectedDate.getMonth() + 1} 月` : `${selectedDate.getFullYear()} 年`}</span>
+                  <span className="text-xs font-bold text-stone-700 mx-1 tabular-nums whitespace-nowrap">{currentView === 'home' ? `${selectedDate.getMonth() + 1} 月` : `${selectedDate.getFullYear()} 年`}</span>
                   <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-white/50 rounded-full transition-colors active:scale-95"><ChevronRight className="w-3 h-3 text-stone-600" /></button>
                 </div>
               )}
