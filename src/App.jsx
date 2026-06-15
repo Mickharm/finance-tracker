@@ -79,8 +79,10 @@ const setCachedPrices = (prices) => {
 };
 const LEDGER_ID = 'Mick';
 
-const GLASS_CARD = "bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-3xl relative overflow-hidden group";
-const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/40 backdrop-blur-md border border-white/60 focus:bg-white/70 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-inner shadow-stone-200/20";
+// Liquid-glass tokens: saturated backdrop blur (refraction) + crisp top-edge
+// specular highlight + layered depth shadow. Used app-wide for one consistent material.
+const GLASS_CARD = "bg-gradient-to-br from-white/75 to-white/40 backdrop-blur-2xl backdrop-saturate-150 border border-white/50 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.65),0_10px_30px_-12px_rgba(87,83,78,0.20)] rounded-3xl relative overflow-hidden group";
+const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/45 backdrop-blur-md backdrop-saturate-150 border border-white/55 focus:bg-white/75 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5)]";
 
 const COLOR_VARIANTS = {
   slate: {
@@ -148,7 +150,7 @@ const MENU_SECTIONS = [
   {
     title: '儲蓄功能',
     items: [
-      { id: 'watchlist', label: '定投名單', icon: Layers },
+      { id: 'watchlist', label: '持股組合', icon: Layers },
       { id: 'stock_goals', label: '存股計畫', icon: Target },
       { id: 'partner', label: '佳欣儲蓄', icon: Users },
       { id: 'principal', label: '資產淨值', icon: PieChart },
@@ -648,57 +650,36 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
 
 
 // ─── Holdings View (持股檢視) ────────────────────────────────────────────────
-const HoldingsStockCard = ({ stock, onAddPurchase, onDeletePurchase, onDeleteStock, currentPrice, priceChange }) => {
+const HoldingsStockCard = ({ stock, onAddPurchase, onDeletePurchase, onDeleteStock, totalPortfolio }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const totalShares = stock.purchases.reduce((sum, p) => sum + Number(p.shares), 0);
-  const totalCost = stock.purchases.reduce((sum, p) => sum + Number(p.shares) * Number(p.price), 0);
-  const avgCost = totalShares > 0 ? totalCost / totalShares : 0;
-  const marketValue = totalShares * (currentPrice || 0);
-  const pnl = currentPrice ? marketValue - totalCost : 0;
-  const pnlPercent = totalCost > 0 && currentPrice ? (pnl / totalCost) * 100 : 0;
-  const isUp = pnl >= 0;
+  const amount = stock.purchases.reduce((sum, p) => sum + Number(p.shares) * Number(p.price), 0);
+  const avgCost = totalShares > 0 ? amount / totalShares : 0;
+  const percent = totalPortfolio > 0 ? (amount / totalPortfolio) * 100 : 0;
 
   return (
     <div className="border border-stone-100 rounded-2xl p-4 bg-white/30">
       <div className="flex justify-between items-start cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="font-bold text-stone-800 text-base">{stock.symbol}</span>
-            {currentPrice > 0 && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${priceChange >= 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>
-                {priceChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}{priceChange?.toFixed(2)}%
-              </span>
-            )}
+            <span className="text-[10px] text-[#5A7099] bg-[#EDF2FA] px-1.5 py-0.5 rounded font-bold tabular-nums">{percent.toFixed(1)}%</span>
           </div>
           <div className="flex items-center gap-3 text-xs text-stone-400">
             <span className="tabular-nums">{totalShares} 股</span>
-            <span>均價 ${avgCost.toFixed(2)}</span>
-            <span>現價 ${currentPrice ? currentPrice.toFixed(2) : '---'}</span>
+            <span className="tabular-nums">均價 ${avgCost.toFixed(2)}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {currentPrice > 0 && (
-            <div className="text-right">
-              <div className={`text-sm font-bold tabular-nums ${isUp ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>
-                {isUp ? '+' : ''}{pnlPercent.toFixed(2)}%
-              </div>
-              <div className={`text-[10px] tabular-nums ${isUp ? 'text-[#52B788]' : 'text-[#E57373]'}`}>
-                {isUp ? '+' : ''}${pnl.toFixed(0)}
-              </div>
-            </div>
-          )}
+          <div className="text-sm font-bold text-stone-800 tabular-nums">${amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
           <button onClick={(e) => { e.stopPropagation(); onDeleteStock(); }} className="text-stone-300 hover:text-[#C0392B] p-1 transition-colors">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
-      {/* Market Value Bar */}
-      {currentPrice > 0 && (
-        <div className="mt-3 flex justify-between items-center text-[10px] text-stone-400">
-          <span>市值 <span className="tabular-nums font-bold text-stone-600">${marketValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
-          <span>成本 <span className="tabular-nums">${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
-        </div>
-      )}
+      <div className="mt-3 w-full bg-stone-100/60 rounded-full h-1 overflow-hidden">
+        <div className="h-full bg-[#7A96BE] rounded-full transition-all duration-500" style={{ width: `${Math.min(percent, 100)}%` }} />
+      </div>
       {isExpanded && (
         <div className="mt-3 pt-3 border-t border-stone-100/50 animate-in slide-in-from-top-1 duration-200">
           <div className="flex justify-between items-center mb-2">
@@ -715,8 +696,8 @@ const HoldingsStockCard = ({ stock, onAddPurchase, onDeletePurchase, onDeleteSto
                 <div key={p.id} className="flex justify-between items-center text-xs bg-stone-50/50 rounded-lg px-3 py-2">
                   <div className="flex items-center gap-3">
                     <span className="text-stone-400 tabular-nums">{p.date}</span>
-                    <span className="font-bold text-stone-600">{p.shares} 股</span>
-                    <span className="text-stone-400">@${Number(p.price).toFixed(2)}</span>
+                    <span className="font-bold text-stone-600 tabular-nums">{p.shares} 股</span>
+                    <span className="text-stone-400 tabular-nums">@${Number(p.price).toFixed(2)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="tabular-nums text-stone-500">${(Number(p.shares) * Number(p.price)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
@@ -734,67 +715,59 @@ const HoldingsStockCard = ({ stock, onAddPurchase, onDeletePurchase, onDeleteSto
   );
 };
 
-const HoldingsGroupCard = ({ group, prices, onAddStock, onDeleteStock, onAddPurchase, onDeletePurchase, onDeleteGroup }) => {
+const HoldingsGroupCard = ({ group, onAddStock, onDeleteStock, onAddPurchase, onDeletePurchase, onDeleteGroup, totalPortfolio }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [newSymbol, setNewSymbol] = useState('');
   const theme = COLOR_VARIANTS.sky;
 
   const groupStats = useMemo(() => {
-    let totalCost = 0, totalValue = 0;
-    group.stocks.forEach(s => {
-      const shares = s.purchases.reduce((sum, p) => sum + Number(p.shares), 0);
-      const cost = s.purchases.reduce((sum, p) => sum + Number(p.shares) * Number(p.price), 0);
-      const price = prices[s.symbol]?.price || 0;
-      totalCost += cost;
-      totalValue += shares * price;
+    let amount = 0;
+    (group.stocks || []).forEach(s => {
+      amount += s.purchases.reduce((sum, p) => sum + Number(p.shares) * Number(p.price), 0);
     });
-    const pnl = totalValue - totalCost;
-    const pnlPercent = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
-    return { totalCost, totalValue, pnl, pnlPercent };
-  }, [group.stocks, prices]);
+    return { amount, percent: totalPortfolio > 0 ? (amount / totalPortfolio) * 100 : 0 };
+  }, [group.stocks, totalPortfolio]);
+
+  const sortedStocks = useMemo(() => (group.stocks || [])
+    .map((s, idx) => ({ s, idx, value: s.purchases.reduce((sum, p) => sum + Number(p.shares) * Number(p.price), 0) }))
+    .sort((a, b) => b.value - a.value), [group.stocks]);
 
   const handleAdd = () => {
-    if (newSymbol.trim()) {
-      onAddStock(group.id, newSymbol.trim().toUpperCase());
-      setNewSymbol('');
-    }
+    if (newSymbol.trim()) { onAddStock(group.id, newSymbol.trim().toUpperCase()); setNewSymbol(''); }
   };
 
   return (
     <div className={`${GLASS_CARD} p-5 mb-4 ${theme.glow}`}>
       <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+        <div className="flex items-center gap-3 cursor-pointer flex-1 min-w-0" onClick={() => setIsExpanded(!isExpanded)}>
           <div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-stone-700 tracking-tight">{group.name}</h3>
-            <span className="text-[10px] text-stone-400 font-medium">
-              {group.stocks.length} 檔 · 市值 <span className="tabular-nums">${groupStats.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-            </span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-stone-700 tracking-tight truncate">{group.name}</h3>
+            <span className="text-[10px] text-stone-400 font-medium tabular-nums">{(group.stocks || []).length} 檔 · 佔 {groupStats.percent.toFixed(1)}%</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {groupStats.totalCost > 0 && (
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${groupStats.pnl >= 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>
-              {groupStats.pnl >= 0 ? '+' : ''}{groupStats.pnlPercent.toFixed(1)}%
-            </span>
-          )}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-sm font-bold text-stone-800 tabular-nums">${groupStats.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
           <button onClick={(e) => { e.stopPropagation(); onDeleteGroup(); }} className="p-1.5 rounded-lg bg-stone-100 text-stone-400 hover:bg-[#FDECEA] hover:text-[#C0392B] transition-all">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
+      <div className="w-full bg-stone-100/60 rounded-full h-1.5 overflow-hidden">
+        <div className="h-full bg-[#7A96BE] rounded-full transition-all duration-500" style={{ width: `${Math.min(groupStats.percent, 100)}%` }} />
+      </div>
       {isExpanded && (
-        <div className="space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-stone-100/50 pt-3">
-          {group.stocks.map((stock, idx) => (
+        <div className="space-y-3 animate-in slide-in-from-top-1 duration-200 border-t border-stone-100/50 pt-3 mt-3">
+          {(group.stocks || []).length === 0 && <div className="text-xs text-stone-300 text-center py-2">尚無持股，於下方輸入代碼新增</div>}
+          {sortedStocks.map(({ s, idx }) => (
             <HoldingsStockCard
-              key={`${stock.symbol}-${idx}`}
-              stock={stock}
-              currentPrice={prices[stock.symbol]?.price}
-              priceChange={prices[stock.symbol]?.change}
+              key={`${s.symbol}-${idx}`}
+              stock={s}
+              totalPortfolio={totalPortfolio}
               onAddPurchase={onAddPurchase}
-              onDeletePurchase={(purchaseId) => onDeletePurchase(group.id, stock.symbol, purchaseId)}
+              onDeletePurchase={(purchaseId) => onDeletePurchase(group.id, s.symbol, purchaseId)}
               onDeleteStock={() => onDeleteStock(group.id, idx)}
             />
           ))}
@@ -842,7 +815,7 @@ const HoldingsDonutChart = ({ data }) => {
       <svg viewBox="0 0 100 100" className="w-28 h-28 flex-shrink-0">
         {arcs}
         <text x={cx} y={cy - 3} textAnchor="middle" className="fill-stone-700 text-[7px] font-bold">${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</text>
-        <text x={cx} y={cy + 6} textAnchor="middle" className="fill-stone-400 text-[4px]">總市值</text>
+        <text x={cx} y={cy + 6} textAnchor="middle" className="fill-stone-400 text-[4px]">總投入</text>
       </svg>
       <div className="flex-1 space-y-1.5">
         {data.map((d, i) => (
@@ -857,242 +830,136 @@ const HoldingsDonutChart = ({ data }) => {
   );
 };
 
+// 持股組合：依「投入金額」檢視比例 / 金額 / 分群（不依賴即時報價）
 const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
-  const [activeTab, setActiveTab] = useState('holdings');
-  // Holdings state
   const [holdingsGroups, setHoldingsGroups] = useState([]);
-  const [holdingsPrices, setHoldingsPrices] = useState({});
-  const [holdingsLoading, setHoldingsLoading] = useState(false);
-  const [holdingsLastUpdated, setHoldingsLastUpdated] = useState(null);
+  const [loaded, setLoaded] = useState(false);
   const [isAddHoldingsGroupOpen, setIsAddHoldingsGroupOpen] = useState(false);
   const [newHoldingsGroupName, setNewHoldingsGroupName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Add purchase modal
   const [purchaseModal, setPurchaseModal] = useState({ open: false, symbol: '' });
-  const [newPurchase, setNewPurchase] = useState({ date: new Date().toISOString().split('T')[0], shares: '', price: '' });
+  const [newPurchase, setNewPurchase] = useState({ date: getTodayString(), shares: '', price: '' });
 
-  // ─ Firestore ─
   const holdingsRef = useMemo(() => user ? doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'holdings_config') : null, [user, db, appId]);
 
   useEffect(() => {
     if (!holdingsRef) return;
     const unsub = onSnapshot(holdingsRef, (s) => {
-      if (s.exists()) {
-        const data = s.data().groups || [];
-        setHoldingsGroups(data);
-        if (data.length > 0) fetchHoldingsPrices(data);
-      } else setHoldingsGroups([]);
+      setHoldingsGroups(s.exists() ? (s.data().groups || []) : []);
+      setLoaded(true);
     });
     return () => unsub();
   }, [holdingsRef]);
 
-  const saveHoldings = async (newGroups) => {
-    if (holdingsRef) await setDoc(holdingsRef, { groups: newGroups });
-  };
+  const saveHoldings = async (newGroups) => { if (holdingsRef) await setDoc(holdingsRef, { groups: newGroups }); };
 
-  // ─ Price fetching (with localStorage cache) ─
-  const fetchHoldingsPrices = useCallback(async (currentGroups) => {
-    setHoldingsLoading(true);
-    const allSymbols = new Set();
-    currentGroups.forEach(g => g.stocks?.forEach(s => {
-      if (s.symbol?.trim()) allSymbols.add(s.symbol.trim().toUpperCase());
-    }));
-    if (allSymbols.size === 0) { setHoldingsLoading(false); return; }
-    const cached = getCachedPrices();
-    const newPrices = {};
-    const symbolsToFetch = [];
-    for (const symbol of allSymbols) {
-      if (cached[symbol]) { newPrices[symbol] = cached[symbol]; }
-      else { symbolsToFetch.push(symbol); }
-    }
-    for (const symbol of symbolsToFetch) {
-      try {
-        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
-        if (res.ok) { const data = await res.json(); if (data.c) newPrices[symbol] = { price: data.c, change: data.dp }; }
-      } catch (e) { console.warn(e); }
-      await new Promise(r => setTimeout(r, 100));
-    }
-    if (symbolsToFetch.length > 0) setCachedPrices(newPrices);
-    setHoldingsPrices(prev => ({ ...prev, ...newPrices }));
-    setHoldingsLastUpdated(new Date());
-    setHoldingsLoading(false);
-  }, []);
-
-  // ─ CRUD ─
   const addHoldingsGroup = async () => {
     if (!newHoldingsGroupName.trim() || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const updated = [...holdingsGroups, { id: Date.now().toString(), name: newHoldingsGroupName, stocks: [] }];
-      await saveHoldings(updated);
+      await saveHoldings([...holdingsGroups, { id: Date.now().toString(), name: newHoldingsGroupName.trim(), stocks: [] }]);
       setNewHoldingsGroupName('');
       setIsAddHoldingsGroupOpen(false);
     } catch (e) { console.error(e); } finally { setIsSubmitting(false); }
   };
 
-  const deleteHoldingsGroup = (id) => requestConfirmation({
-    message: '確定刪除此群組及所有持股紀錄？',
-    onConfirm: async () => { await saveHoldings(holdingsGroups.filter(g => g.id !== id)); }
-  });
+  const deleteHoldingsGroup = (id) => requestConfirmation({ message: '確定刪除此群組及所有持股紀錄？', onConfirm: async () => { await saveHoldings(holdingsGroups.filter(g => g.id !== id)); } });
 
   const addStockToGroup = async (groupId, symbol) => {
     const exists = holdingsGroups.find(g => g.id === groupId)?.stocks?.some(s => s.symbol === symbol);
     if (exists) return;
-    const updated = holdingsGroups.map(g => g.id === groupId ? { ...g, stocks: [...(g.stocks || []), { symbol, purchases: [] }] } : g);
-    await saveHoldings(updated);
-    fetchHoldingsPrices(updated);
+    await saveHoldings(holdingsGroups.map(g => g.id === groupId ? { ...g, stocks: [...(g.stocks || []), { symbol, purchases: [] }] } : g));
   };
 
   const deleteStockFromGroup = async (groupId, stockIdx) => {
-    const updated = holdingsGroups.map(g => g.id === groupId ? { ...g, stocks: g.stocks.filter((_, i) => i !== stockIdx) } : g);
-    await saveHoldings(updated);
+    await saveHoldings(holdingsGroups.map(g => g.id === groupId ? { ...g, stocks: g.stocks.filter((_, i) => i !== stockIdx) } : g));
   };
 
   const addPurchaseToStock = async (symbol) => {
     if (!newPurchase.shares || !newPurchase.price) return;
     const purchase = { id: Date.now().toString(), date: newPurchase.date, shares: Number(newPurchase.shares), price: Number(newPurchase.price) };
-    const updated = holdingsGroups.map(g => ({
-      ...g,
-      stocks: g.stocks.map(s => s.symbol === symbol ? { ...s, purchases: [...s.purchases, purchase] } : s)
-    }));
-    await saveHoldings(updated);
+    await saveHoldings(holdingsGroups.map(g => ({ ...g, stocks: g.stocks.map(s => s.symbol === symbol ? { ...s, purchases: [...s.purchases, purchase] } : s) })));
     setPurchaseModal({ open: false, symbol: '' });
-    setNewPurchase({ date: new Date().toISOString().split('T')[0], shares: '', price: '' });
+    setNewPurchase({ date: getTodayString(), shares: '', price: '' });
   };
 
   const deletePurchaseFromStock = async (groupId, symbol, purchaseId) => {
-    const updated = holdingsGroups.map(g => g.id === groupId ? {
-      ...g,
-      stocks: g.stocks.map(s => s.symbol === symbol ? { ...s, purchases: s.purchases.filter(p => p.id !== purchaseId) } : s)
-    } : g);
-    await saveHoldings(updated);
+    await saveHoldings(holdingsGroups.map(g => g.id === groupId ? { ...g, stocks: g.stocks.map(s => s.symbol === symbol ? { ...s, purchases: s.purchases.filter(p => p.id !== purchaseId) } : s) } : g));
   };
 
-  // ─ Computed ─
-  const portfolioSummary = useMemo(() => {
-    let totalCost = 0, totalValue = 0;
-    const pieData = [];
-    holdingsGroups.forEach(g => {
-      let gValue = 0;
-      g.stocks?.forEach(s => {
-        const shares = s.purchases.reduce((sum, p) => sum + Number(p.shares), 0);
-        const cost = s.purchases.reduce((sum, p) => sum + Number(p.shares) * Number(p.price), 0);
-        const price = holdingsPrices[s.symbol]?.price || 0;
-        const value = shares * price;
-        totalCost += cost;
-        totalValue += value;
-        gValue += value;
-        if (value > 0) pieData.push({ label: s.symbol, value });
-      });
+  const summary = useMemo(() => {
+    let total = 0;
+    const groupData = holdingsGroups.map(g => {
+      const amount = (g.stocks || []).reduce((gs, s) => gs + s.purchases.reduce((ps, p) => ps + Number(p.shares) * Number(p.price), 0), 0);
+      total += amount;
+      return { name: g.name, amount };
     });
-    return { totalCost, totalValue, pnl: totalValue - totalCost, pnlPercent: totalCost > 0 ? ((totalValue - totalCost) / totalCost) * 100 : 0, pieData };
-  }, [holdingsGroups, holdingsPrices]);
+    const pieData = groupData.filter(g => g.amount > 0).map(g => ({ label: g.name, value: g.amount }));
+    return { total, pieData };
+  }, [holdingsGroups]);
+
+  if (!loaded) return <ViewLoader label="載入持股資料..." />;
 
   return (
-    <div className="pb-24 animate-in fade-in">
-      {/* Tab Bar */}
-      <div className="flex bg-stone-100 p-1 rounded-xl mb-6">
-        <button onClick={() => setActiveTab('holdings')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'holdings' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-400'}`}>持股檢視</button>
-        <button onClick={() => setActiveTab('allocation')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'allocation' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-400'}`}>占比計算</button>
+    <div className="pb-24 space-y-5 animate-in fade-in">
+      <div className="px-1">
+        <h2 className="text-xl font-bold text-stone-800">持股組合</h2>
+        <p className="text-xs text-stone-400 mt-1">依投入金額檢視比例與分群</p>
       </div>
 
-      {activeTab === 'holdings' ? (
-        <div className="space-y-5 animate-in slide-in-from-left-4 duration-300">
-          {/* Header */}
-          <div className="flex justify-between items-end px-1">
-            <div>
-              <h2 className="text-xl font-bold text-stone-800">持股檢視</h2>
-              <p className="text-xs text-stone-400 tabular-nums mt-1">{holdingsLastUpdated ? `最後更新: ${holdingsLastUpdated.toLocaleTimeString()}` : '更新中...'}</p>
-            </div>
-            <button onClick={() => fetchHoldingsPrices(holdingsGroups)} className="p-2 rounded-xl bg-white shadow-sm border border-stone-100 text-[#5A7099]">
-              <RefreshCw className={`w-5 h-5 ${holdingsLoading ? 'animate-spin' : ''}`} />
-            </button>
+      {summary.total > 0 && (
+        <div className={`${GLASS_CARD} p-5`}>
+          <div className="mb-4">
+            <div className="text-xs text-stone-400 uppercase font-bold mb-1">總投入金額</div>
+            <div className="text-2xl font-bold text-stone-800 tabular-nums">${summary.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
           </div>
-
-          {/* Portfolio Summary */}
-          {portfolioSummary.totalCost > 0 && (
-            <div className={`${GLASS_CARD} p-5`}>
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="text-xs text-stone-400 uppercase font-bold mb-1">總持有市值</div>
-                  <div className="text-2xl font-bold text-stone-800 tabular-nums">${portfolioSummary.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                </div>
-                <span className={`text-sm font-bold px-2.5 py-1 rounded-xl ${portfolioSummary.pnl >= 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>
-                  {portfolioSummary.pnl >= 0 ? '+' : ''}{portfolioSummary.pnlPercent.toFixed(2)}%
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-stone-50/50 rounded-xl p-3">
-                  <div className="text-[10px] text-stone-400 font-bold uppercase mb-1">總成本</div>
-                  <div className="text-sm font-bold text-stone-700 tabular-nums">${portfolioSummary.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                </div>
-                <div className={`rounded-xl p-3 ${portfolioSummary.pnl >= 0 ? 'bg-[#F1FAEE]/50' : 'bg-[#FDECEA]/50'}`}>
-                  <div className={`text-[10px] font-bold uppercase mb-1 ${portfolioSummary.pnl >= 0 ? 'text-[#52B788]' : 'text-[#E57373]'}`}>總損益</div>
-                  <div className={`text-sm font-bold tabular-nums ${portfolioSummary.pnl >= 0 ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>
-                    {portfolioSummary.pnl >= 0 ? '+' : ''}${portfolioSummary.pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </div>
-                </div>
-              </div>
-              {portfolioSummary.pieData.length > 0 && <HoldingsDonutChart data={portfolioSummary.pieData} />}
-            </div>
-          )}
-
-          {/* Add Group */}
-          <div>
-            {!isAddHoldingsGroupOpen ? (
-              <button onClick={() => setIsAddHoldingsGroupOpen(true)} className="w-full py-3 border-2 border-dashed border-stone-200 rounded-2xl text-stone-400 font-bold text-sm hover:border-[#7A96BE] hover:text-[#5A7099] transition-all flex items-center justify-center gap-2">
-                <Plus className="w-4 h-4" /> 新增群組
-              </button>
-            ) : (
-              <div className={`${GLASS_CARD} p-3 flex gap-2 animate-in slide-in-from-top-2 duration-200`}>
-                <input value={newHoldingsGroupName} onChange={e => setNewHoldingsGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHoldingsGroup()} placeholder="輸入群組名稱" className={`${GLASS_INPUT} py-2 px-3 text-xs`} autoFocus />
-                <button onClick={addHoldingsGroup} disabled={isSubmitting} className="bg-stone-800 text-white px-4 rounded-xl font-bold shadow-md hover:bg-stone-700">
-                  <Check className="w-4 h-4" />
-                </button>
-                <button onClick={() => setIsAddHoldingsGroupOpen(false)} className="bg-stone-100 text-stone-500 px-3 rounded-xl hover:bg-stone-200">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Group Cards */}
-          {holdingsGroups.length === 0 && !isAddHoldingsGroupOpen && (
-            <div className="text-center text-stone-400 py-10">
-              <Layers className="w-10 h-10 mx-auto mb-3 text-stone-200" />
-              <p className="text-sm font-medium">尚無持股群組</p>
-              <p className="text-xs mt-1">點擊上方按鈕新增群組開始追蹤</p>
-            </div>
-          )}
-          {holdingsGroups.map(g => (
-            <HoldingsGroupCard
-              key={g.id}
-              group={g}
-              prices={holdingsPrices}
-              onAddStock={addStockToGroup}
-              onDeleteStock={deleteStockFromGroup}
-              onAddPurchase={(symbol) => { setPurchaseModal({ open: true, symbol }); setNewPurchase({ date: new Date().toISOString().split('T')[0], shares: '', price: '' }); }}
-              onDeletePurchase={deletePurchaseFromStock}
-              onDeleteGroup={() => deleteHoldingsGroup(g.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="animate-in slide-in-from-right-4 duration-300">
-          <WatchlistView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />
+          {summary.pieData.length > 0 && <HoldingsDonutChart data={summary.pieData} />}
         </div>
       )}
 
-      {/* Add Purchase Modal */}
+      <div>
+        {!isAddHoldingsGroupOpen ? (
+          <button onClick={() => setIsAddHoldingsGroupOpen(true)} className="w-full py-3 border-2 border-dashed border-stone-200 rounded-2xl text-stone-400 font-bold text-sm hover:border-[#7A96BE] hover:text-[#5A7099] transition-all flex items-center justify-center gap-2">
+            <Plus className="w-4 h-4" /> 新增群組
+          </button>
+        ) : (
+          <div className={`${GLASS_CARD} p-3 flex gap-2 animate-in slide-in-from-top-2 duration-200`}>
+            <input value={newHoldingsGroupName} onChange={e => setNewHoldingsGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addHoldingsGroup()} placeholder="輸入群組名稱" className={`${GLASS_INPUT} py-2 px-3 text-xs`} autoFocus />
+            <button onClick={addHoldingsGroup} disabled={isSubmitting} className="bg-stone-800 text-white px-4 rounded-xl font-bold shadow-md hover:bg-stone-700"><Check className="w-4 h-4" /></button>
+            <button onClick={() => setIsAddHoldingsGroupOpen(false)} className="bg-stone-100 text-stone-500 px-3 rounded-xl hover:bg-stone-200"><X className="w-4 h-4" /></button>
+          </div>
+        )}
+      </div>
+
+      {holdingsGroups.length === 0 && !isAddHoldingsGroupOpen && (
+        <div className="text-center text-stone-400 py-10">
+          <Layers className="w-10 h-10 mx-auto mb-3 text-stone-200" />
+          <p className="text-sm font-medium">尚無持股群組</p>
+          <p className="text-xs mt-1">點擊上方按鈕新增群組開始記錄</p>
+        </div>
+      )}
+      {holdingsGroups.map(g => (
+        <HoldingsGroupCard
+          key={g.id}
+          group={g}
+          totalPortfolio={summary.total}
+          onAddStock={addStockToGroup}
+          onDeleteStock={deleteStockFromGroup}
+          onAddPurchase={(symbol) => { setPurchaseModal({ open: true, symbol }); setNewPurchase({ date: getTodayString(), shares: '', price: '' }); }}
+          onDeletePurchase={deletePurchaseFromStock}
+          onDeleteGroup={() => deleteHoldingsGroup(g.id)}
+        />
+      ))}
+
       {purchaseModal.open && (
         <ModalWrapper title={`新增買入 — ${purchaseModal.symbol}`} onClose={() => setPurchaseModal({ open: false, symbol: '' })}>
           <div className="space-y-4">
             <InputField label="購買日期" type="date" value={newPurchase.date} onChange={e => setNewPurchase(p => ({ ...p, date: e.target.value }))} />
-            <InputField label="股數" type="number" value={newPurchase.shares} onChange={e => setNewPurchase(p => ({ ...p, shares: e.target.value }))} placeholder="10" />
+            <InputField label="股數" type="number" value={newPurchase.shares} onChange={e => setNewPurchase(p => ({ ...p, shares: e.target.value }))} placeholder="10" autoFocus />
             <InputField label="每股價格 (USD)" type="number" step="0.01" value={newPurchase.price} onChange={e => setNewPurchase(p => ({ ...p, price: e.target.value }))} placeholder="480.50" />
             {newPurchase.shares && newPurchase.price && (
               <div className="bg-stone-50 rounded-xl p-3 text-center">
-                <span className="text-[10px] text-stone-400 uppercase font-bold">總金額</span>
+                <span className="text-[10px] text-stone-400 uppercase font-bold">投入金額</span>
                 <div className="text-lg font-bold text-stone-800 tabular-nums">${(Number(newPurchase.shares) * Number(newPurchase.price)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
               </div>
             )}
@@ -1102,119 +969,6 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
           </div>
         </ModalWrapper>
       )}
-    </div>
-  );
-};
-
-const WatchlistGroup = ({ group, onUpdateStock, onDeleteStock, onDeleteGroup, onAddStock, totalSystemBudget, prices }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [newSymbol, setNewSymbol] = useState('');
-  const handleAdd = () => { if (newSymbol) { onAddStock(group.id, newSymbol.toUpperCase()); setNewSymbol(''); } };
-
-  const groupTotalBudget = useMemo(() => group.items.reduce((sum, item) => sum + (Number(item.budget) || 0), 0), [group.items]);
-  const groupPercentage = totalSystemBudget > 0 ? (groupTotalBudget / totalSystemBudget) * 100 : 0;
-  const theme = COLOR_VARIANTS.indigo;
-  return (
-    <div className={`${GLASS_CARD} p-5 hover:border-indigo-300 transition-all duration-300 mb-4 ${theme.glow}`}>
-      <div className="flex justify-between items-center mb-4"><div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}><div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div><div><h3 className="text-sm font-bold text-stone-700 tracking-tight">{group.name}</h3><span className="text-[10px] text-stone-400 font-medium">佔總預算 {groupPercentage.toFixed(1)}%</span></div></div><div className="flex items-center gap-2"><button onClick={(e) => { e.stopPropagation(); onDeleteGroup(); }} className="p-1.5 rounded-lg bg-stone-100 text-stone-400 hover:bg-rose-50 hover:text-rose-500 transition-all"><X className="w-3.5 h-3.5" /></button></div></div>
-      {isExpanded && (<div className="space-y-4 animate-in slide-in-from-top-1 duration-200 border-t border-stone-100/50 pt-3">{group.items.map((stock, idx) => { const priceData = prices[stock.symbol]; const budget = Number(stock.budget) || 0; const price = priceData ? priceData.price : 0; const shares = price > 0 ? Math.floor(budget / price) : 0; const isUp = priceData?.change >= 0; const stockPercentage = groupTotalBudget > 0 ? (budget / groupTotalBudget) * 100 : 0; return (<div key={idx} className="flex flex-col gap-2 border-b border-stone-100/50 last:border-0 pb-3 last:pb-0"><div className="flex justify-between items-center"><div><div className="flex items-center gap-2"><span className="font-bold text-stone-800 text-base">{stock.symbol}</span><span className="text-[10px] text-stone-400 bg-stone-100 px-1.5 rounded">佔比 {stockPercentage.toFixed(1)}%</span>{priceData && (<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${isUp ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>{isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}{priceData.change.toFixed(2)}%</span>)}</div><div className="text-xs text-stone-400 tabular-nums mt-0.5">現價: ${price > 0 ? price.toFixed(2) : '---'}</div></div><button onClick={() => onDeleteStock(group.id, idx)} className="text-stone-300 hover:text-rose-400 p-1"><X className="w-4 h-4" /></button></div><div className="bg-stone-50/50 rounded-xl p-3 flex items-center gap-3"><div className="flex-1"><label className="text-[10px] text-stone-400 font-bold uppercase block mb-1">定投預算 (USD)</label><input type="number" value={stock.budget} onChange={(e) => onUpdateStock(group.id, idx, 'budget', e.target.value)} className="w-full bg-white/50 border border-stone-200 rounded-lg px-2 py-1 text-sm font-bold text-stone-700 outline-none focus:border-indigo-300" placeholder="500" /></div><div className="text-right"><div className="text-[10px] text-stone-400 font-bold uppercase mb-1">可購股數</div><div className="text-xl font-bold text-indigo-600 tabular-nums">{shares} <span className="text-xs text-stone-400 font-sans">股</span></div></div></div></div>); })}<div className="mt-2 pt-2 border-t border-stone-100/50"><div className="flex gap-2"><input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAdd()} placeholder="輸入代碼" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} /><button onClick={handleAdd} className="bg-stone-800 text-white px-4 rounded-xl hover:bg-stone-700 font-bold text-xs shadow-lg"><Plus className="w-4 h-4" /></button></div></div></div>)}
-    </div>
-  );
-};
-
-const WatchlistView = ({ user, db, appId, requestConfirmation }) => {
-  const [groups, setGroups] = useState([]);
-  const [newGroupName, setNewGroupName] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAddGroupOpen, setIsAddGroupOpen] = useState(false);
-  const [prices, setPrices] = useState({});
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-
-  const fetchAllPrices = useCallback(async (currentGroups) => {
-    setLoading(true);
-    const allSymbols = new Set();
-    currentGroups.forEach(g => g.items.forEach(s => {
-      if (s.symbol && s.symbol.trim() !== '') allSymbols.add(s.symbol.trim().toUpperCase());
-    }));
-
-    if (allSymbols.size === 0) {
-      setLoading(false);
-      return;
-    }
-
-    const cached = getCachedPrices();
-    const newPrices = {};
-    const symbolsToFetch = [];
-    for (const symbol of allSymbols) {
-      if (cached[symbol]) { newPrices[symbol] = cached[symbol]; }
-      else { symbolsToFetch.push(symbol); }
-    }
-    for (const symbol of symbolsToFetch) {
-      try {
-        const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.c) newPrices[symbol] = { price: data.c, change: data.dp };
-        }
-      } catch (e) {
-        console.warn(`Error fetching ${symbol}:`, e);
-      }
-      await new Promise(r => setTimeout(r, 100));
-    }
-    if (symbolsToFetch.length > 0) setCachedPrices(newPrices);
-    setPrices(prev => ({ ...prev, ...newPrices }));
-    setLastUpdated(new Date());
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    const ref = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'watchlist_config');
-    const unsub = onSnapshot(ref, (s) => {
-      if (s.exists()) {
-        const data = s.data().groups || [];
-        setGroups(data);
-        if (data.length > 0) fetchAllPrices(data);
-      } else setGroups([]);
-    });
-    return () => unsub();
-  }, [user, fetchAllPrices]);
-
-  const totalSystemBudget = useMemo(() => groups.reduce((acc, group) => acc + group.items.reduce((gAcc, item) => gAcc + (Number(item.budget) || 0), 0), 0), [groups]);
-  const saveGroups = async (newGroups) => await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'watchlist_config'), { groups: newGroups });
-
-  const addGroup = async () => {
-    if (!newGroupName.trim() || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      const newGroups = [...groups, { id: Date.now().toString(), name: newGroupName, items: [] }];
-      await saveGroups(newGroups);
-      setNewGroupName('');
-      setIsAddGroupOpen(false);
-    } catch (e) { console.error("Error adding group:", e); } finally { setIsSubmitting(false); }
-  };
-
-  const deleteGroup = (id) => requestConfirmation({ message: '確定刪除此群組？', onConfirm: async () => { const newGroups = groups.filter(g => g.id !== id); await saveGroups(newGroups); } });
-  const addStock = async (groupId, symbol) => { const newGroups = groups.map(g => { if (g.id === groupId) return { ...g, items: [...g.items, { symbol, budget: 0 }] }; return g; }); await saveGroups(newGroups); fetchAllPrices(newGroups); };
-  const updateStock = async (groupId, idx, field, value) => { const newGroups = groups.map(g => { if (g.id === groupId) { const newItems = [...g.items]; newItems[idx][field] = value; return { ...g, items: newItems }; } return g; }); await saveGroups(newGroups); };
-  const deleteStock = async (groupId, idx) => { const newGroups = groups.map(g => { if (g.id === groupId) { const newItems = g.items.filter((_, i) => i !== idx); return { ...g, items: newItems }; } return g; }); await saveGroups(newGroups); };
-
-  return (
-    <div className="pb-24 space-y-6 animate-in fade-in">
-      <div className="flex justify-between items-end mb-2 px-2">
-        <div><h2 className="text-xl font-bold text-stone-800">投資名單</h2><p className="text-xs text-stone-400 tabular-nums mt-1">{lastUpdated ? `最後更新: ${lastUpdated.toLocaleTimeString()}` : '更新中...'}</p></div>
-        <button onClick={() => fetchAllPrices(groups)} className={`p-2 rounded-xl bg-white shadow-sm border border-stone-100 text-indigo-600`}><RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
-      </div>
-      <div className="mb-4">
-        {!isAddGroupOpen ? (
-          <button onClick={() => setIsAddGroupOpen(true)} className="w-full py-3 border-2 border-dashed border-stone-200 rounded-2xl text-stone-400 font-bold text-sm hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"><Plus className="w-4 h-4" /> 新增追蹤清單</button>
-        ) : (
-          <div className={`${GLASS_CARD} p-3 flex gap-2 animate-in slide-in-from-top-2 duration-200`}><input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addGroup()} placeholder="輸入群組名稱" className={`${GLASS_INPUT} py-2 px-3 text-xs uppercase`} autoFocus /><button onClick={addGroup} disabled={isSubmitting} className="bg-indigo-600 text-white px-4 rounded-xl font-bold shadow-md hover:bg-indigo-700"><Check className="w-4 h-4" /></button><button onClick={() => setIsAddGroupOpen(false)} className="bg-stone-100 text-stone-500 px-3 rounded-xl hover:bg-stone-200"><X className="w-4 h-4" /></button></div>
-        )}
-      </div>
-      <div>{groups.map(g => (<WatchlistGroup key={g.id} group={g} totalSystemBudget={totalSystemBudget} prices={prices} onAddStock={addStock} onUpdateStock={updateStock} onDeleteStock={deleteStock} onDeleteGroup={() => deleteGroup(g.id)} />))}</div>
     </div>
   );
 };
@@ -3281,7 +3035,7 @@ function AppContent() {
   ];
   const MORE_ITEMS = [
     { id: 'income',      label: '收入管理', icon: DollarSign },
-    { id: 'watchlist',   label: '定投名單', icon: Layers },
+    { id: 'watchlist',   label: '持股組合', icon: Layers },
     { id: 'stock_goals', label: '存股計畫', icon: Target },
     { id: 'partner',     label: '佳欣儲蓄', icon: Users },
     { id: 'principal',   label: '資產淨值', icon: PieChart },
@@ -3902,10 +3656,10 @@ function AppContent() {
   // --- Main Render ---
   return (
     <div className="flex flex-col h-screen bg-[#F8F5F0] text-stone-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
-      {/* Background Blobs - Soft pastel accents */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#F1FAEE]/50 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#FDECEA]/40 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-[#FEF9E7]/35 rounded-full blur-[100px] pointer-events-none z-0"></div>
+      {/* Background Blobs - soft pastel accents that the glass surfaces refract */}
+      <div className="absolute top-[-10%] left-[-10%] w-[55%] h-[42%] bg-[#DFF3E6]/60 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[55%] h-[42%] bg-[#FBE4E6]/55 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute top-[38%] left-[15%] w-[65%] h-[32%] bg-[#FBF1DA]/45 rounded-full blur-[100px] pointer-events-none z-0"></div>
 
       {/* Loading Screen - completely covers viewport until done, then unmounts */}
       {appPhase === 'loading' && (
