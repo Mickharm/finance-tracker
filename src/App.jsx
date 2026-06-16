@@ -1638,6 +1638,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
   const isOverBudget = totalRemaining < 0;
   const currentMonth = new Date().getMonth() + 1;
   const monthlyAvgSpending = currentMonth > 0 ? Math.round(totalAnnualUsed / currentMonth) : 0;
+  const usedPct = totalAnnualBudget > 0 ? (totalAnnualUsed / totalAnnualBudget) * 100 : 0;
 
   return (
     <div className="space-y-8 pb-24 animate-in fade-in duration-500">
@@ -1651,9 +1652,18 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
             <div className="text-xl sm:text-2xl font-bold text-slate-800 tabular-nums break-all line-clamp-1">${totalAnnualBudget.toLocaleString()}</div>
           </div>
         </div>
+        <div className="mb-4">
+          <div className="w-full bg-slate-100/70 rounded-full h-2 overflow-hidden">
+            <div className={`h-full rounded-full transition-all duration-700 ${isOverBudget ? 'bg-[#E57373]' : usedPct > 85 ? 'bg-[#E8BE6E]' : 'bg-[#52B788]'}`} style={{ width: `${Math.min(usedPct, 100)}%` }} />
+          </div>
+          <div className="flex justify-between mt-1.5 text-[10px] font-medium text-slate-400">
+            <span className={isOverBudget ? 'text-[#C0392B] font-bold' : ''}>已用 {Math.round(usedPct)}%</span>
+            <span>全年進度</span>
+          </div>
+        </div>
         <div className="flex flex-row gap-4 w-full">
           <div className="flex-1 overflow-hidden">
-            <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">已花費</div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">今年總花費</div>
             <div className="text-base sm:text-lg font-bold text-slate-700 tabular-nums truncate">${totalAnnualUsed.toLocaleString()}</div>
           </div>
           <div className="flex-1 overflow-hidden text-right">
@@ -1964,31 +1974,37 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
     const dayMeal = (lunch !== null || dinner !== null) ? { lunch, dinner } : null;
 
     calendarCells.push(
-      <div key={day} onClick={() => setSelectedDay(day)} className={`h-24 border-t border-r border-slate-100/50 p-1 flex flex-col justify-between transition-colors cursor-pointer relative ${isSelected ? 'bg-slate-50/50 shadow-inner' : 'bg-white/30'} ${day % 7 === 0 ? 'border-r-0' : ''}`}>
+      <div key={day} onClick={() => setSelectedDay(day)} className={`h-24 border-t border-r border-slate-100/50 p-1.5 flex flex-col justify-between transition-colors cursor-pointer relative ${isSelected ? 'bg-white/55' : 'bg-white/20'} ${day % 7 === 0 ? 'border-r-0' : ''}`}>
         <div className="flex justify-between items-start">
-          <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-slate-800 text-white' : 'text-slate-400'}`}>{day}</span>
-          {/* Meal icons */}
+          <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-slate-800 text-white' : 'text-slate-500'}`}>{day}</span>
           {dayMeal && (
-            <div className="flex gap-0.5 mt-0.5">
+            <div className="flex gap-0.5">
               {dayMeal.lunch !== null && (
-                <span className={`text-[8px] ${dayMeal.lunch ? 'text-[#52B788]' : 'text-[#E57373]'}`}>{dayMeal.lunch ? '☀' : '☀̶'}</span>
+                <span className={`text-[10px] leading-none ${dayMeal.lunch ? 'text-[#E0A23E]' : 'text-[#E57373] line-through'}`}>☀</span>
               )}
               {dayMeal.dinner !== null && (
-                <span className={`text-[8px] ${dayMeal.dinner ? 'text-[#52B788]' : 'text-[#E57373]'}`}>{dayMeal.dinner ? '☽' : '☽̶'}</span>
+                <span className={`text-[10px] leading-none ${dayMeal.dinner ? 'text-[#5A7099]' : 'text-[#E57373] line-through'}`}>☽</span>
               )}
             </div>
           )}
         </div>
-        {dayTotal > 0 && (<div className="mb-1 flex flex-col items-end px-1 w-full"><span className="text-[10px] text-slate-400 font-medium">總計</span><span className={`text-[10px] font-bold truncate w-full text-right ${dayTrans.some(t => t.type === 'annual') ? 'text-amber-600' : 'text-slate-600'}`}>${dayTotal.toLocaleString()}</span></div>)}
-        {isSelected && <div className="absolute inset-1 border-2 border-slate-400/50 rounded-lg pointer-events-none"></div>}
+        {dayTotal > 0 && (<div className="w-full text-right"><span className={`text-[11px] font-bold tabular-nums ${dayTrans.some(t => t.type === 'annual') ? 'text-amber-600' : 'text-slate-700'}`}>${dayTotal.toLocaleString()}</span></div>)}
+        {isSelected && <div className="absolute inset-1 border-2 border-[#7FB3D5]/60 rounded-lg pointer-events-none"></div>}
       </div>
     );
   }
   const selectedDateStr = selectedDay ? toLocalISOString(new Date(viewDate.getFullYear(), viewDate.getMonth(), selectedDay)) : null;
   const selectedTrans = selectedDateStr ? transactions.filter(t => t.date === selectedDateStr) : [];
+  const monthTotal = transactions.filter(t => { const d = new Date(t.date); return d.getFullYear() === viewDate.getFullYear() && d.getMonth() === viewDate.getMonth(); }).reduce((s, t) => s + Number(t.amount), 0);
   return (
     <div className="pb-24 animate-in fade-in duration-300 relative">
-      <div className="flex justify-between items-center mb-4 px-2"><h2 className="text-xl font-bold text-slate-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2><div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-600"><ChevronRight className="w-5 h-5" /></button></div></div>
+      <div className="flex justify-between items-end mb-4 px-2">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2>
+          <div className="text-xs text-slate-400 mt-0.5">本月支出 <span className="font-bold text-slate-600 tabular-nums">${monthTotal.toLocaleString()}</span></div>
+        </div>
+        <div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white/60 rounded-xl shadow-sm border border-white/60 text-slate-600 active:scale-95 transition-transform"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white/60 rounded-xl shadow-sm border border-white/60 text-slate-600 active:scale-95 transition-transform"><ChevronRight className="w-5 h-5" /></button></div>
+      </div>
       <div className={`${GLASS_CARD} p-0 border border-slate-100`}>
         <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">{d}</div>))}</div>
         <div className="grid grid-cols-7 rounded-b-3xl overflow-hidden">{calendarCells}</div>
@@ -2048,6 +2064,9 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                 ))}
               </div>
             )}
+            <button onClick={() => onAddExpense && onAddExpense(selectedDateStr)} className="w-full mt-3 py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 font-bold text-xs hover:border-[#7FB3D5] hover:text-[#5A7099] transition-all flex items-center justify-center gap-1.5 active:scale-95">
+              <Plus className="w-3.5 h-3.5" /> 在這天新增支出
+            </button>
           </div>
         </div>
       )}
