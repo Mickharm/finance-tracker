@@ -1206,7 +1206,7 @@ const formatThousands = (raw) => {
   const f = Number(int || 0).toLocaleString('en-US');
   return dec !== undefined ? `${f}.${dec}` : f;
 };
-const AmountInput = ({ value, onCommit, className = '', placeholder = '0', autoFocus = false }) => {
+const AmountInput = ({ value, onCommit, className = '', placeholder = '0', autoFocus = false, commitOnChange = false }) => {
   const [text, setText] = useState(() => (value === '' || value === undefined || value === null) ? '' : formatThousands(String(value)));
   useEffect(() => {
     setText((value === '' || value === undefined || value === null) ? '' : formatThousands(String(value)));
@@ -1216,11 +1216,12 @@ const AmountInput = ({ value, onCommit, className = '', placeholder = '0', autoF
     const parts = raw.split('.');
     if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
     setText(formatThousands(raw));
+    if (commitOnChange) onCommit(raw); // live commit for cheap (local) state, avoids blur race with buttons
   };
   return (
     <input
       type="text" inputMode="decimal" value={text} onChange={handleChange}
-      onBlur={() => onCommit(text.replace(/,/g, ''))}
+      onBlur={() => { if (!commitOnChange) onCommit(text.replace(/,/g, '')); }}
       onFocus={(e) => e.target.select()} autoFocus={autoFocus}
       className={className} placeholder={placeholder}
     />
@@ -2086,9 +2087,28 @@ const IncomeView = ({ incomes, salaryHistory, onAddSalary, onDeleteSalary, onDel
   const partnerTotal = partnerIncomes.reduce((sum, i) => sum + Number(i.amount), 0);
   const myselfHistory = salaryHistory.filter(s => s.owner === 'myself').sort((a, b) => new Date(b.date) - new Date(a.date));
   const partnerHistory = salaryHistory.filter(s => s.owner === 'partner').sort((a, b) => new Date(b.date) - new Date(a.date));
+  const incomeTotal = myselfTotal + partnerTotal;
+  const myselfPct = incomeTotal > 0 ? (myselfTotal / incomeTotal) * 100 : 50;
+  const partnerPct = incomeTotal > 0 ? (partnerTotal / incomeTotal) * 100 : 50;
   return (
     <div className="space-y-6 pb-24 animate-in fade-in">
-      <CleanSummaryCard title="年度總收入" value={(myselfTotal + partnerTotal).toLocaleString()} subValue={`${currentYear}年度`} icon={Wallet} />
+      <CleanSummaryCard title="年度總收入" value={incomeTotal.toLocaleString()} subValue={`${currentYear}年度`} icon={Wallet} />
+      {incomeTotal > 0 && (
+        <div className={`${GLASS_CARD} p-4`}>
+          <div className="flex justify-between items-center text-xs font-bold mb-2">
+            <span className="text-blue-600">士程 <span className="tabular-nums">${myselfTotal.toLocaleString()}</span></span>
+            <span className="text-rose-500"><span className="tabular-nums">${partnerTotal.toLocaleString()}</span> 佳欣</span>
+          </div>
+          <div className="w-full h-2.5 rounded-full overflow-hidden flex bg-slate-100">
+            <div className="bg-blue-400 h-full transition-all duration-500" style={{ width: `${myselfPct}%` }} />
+            <div className="bg-rose-400 h-full transition-all duration-500" style={{ width: `${partnerPct}%` }} />
+          </div>
+          <div className="flex justify-between text-[10px] text-slate-400 font-medium mt-1 tabular-nums">
+            <span>{myselfPct.toFixed(0)}%</span>
+            <span>{partnerPct.toFixed(0)}%</span>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col gap-6">
         <PersonCard name="士程" owner="myself" incomes={myselfIncomes} total={myselfTotal} history={myselfHistory} icon={User} onAddSalary={onAddSalary} onDeleteSalary={onDeleteSalary} onDeleteIncome={onDeleteIncome} onAddIncome={onAddIncome} onEditSalary={onEditSalary} variant="blue" />
         <PersonCard name="佳欣" owner="partner" incomes={partnerIncomes} total={partnerTotal} history={partnerHistory} icon={Heart} onAddSalary={onAddSalary} onDeleteSalary={onDeleteSalary} onDeleteIncome={onDeleteIncome} onAddIncome={onAddIncome} onEditSalary={onEditSalary} variant="rose" />
@@ -2122,10 +2142,10 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
   const [baseYear, setBaseYear] = useState(new Date().getFullYear());
   const [compareYear, setCompareYear] = useState(new Date().getFullYear() - 1);
   const [isCompareMode, setIsCompareMode] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(null); // Drill-down state: month
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); // Drill-down state: month — default to current month for monthly reconciliation
 
   const [selectedFilter, setSelectedFilter] = useState(null); // { type: 'group'|'category', value: string }
-  const [sortMode, setSortMode] = useState('amount'); // 'amount' | 'budget'
+  const [sortMode, setSortMode] = useState('budget'); // 'amount' | 'budget' — budget order is the monthly reconciliation default
   const [expandedGroups, setExpandedGroups] = useState({}); // { groupName: boolean }
 
   useEffect(() => {
@@ -2412,7 +2432,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
             </div>
           </Card>
 
-          {(selectedMonth !== null || selectedFilter !== null) && (
+          {selectedFilter !== null && (
             <div className="animate-in slide-in-from-bottom-4 duration-500">
               <h3 className="text-sm font-bold text-slate-500 mb-3 px-2">詳細明細 </h3>
               <div className="space-y-3">
@@ -2691,12 +2711,13 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, on
   );
 };
 
-const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
+const GroupSettingsEditor = ({ title, groups, onSave }) => {
   const [localGroups, setLocalGroups] = useState(groups);
   const [newGroupName, setNewGroupName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [editingSelection, setEditingSelection] = useState(null);
+  const [drafts, setDrafts] = useState({}); // { [gIdx]: { name, budget } } — controlled add/edit inputs
   const saveTimerRef = useRef(null);
 
   useEffect(() => setLocalGroups(groups), [groups]);
@@ -2723,89 +2744,87 @@ const GroupSettingsEditor = ({ title, groups, onSave, idPrefix }) => {
   const addGroup = () => { if (newGroupName) { updateLocalGroups([...localGroups, { name: newGroupName, items: [] }]); } setNewGroupName(''); };
   const deleteGroup = (i) => updateLocalGroups(localGroups.filter((_, idx) => idx !== i));
 
+  const setDraft = (gIdx, field, val) => setDrafts(prev => ({ ...prev, [gIdx]: { ...prev[gIdx], [field]: val } }));
+  const clearDraft = (gIdx) => setDrafts(prev => ({ ...prev, [gIdx]: { name: '', budget: '' } }));
+
   const handleItemSubmit = (gIdx) => {
-    const nameInput = document.getElementById(`${idPrefix}-n-${gIdx}`);
-    const budgetInput = document.getElementById(`${idPrefix}-b-${gIdx}`);
-    const name = nameInput.value;
-    const budget = name ? budgetInput.value : 0;
-
+    const draft = drafts[gIdx] || {};
+    const name = (draft.name || '').trim();
     if (!name) return;
-
+    const budget = Number(draft.budget) || 0;
+    const g = [...localGroups];
     if (editingSelection && editingSelection.gIdx === gIdx) {
-      // Update existing
-      const g = [...localGroups];
       g[gIdx].items[editingSelection.iIdx] = { name, budget };
-      updateLocalGroups(g);
       setEditingSelection(null);
     } else {
-      // Add new
-      const g = [...localGroups];
       g[gIdx].items.push({ name, budget });
-      updateLocalGroups(g);
     }
-    nameInput.value = '';
-    budgetInput.value = '';
+    updateLocalGroups(g);
+    clearDraft(gIdx);
   };
 
   const handleEditItem = (gIdx, iIdx) => {
     const item = localGroups[gIdx].items[iIdx];
     setEditingSelection({ gIdx, iIdx });
-    const nameInput = document.getElementById(`${idPrefix}-n-${gIdx}`);
-    const budgetInput = document.getElementById(`${idPrefix}-b-${gIdx}`);
-    if (nameInput && budgetInput) {
-      nameInput.value = item.name;
-      budgetInput.value = item.budget;
-      nameInput.focus();
-    }
+    setDrafts(prev => ({ ...prev, [gIdx]: { name: item.name, budget: String(item.budget) } }));
   };
 
   const delItem = (gi, ii) => {
     const g = [...localGroups];
     g[gi].items = g[gi].items.filter((_, i) => i !== ii);
     updateLocalGroups(g);
-    if (editingSelection && editingSelection.gIdx === gi && editingSelection.iIdx === ii) {
-      setEditingSelection(null);
-      document.getElementById(`${idPrefix}-n-${gi}`).value = '';
-      document.getElementById(`${idPrefix}-b-${gi}`).value = '';
-    }
+    if (editingSelection && editingSelection.gIdx === gi && editingSelection.iIdx === ii) { setEditingSelection(null); clearDraft(gi); }
   };
+
+  const grandTotal = localGroups.reduce((s, g) => s + g.items.reduce((a, i) => a + Number(i.budget || 0), 0), 0);
 
   return (
     <div className="mb-10 animate-in fade-in">
       <div className="flex justify-between items-end mb-4 border-b border-slate-100 pb-2">
-        <h3 className="text-lg font-bold text-slate-700">{title}</h3>
+        <div>
+          <h3 className="text-lg font-bold text-slate-700">{title}</h3>
+          <div className="text-xs text-slate-400 mt-0.5">預算總計 <span className="font-bold text-slate-600 tabular-nums">${grandTotal.toLocaleString()}</span></div>
+        </div>
         <button onClick={handleSaveWrapper} className={`text-xs px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 font-bold ${isSaving ? 'bg-emerald-50 text-emerald-600' : hasUnsavedChanges ? 'bg-amber-500 text-white hover:bg-amber-600 animate-pulse' : 'bg-slate-800 text-white hover:bg-slate-700'}`}>{isSaving ? <><Check className="w-3 h-3" /> 已儲存</> : hasUnsavedChanges ? '儲存變更' : <><Check className="w-3 h-3" /> 已儲存</>}</button>
       </div>
       <div className="space-y-4">
-        {localGroups.map((group, gIdx) => (
-          <div key={gIdx} className={`${GLASS_CARD} overflow-hidden p-0`}>
-            <div className="bg-slate-50/50 p-4 flex justify-between items-center border-b border-slate-100">
-              <span className="font-bold text-slate-600 text-sm flex items-center gap-2"><FolderOpen className="w-4 h-4 text-slate-400" /> {group.name}</span>
-              <button onClick={() => deleteGroup(gIdx)} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
-            </div>
-            <div className="p-4 space-y-3">
-              {group.items.map((item, iIdx) => (
-                <div key={iIdx} onClick={() => handleEditItem(gIdx, iIdx)} className={`flex justify-between items-center text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-slate-50 p-2 rounded transition-colors ${editingSelection?.gIdx === gIdx && editingSelection?.iIdx === iIdx ? 'bg-blue-50 ring-1 ring-blue-100' : ''}`}>
-                  <span className="text-slate-500 font-medium">{item.name}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="tabular-nums text-slate-700 font-bold bg-slate-100 px-2 py-0.5 rounded-md">${Number(item.budget).toLocaleString()}</span>
-                    <button onClick={(e) => { e.stopPropagation(); delItem(gIdx, iIdx); }} className="text-slate-200 hover:text-rose-400"><X className="w-3 h-3" /></button>
-                  </div>
+        {localGroups.map((group, gIdx) => {
+          const groupTotal = group.items.reduce((a, i) => a + Number(i.budget || 0), 0);
+          const draft = drafts[gIdx] || { name: '', budget: '' };
+          const isEditingThis = editingSelection?.gIdx === gIdx;
+          return (
+            <div key={gIdx} className={`${GLASS_CARD} overflow-hidden p-0`}>
+              <div className="bg-slate-50/50 p-4 flex justify-between items-center border-b border-slate-100">
+                <span className="font-bold text-slate-600 text-sm flex items-center gap-2"><FolderOpen className="w-4 h-4 text-slate-400" /> {group.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-400 tabular-nums">${groupTotal.toLocaleString()}</span>
+                  <button onClick={() => deleteGroup(gIdx)} className="text-slate-300 hover:text-rose-400"><X className="w-4 h-4" /></button>
                 </div>
-              ))}
-              <div className="flex gap-2 mt-3 pt-2">
-                <input id={`${idPrefix}-n-${gIdx}`} placeholder="項目名稱" className={`${GLASS_INPUT} w-full text-xs py-2 px-3`} />
-                <input id={`${idPrefix}-b-${gIdx}`} placeholder="$" type="number" className={`${GLASS_INPUT} w-20 text-xs py-2 px-3`} />
-                <button onClick={() => handleItemSubmit(gIdx)} className={`text-white px-3 rounded-lg transition-colors ${editingSelection?.gIdx === gIdx ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-800 hover:bg-slate-700'}`}>
-                  {editingSelection?.gIdx === gIdx ? <RefreshCw className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                {group.items.map((item, iIdx) => (
+                  <div key={iIdx} onClick={() => handleEditItem(gIdx, iIdx)} className={`flex justify-between items-center text-sm border-b border-slate-50 last:border-0 pb-2 last:pb-0 cursor-pointer hover:bg-slate-50 p-2 rounded transition-colors ${editingSelection?.gIdx === gIdx && editingSelection?.iIdx === iIdx ? 'bg-blue-50 ring-1 ring-blue-100' : ''}`}>
+                    <span className="text-slate-500 font-medium">{item.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="tabular-nums text-slate-700 font-bold bg-slate-100 px-2 py-0.5 rounded-md">${Number(item.budget).toLocaleString()}</span>
+                      <button onClick={(e) => { e.stopPropagation(); delItem(gIdx, iIdx); }} className="text-slate-200 hover:text-rose-400"><X className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex gap-2 mt-3 pt-2">
+                  <input value={draft.name || ''} onChange={(e) => setDraft(gIdx, 'name', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleItemSubmit(gIdx)} placeholder={isEditingThis ? '編輯項目名稱' : '項目名稱'} className={`${GLASS_INPUT} w-full text-xs py-2 px-3`} />
+                  <AmountInput value={draft.budget ?? ''} onCommit={(v) => setDraft(gIdx, 'budget', v)} commitOnChange placeholder="$" className={`${GLASS_INPUT} w-24 text-xs py-2 px-3`} />
+                  <button onClick={() => handleItemSubmit(gIdx)} className={`text-white px-3 rounded-lg transition-colors ${isEditingThis ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-800 hover:bg-slate-700'}`}>
+                    {isEditingThis ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="flex gap-2 mt-4">
-        <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} placeholder="新增群組名稱..." className={`${GLASS_INPUT} flex-1 text-sm shadow-sm`} />
+        <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addGroup()} placeholder="新增群組名稱..." className={`${GLASS_INPUT} flex-1 text-sm shadow-sm`} />
         <button onClick={addGroup} className="bg-white border border-slate-200 text-slate-600 px-5 rounded-xl shadow-sm hover:bg-slate-50 font-bold"><Plus className="w-4 h-4" /></button>
       </div>
     </div>
