@@ -79,10 +79,11 @@ const setCachedPrices = (prices) => {
 };
 const LEDGER_ID = 'Mick';
 
-// Frosted-glass tokens over the light-blue base: translucent white body + blur
-// (the blue shows through) + soft top sheen + a cool blue-grey lift shadow.
-const GLASS_CARD = "bg-white/45 backdrop-blur-2xl backdrop-saturate-150 border border-white/60 shadow-[inset_0_1px_1px_rgba(255,255,255,0.75),0_12px_34px_-16px_rgba(30,64,96,0.22)] rounded-3xl relative overflow-hidden group";
-const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/45 backdrop-blur-md backdrop-saturate-150 border border-white/60 focus:bg-white/75 focus:border-[#7FB3D5] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]";
+// Frosted glass: stronger blur + a more opaque (less see-through) white so it reads
+// as a matte frosted surface, not a translucent film. Needs colour behind it to look
+// like glass (see the background blobs) — a flat bg alone gains nothing from blur.
+const GLASS_CARD = "bg-white/55 backdrop-blur-3xl backdrop-saturate-[1.8] border border-white/55 shadow-[0_8px_30px_-8px_rgba(40,80,140,0.20),inset_0_1px_1px_rgba(255,255,255,0.85)] rounded-3xl relative overflow-hidden group";
+const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/50 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/55 focus:bg-white/80 focus:border-[#7FB3D5] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.7)]";
 
 const COLOR_VARIANTS = {
   slate: {
@@ -1197,6 +1198,35 @@ const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete
   );
 };
 
+// Number input that shows live thousand separators while typing; commits the raw
+// number (no commas) on change/blur. Reusable for any amount field.
+const formatThousands = (raw) => {
+  if (raw === '' || raw === '.') return raw;
+  const [int, dec] = raw.split('.');
+  const f = Number(int || 0).toLocaleString('en-US');
+  return dec !== undefined ? `${f}.${dec}` : f;
+};
+const AmountInput = ({ value, onCommit, className = '', placeholder = '0', autoFocus = false }) => {
+  const [text, setText] = useState(() => (value === '' || value === undefined || value === null) ? '' : formatThousands(String(value)));
+  useEffect(() => {
+    setText((value === '' || value === undefined || value === null) ? '' : formatThousands(String(value)));
+  }, [value]);
+  const handleChange = (e) => {
+    let raw = e.target.value.replace(/,/g, '').replace(/[^\d.]/g, '');
+    const parts = raw.split('.');
+    if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
+    setText(formatThousands(raw));
+  };
+  return (
+    <input
+      type="text" inputMode="decimal" value={text} onChange={handleChange}
+      onBlur={() => onCommit(text.replace(/,/g, ''))}
+      onFocus={(e) => e.target.select()} autoFocus={autoFocus}
+      className={className} placeholder={placeholder}
+    />
+  );
+};
+
 const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
   const [dragStartX, setDragStartX] = useState(null);
   const [dragOffset, setDragOffset] = useState(0);
@@ -1286,9 +1316,9 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
           </div>
         </div>
       <div className="grid grid-cols-2 gap-4 mb-4 pl-3">
-        <div><label className="text-[10px] text-slate-400 uppercase font-bold">Firstrade (美金)</label><input type="number" defaultValue={yearData.firstrade} onBlur={(e) => onUpdate(yearData.id, 'firstrade', e.target.value)} className="w-full tabular-nums font-bold text-slate-700 border-b border-slate-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
-        <div><label className="text-[10px] text-slate-400 uppercase font-bold">IB (美金)</label><input type="number" defaultValue={yearData.ib} onBlur={(e) => onUpdate(yearData.id, 'ib', e.target.value)} className="w-full tabular-nums font-bold text-slate-700 border-b border-slate-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
-        <div className="col-span-2 relative"><label className="text-[10px] text-amber-400 uppercase font-bold">提領/調節 (美金)</label><input type="number" defaultValue={yearData.withdrawal} onBlur={(e) => onUpdate(yearData.id, 'withdrawal', e.target.value)} className="w-full tabular-nums font-bold text-slate-700 border-b border-amber-100 focus:border-amber-400 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div><label className="text-[10px] text-slate-400 uppercase font-bold">Firstrade (美金)</label><AmountInput value={yearData.firstrade} onCommit={(v) => onUpdate(yearData.id, 'firstrade', v)} className="w-full tabular-nums font-bold text-slate-700 border-b border-slate-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div><label className="text-[10px] text-slate-400 uppercase font-bold">IB (美金)</label><AmountInput value={yearData.ib} onCommit={(v) => onUpdate(yearData.id, 'ib', v)} className="w-full tabular-nums font-bold text-slate-700 border-b border-slate-100 focus:border-emerald-500 outline-none py-1 bg-transparent" placeholder="0" /></div>
+        <div className="col-span-2 relative"><label className="text-[10px] text-amber-400 uppercase font-bold">提領/調節 (美金)</label><AmountInput value={yearData.withdrawal} onCommit={(v) => onUpdate(yearData.id, 'withdrawal', v)} className="w-full tabular-nums font-bold text-slate-700 border-b border-amber-100 focus:border-amber-400 outline-none py-1 bg-transparent" placeholder="0" /></div>
       </div>
       <div className="bg-slate-50/50 rounded-xl p-3 pl-4 flex justify-between items-center">
         <div><div className="text-[10px] text-slate-400 mb-0.5 font-bold uppercase">目標金額</div><div className="font-bold text-slate-500 text-sm tabular-nums">${Math.round(targetAmount).toLocaleString()}</div></div>
@@ -3757,11 +3787,14 @@ function AppContent() {
 
   // --- Main Render ---
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-[#E9F7FE] via-[#E1F5FE] to-[#D6EBFA] text-slate-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
-      {/* Soft blue-family wash behind the frosted glass for gentle depth */}
-      <div className="absolute top-[-12%] left-[-12%] w-[60%] h-[45%] bg-[#CDEBFB]/45 rounded-full blur-[90px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-12%] right-[-12%] w-[60%] h-[45%] bg-[#D8E4FA]/40 rounded-full blur-[90px] pointer-events-none z-0"></div>
-      <div className="absolute top-[40%] left-[5%] w-[70%] h-[34%] bg-[#E4F5FB]/40 rounded-full blur-[100px] pointer-events-none z-0"></div>
+    <div className="flex flex-col h-screen bg-[#f0f9fc] text-slate-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
+      {/* Colour orbs behind the glass — frosted cards blur these so they read as real glass.
+          Kept soft, but present (a flat bg gives the blur nothing to work with). */}
+      <div className="absolute top-[-8%] left-[-15%] w-[65%] h-[40%] bg-[#8FD3F4]/45 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute top-[22%] right-[-15%] w-[55%] h-[35%] bg-[#B9C4F5]/40 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute top-[52%] left-[-10%] w-[60%] h-[35%] bg-[#9FE8D6]/38 rounded-full blur-[85px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-8%] right-[-10%] w-[60%] h-[38%] bg-[#C9B6F0]/38 rounded-full blur-[85px] pointer-events-none z-0"></div>
+      <div className="absolute top-[78%] left-[25%] w-[55%] h-[28%] bg-[#F5D6B0]/30 rounded-full blur-[90px] pointer-events-none z-0"></div>
 
       {/* Loading Screen - completely covers viewport until done, then unmounts */}
       {appPhase === 'loading' && (
