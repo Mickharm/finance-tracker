@@ -81,8 +81,8 @@ const LEDGER_ID = 'Mick';
 
 // Liquid-glass tokens: saturated backdrop blur (refraction) + crisp top-edge
 // specular highlight + layered depth shadow. Used app-wide for one consistent material.
-const GLASS_CARD = "bg-gradient-to-br from-white/50 to-white/28 backdrop-blur-2xl backdrop-saturate-[1.7] border border-white/60 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.85),inset_0_-6px_14px_-8px_rgba(255,255,255,0.3),0_14px_42px_-14px_rgba(80,75,70,0.32)] rounded-3xl relative overflow-hidden group";
-const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/35 backdrop-blur-md backdrop-saturate-[1.7] border border-white/60 focus:bg-white/75 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.7)]";
+const GLASS_CARD = "bg-gradient-to-br from-white/32 to-white/14 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/70 shadow-[inset_0_2px_1px_rgba(255,255,255,0.95),inset_0_12px_24px_-14px_rgba(255,255,255,0.6),inset_0_-1px_1px_rgba(255,255,255,0.4),0_16px_48px_-16px_rgba(80,75,70,0.34)] rounded-3xl relative overflow-hidden group";
+const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/28 backdrop-blur-md backdrop-saturate-[1.8] border border-white/70 focus:bg-white/65 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_2px_1px_rgba(255,255,255,0.9)]";
 
 const COLOR_VARIANTS = {
   slate: {
