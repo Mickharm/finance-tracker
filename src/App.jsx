@@ -81,8 +81,10 @@ const LEDGER_ID = 'Mick';
 
 // Liquid-glass tokens: saturated backdrop blur (refraction) + crisp top-edge
 // specular highlight + layered depth shadow. Used app-wide for one consistent material.
-const GLASS_CARD = "bg-gradient-to-br from-white/32 to-white/14 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/70 shadow-[inset_0_2px_1px_rgba(255,255,255,0.95),inset_0_12px_24px_-14px_rgba(255,255,255,0.6),inset_0_-1px_1px_rgba(255,255,255,0.4),0_16px_48px_-16px_rgba(80,75,70,0.34)] rounded-3xl relative overflow-hidden group";
-const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/28 backdrop-blur-md backdrop-saturate-[1.8] border border-white/70 focus:bg-white/65 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_2px_1px_rgba(255,255,255,0.9)]";
+// One integrated liquid-glass surface: very translucent body + a single soft top
+// sheen (no hard full-perimeter white ring) + a gentle diffuse lift shadow.
+const GLASS_CARD = "bg-white/20 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),inset_0_22px_42px_-30px_rgba(255,255,255,0.45),0_12px_32px_-18px_rgba(80,75,70,0.16)] rounded-3xl relative overflow-hidden group";
+const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/20 backdrop-blur-md backdrop-saturate-[1.8] border border-white/30 focus:bg-white/55 focus:border-[#A5A5C7] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.55)]";
 
 const COLOR_VARIANTS = {
   slate: {
@@ -1077,7 +1079,7 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
 
 const SalaryHistoryCard = ({ history, owner, onAdd, onDelete, onEdit, embedded = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const containerClass = embedded ? "bg-stone-50/50 rounded-xl p-3 border border-stone-100" : `${GLASS_CARD} p-5`;
+  const containerClass = embedded ? "bg-white/15 rounded-xl p-3 border border-white/25" : `${GLASS_CARD} p-5`;
 
   return (
     <div className={containerClass}>
@@ -1503,7 +1505,7 @@ const IncomeTrendChart = ({ incomes, variant }) => {
   const max = Math.max(...data, 1);
 
   return (
-    <div className="bg-white/40 p-3 rounded-xl border border-white/40 mb-4">
+    <div className="bg-white/15 p-3 rounded-xl border border-white/25 mb-4">
       <h5 className="text-xs font-bold text-stone-500 mb-2">月度收入趨勢</h5>
       <div className="h-16 flex items-end gap-1">
         {data.map((v, i) => (
@@ -3757,12 +3759,12 @@ function AppContent() {
 
   // --- Main Render ---
   return (
-    <div className="flex flex-col h-screen bg-[#F8F5F0] text-stone-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
-      {/* Background Blobs - soft pastel tints; enough colour for the glass to refract, kept gentle */}
-      <div className="absolute top-[-12%] left-[-12%] w-[60%] h-[45%] bg-[#C4E7D6]/50 rounded-full blur-[85px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-12%] right-[-12%] w-[60%] h-[45%] bg-[#F2D2D9]/45 rounded-full blur-[85px] pointer-events-none z-0"></div>
-      <div className="absolute top-[35%] left-[10%] w-[70%] h-[36%] bg-[#F5E7C8]/40 rounded-full blur-[95px] pointer-events-none z-0"></div>
-      <div className="absolute top-[12%] right-[-5%] w-[45%] h-[30%] bg-[#CFE0F0]/42 rounded-full blur-[85px] pointer-events-none z-0"></div>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-[#E8F0EC] via-[#F4F1EC] to-[#E9EDF5] text-stone-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
+      {/* Faint pastel wash behind the glass — gentle so card interiors stay clean, not tinted */}
+      <div className="absolute top-[-12%] left-[-12%] w-[60%] h-[45%] bg-[#C4E7D6]/30 rounded-full blur-[90px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-12%] right-[-12%] w-[60%] h-[45%] bg-[#F2D2D9]/28 rounded-full blur-[90px] pointer-events-none z-0"></div>
+      <div className="absolute top-[35%] left-[10%] w-[70%] h-[36%] bg-[#F5E7C8]/24 rounded-full blur-[100px] pointer-events-none z-0"></div>
+      <div className="absolute top-[12%] right-[-5%] w-[45%] h-[30%] bg-[#CFE0F0]/28 rounded-full blur-[90px] pointer-events-none z-0"></div>
 
       {/* Loading Screen - completely covers viewport until done, then unmounts */}
       {appPhase === 'loading' && (
