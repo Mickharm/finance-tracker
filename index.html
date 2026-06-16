@@ -12,54 +12,54 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="記帳助手" />
   <!-- PWA: Theme color -->
-  <meta name="theme-color" content="#F8F5F0" />
+  <meta name="theme-color" content="#E1F5FE" />
   <!-- PWA: Web App Manifest -->
   <link rel="manifest" href="/finance-tracker/manifest.webmanifest" />
   <title>記帳助手</title>
   <style>
-    body { margin: 0; background: #F8F5F0; }
+    body { margin: 0; background: #E1F5FE; }
     #pre-loader {
       position: fixed; inset: 0; z-index: 200;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: #F8F5F0;
+      background: #E1F5FE;
     }
     #pre-loader .pl-blob-1 {
       position: absolute; top: -10%; left: -10%; width: 50%; height: 40%;
-      background: rgba(241,250,238,0.4); border-radius: 50%; filter: blur(80px);
+      background: rgba(205,235,251,0.5); border-radius: 50%; filter: blur(80px);
     }
     #pre-loader .pl-blob-2 {
       position: absolute; bottom: -10%; right: -10%; width: 50%; height: 40%;
-      background: rgba(253,236,234,0.35); border-radius: 50%; filter: blur(80px);
+      background: rgba(216,228,250,0.45); border-radius: 50%; filter: blur(80px);
     }
     #pre-loader .pl-blob-3 {
       position: absolute; top: 40%; left: 20%; width: 60%; height: 30%;
-      background: rgba(254,249,231,0.3); border-radius: 50%; filter: blur(100px);
+      background: rgba(228,245,251,0.4); border-radius: 50%; filter: blur(100px);
     }
     #pre-loader .pl-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
     #pre-loader .pl-icon-box {
       width: 5rem; height: 5rem; border-radius: 1rem;
       background-color: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(24px);
-      box-shadow: 0 10px 15px -3px rgba(231, 229, 228, 0.5), 0 4px 6px -4px rgba(231, 229, 228, 0.5);
+      box-shadow: 0 10px 15px -3px rgba(148,163,184,0.35), 0 4px 6px -4px rgba(148,163,184,0.35);
       display: flex; align-items: center; justify-content: center;
       margin-bottom: 2rem; animation: pl-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
-    #pre-loader .pl-icon-box svg { width: 2.5rem; height: 2.5rem; color: #57534e; }
+    #pre-loader .pl-icon-box svg { width: 2.5rem; height: 2.5rem; color: #475569; }
     #pre-loader .pl-title {
-      font-size: 1.25rem; font-weight: 700; color: #44403c;
+      font-size: 1.25rem; font-weight: 700; color: #334155;
       margin-bottom: 1.5rem; letter-spacing: -0.025em; font-family: ui-sans-serif, system-ui, sans-serif;
     }
     #pre-loader .pl-bar-track {
-      width: 12rem; height: 0.375rem; background-color: rgba(231, 229, 228, 0.6);
+      width: 12rem; height: 0.375rem; background-color: rgba(203,213,225,0.6);
       border-radius: 9999px; overflow: hidden; backdrop-filter: blur(4px);
     }
     #pre-loader .pl-bar-fill {
       height: 100%; width: 0%; border-radius: 9999px;
-      background: linear-gradient(to right, #a8a29e, #57534e);
+      background: linear-gradient(to right, #94a3b8, #475569);
       animation: pl-bar-grow 2s ease-out forwards;
     }
     #pre-loader .pl-text {
-      font-size: 0.75rem; color: #a8a29e; margin-top: 0.75rem;
+      font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem;
       font-family: ui-sans-serif, system-ui, sans-serif;
     }
     @keyframes pl-pulse {
