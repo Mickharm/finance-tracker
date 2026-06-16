@@ -358,7 +358,7 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
   }, [isComplete, onDone]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#E1F5FE]">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#f7fbfc]">
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#CDEBFB]/45 rounded-full blur-[80px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#D8E4FA]/40 rounded-full blur-[80px] pointer-events-none"></div>
       <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-[#E4F5FB]/40 rounded-full blur-[100px] pointer-events-none"></div>
@@ -1165,10 +1165,10 @@ const PartnerYearGroup = ({ year, transactions, onDelete, onEdit }) => {
 };
 
 const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete, accentColor = 'stone' }) => {
-  const colorMap = { emerald: 'border-l-emerald-400', rose: 'border-l-rose-400', stone: 'border-l-slate-300' };
+  const colorHex = { emerald: '#52B788', rose: '#E57373', stone: '#CBD5E1' };
   const subtotal = (items || []).reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
   return (
-    <div className={`${GLASS_CARD} p-0 mb-4 border-l-4 ${colorMap[accentColor] || colorMap.stone}`}>
+    <div className={`${GLASS_CARD} p-0 mb-4 border-l-4`} style={{ borderLeftColor: colorHex[accentColor] || colorHex.stone }}>
       <div className="flex justify-between items-center px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
           {section === 'assets' ? <Landmark className="w-4 h-4 text-slate-400" /> : <Building2 className="w-4 h-4 text-slate-400" />}
@@ -1338,7 +1338,7 @@ const ExchangeItem = ({ item, onDelete, onEdit }) => {
     : { bg: 'bg-[#F0EAC2]/60', text: 'text-[#8F8335]', border: 'border-[#E0D695]' };
 
   return (
-    <div onClick={() => onEdit && onEdit(item)} className={`${GLASS_CARD} p-4 group border-l-4 ${isSell ? 'border-[#C48286]' : 'border-[#4DA391]'} ${onEdit ? 'cursor-pointer hover:bg-white/60' : ''} transition-all`}>
+    <div onClick={() => onEdit && onEdit(item)} className={`${GLASS_CARD} p-4 group border-l-4 ${onEdit ? 'cursor-pointer hover:bg-white/60' : ''} transition-all`} style={{ borderLeftColor: isSell ? '#C48286' : '#4DA391' }}>
       {/* Row 1: Account + Type + Amount + Delete */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
@@ -1641,7 +1641,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
 
   return (
     <div className="space-y-8 pb-24 animate-in fade-in duration-500">
-      <div className={`${GLASS_CARD} p-6 border-l-4 ${isOverBudget ? 'border-rose-400' : 'border-emerald-400'}`}>
+      <div className={`${GLASS_CARD} p-6 border-l-4`} style={{ borderLeftColor: isOverBudget ? '#E57373' : '#52B788' }}>
         <div className="flex items-center gap-3 mb-4">
           <div className={`p-2 rounded-xl ${isOverBudget ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
             <PieChart className="w-5 h-5" />
@@ -1672,7 +1672,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
           <div className="w-8 h-8 rounded-full bg-[#F1FAEE] flex items-center justify-center text-[#2D6A4F]"><Calendar className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-slate-800 leading-tight">月度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">經常性支出</p></div>
         </div>
-        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-[#95D5B2]`}>
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4`} style={{ borderLeftColor: '#95D5B2' }}>
           <BudgetProgressBar current={monthlyStats.totalUsed} total={monthlyStats.totalBudget} label="本月總剩餘" colorTheme="emerald" />
         </div>
         <div className="space-y-3">{monthlyStats.groups.map(g => (<GroupCard key={g.name} group={g} colorTheme="emerald" />))}</div>
@@ -1684,7 +1684,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
         </div>
 
         {/* Annual Summary - Same design as monthly */}
-        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4 border-[#7889B0]`}>
+        <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden border-l-4`} style={{ borderLeftColor: '#7889B0' }}>
           <BudgetProgressBar
             key={annualStats.totalBudget}
             current={annualStats.totalUsed}
@@ -2484,7 +2484,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3">
-        <div className={`${GLASS_CARD} p-4 border-l-4 border-l-emerald-400`}>
+        <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#52B788' }}>
           <div className="flex items-center gap-1.5 mb-2">
             <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
             <span className="text-[10px] text-slate-400 font-bold uppercase">總資產</span>
@@ -2495,7 +2495,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
             <span className="text-[9px] text-slate-400 tabular-nums">投資 ${totalInvest.toLocaleString()}</span>
           </div>
         </div>
-        <div className={`${GLASS_CARD} p-4 border-l-4 border-l-rose-400`}>
+        <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#E57373' }}>
           <div className="flex items-center gap-1.5 mb-2">
             <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
             <span className="text-[10px] text-slate-400 font-bold uppercase">總負債</span>
@@ -2633,7 +2633,7 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, on
 
           {/* Buy/Sell Summary Cards */}
           <div className="grid grid-cols-2 gap-3">
-            <div className={`${GLASS_CARD} p-4 border-l-4 border-[#4DA391]`}>
+            <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#4DA391' }}>
               <div className="text-lg font-bold text-[#2F7567] tabular-nums">${(() => {
                 const buyRecords = exchanges.filter(e => e.type !== 'sell');
                 return buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
@@ -2645,7 +2645,7 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, on
                 return totalUSD > 0 ? (totalTWD / totalUSD).toFixed(2) : '0';
               })()}</div>
             </div>
-            <div className={`${GLASS_CARD} p-4 border-l-4 border-[#C48286]`}>
+            <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#C48286' }}>
               <div className="text-lg font-bold text-[#A65E62] tabular-nums">${(() => {
                 const sellRecords = exchanges.filter(e => e.type === 'sell');
                 return sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
@@ -3787,7 +3787,7 @@ function AppContent() {
 
   // --- Main Render ---
   return (
-    <div className="flex flex-col h-screen bg-[#f0f9fc] text-slate-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
+    <div className="flex flex-col h-screen bg-[#f7fbfc] text-slate-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
       {/* Colour orbs behind the glass — frosted cards blur these so they read as real glass.
           Kept soft, but present (a flat bg gives the blur nothing to work with). */}
       <div className="absolute top-[-8%] left-[-15%] w-[65%] h-[40%] bg-[#8FD3F4]/45 rounded-full blur-[80px] pointer-events-none z-0"></div>

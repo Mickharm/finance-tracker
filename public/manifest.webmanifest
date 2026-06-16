@@ -6,8 +6,8 @@
   "scope": "/finance-tracker/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F8F5F0",
-  "theme_color": "#F8F5F0",
+  "background_color": "#f7fbfc",
+  "theme_color": "#f7fbfc",
   "icons": [
     {
       "src": "/finance-tracker/icon.png",
