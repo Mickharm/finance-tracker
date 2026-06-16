@@ -582,10 +582,12 @@ const PrincipalTrendChart = ({ history }) => {
   const width = 100; const height = 50; const padding = 5;
   const values = data.map(d => d.netPrincipal);
   const minVal = Math.min(...values); const maxVal = Math.max(...values); const range = maxVal - minVal || 1;
-  const points = data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return `${x},${y}`; }).join(' ');
+  const pts = data.map((d, i) => ({ x: padding + (i / (data.length - 1)) * (width - 2 * padding), y: height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding) }));
+  const lineStr = pts.map(p => `${p.x},${p.y}`).join(' ');
+  const areaD = `M${pts[0].x},${height - padding} ` + pts.map(p => `L${p.x},${p.y}`).join(' ') + ` L${pts[pts.length - 1].x},${height - padding} Z`;
   const currentNet = values[values.length - 1]; const prevNet = values.length > 1 ? values[values.length - 2] : currentNet; const growth = currentNet - prevNet;
   return (
-    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">歷史資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-slate-800 tabular-nums tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" /><polyline points={points} fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{data.map((d, i) => { const x = padding + (i / (data.length - 1)) * (width - 2 * padding); const y = height - padding - ((d.netPrincipal - minVal) / range) * (height - 2 * padding); return (<circle key={i} cx={x} cy={y} r={i === data.length - 1 ? 2 : 1} className={i === data.length - 1 ? "fill-slate-800" : "fill-white stroke-slate-400 stroke-[0.5]"} />); })}</svg></div><div className="flex justify-between text-[10px] text-slate-400 tabular-nums mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
+    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-slate-800 tabular-nums tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><defs><linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#5A7099" stopOpacity="0.3" /><stop offset="100%" stopColor="#5A7099" stopOpacity="0" /></linearGradient></defs><line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" /><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" /><path d={areaD} fill="url(#netGrad)" /><polyline points={lineStr} fill="none" stroke="#5A7099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{pts.map((p, i) => (<circle key={i} cx={p.x} cy={p.y} r={i === pts.length - 1 ? 2 : 1} className={i === pts.length - 1 ? "fill-[#5A7099]" : "fill-white stroke-[#5A7099] stroke-[0.5]"} />))}</svg></div><div className="flex justify-between text-[10px] text-slate-400 tabular-nums mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
   );
 };
 
@@ -2520,6 +2522,13 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
     <div className="pb-24 space-y-5 animate-in fade-in">
       {/* Trend Chart */}
       <PrincipalTrendChart history={history} />
+
+      {/* Current (live) net worth — what you're inventorying right now */}
+      <div className={`${GLASS_CARD} p-5`}>
+        <div className="text-xs text-slate-400 uppercase font-bold mb-1">目前淨值</div>
+        <div className="text-3xl font-bold text-slate-800 tabular-nums tracking-tight">${netWorth.toLocaleString()}</div>
+        <div className="text-[10px] text-slate-400 mt-1.5 tabular-nums">總資產 ${totalAssets.toLocaleString()} − 總負債 ${totalLiabilities.toLocaleString()}</div>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3">
