@@ -1400,7 +1400,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
             {items.length === 0 ? <p className="text-center text-xs text-slate-300 py-4">無紀錄</p> : items.map((item) => (
               <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-white/20 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-white/30 rounded-lg p-2 transition-colors' : ''}`}>
                 {itemRenderer(item)}
-                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-2 right-2 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
+                <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-1/2 -translate-y-1/2 right-2 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
                   <X className="w-4 h-4" />
                 </button>
               </div>
