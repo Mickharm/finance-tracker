@@ -64,9 +64,19 @@ html, body {
   width: 100%;
   max-width: 28rem; /* max-w-md */
   z-index: 40;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  border-top: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+  /* 與卡片一致的清透玻璃：低填充 + 強模糊 */
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.05);
+}
+
+/* ─── Budget Alert（剩餘 <10% 的進度條呼吸光警示）──────────────────── */
+@keyframes budgetAlertPulse {
+  0%, 100% { box-shadow: 0 0 3px 0 rgba(224, 90, 78, 0.35); }
+  50%      { box-shadow: 0 0 12px 2.5px rgba(224, 90, 78, 0.85); }
+}
+.budget-alert-glow {
+  animation: budgetAlertPulse 1.6s ease-in-out infinite;
 }

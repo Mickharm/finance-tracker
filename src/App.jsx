@@ -80,11 +80,12 @@ const setCachedPrices = (prices) => {
 };
 const LEDGER_ID = 'Mick';
 
-// Frosted glass: stronger blur + a more opaque (less see-through) white so it reads
-// as a matte frosted surface, not a translucent film. Needs colour behind it to look
-// like glass (see the background blobs) — a flat bg alone gains nothing from blur.
-const GLASS_CARD = "bg-white/55 backdrop-blur-3xl backdrop-saturate-[1.8] border border-white/55 shadow-[0_8px_30px_-8px_rgba(40,80,140,0.20),inset_0_1px_1px_rgba(255,255,255,0.85)] rounded-3xl relative overflow-hidden group";
-const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/50 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/55 focus:bg-white/80 focus:border-[#7FB3D5] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.7)]";
+// Clear glass: low-opacity white fill + strong blur so the surface reads as real
+// translucent glass (background colour shows through). Crisp light border + inset
+// top highlight give the pane its edge. Background blobs are kept pale so content
+// stays readable through the more transparent surface.
+const GLASS_CARD = "bg-white/35 backdrop-blur-3xl backdrop-saturate-[1.8] border border-white/60 shadow-[0_8px_30px_-8px_rgba(40,80,140,0.16),inset_0_1px_1px_rgba(255,255,255,0.9)] rounded-3xl relative overflow-hidden group";
+const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/40 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/60 focus:bg-white/70 focus:border-[#7FB3D5] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.75)]";
 
 const COLOR_VARIANTS = {
   slate: {
@@ -416,6 +417,42 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, requir
   );
 };
 
+// 常用備註快捷：統計歷史紀錄中最常出現的備註，一鍵帶入。
+// （新增支出視窗另有含「分類連動」的進階版；其餘表單共用這個。）
+const NoteQuickPicks = ({ records, onPick, label = '常用備註' }) => {
+  const top = useMemo(() => {
+    const stats = {};
+    (records || []).forEach(r => {
+      const n = (r.note || '').trim();
+      if (!n) return;
+      stats[n] = (stats[n] || 0) + 1;
+    });
+    return Object.entries(stats).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => n);
+  }, [records]);
+
+  if (top.length === 0) return null;
+  return (
+    <div className="mt-2">
+      <div className="flex items-center gap-1.5 mb-2 ml-1">
+        <Clock className="w-3 h-3 text-slate-300" />
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+      </div>
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+        {top.map(note => (
+          <button
+            key={note}
+            type="button"
+            onClick={() => onPick(note)}
+            className="flex-shrink-0 px-4 py-2 bg-white/50 hover:bg-white/80 text-slate-600 rounded-xl text-xs font-bold transition-all active:scale-95 border border-white/60 backdrop-blur-xl"
+          >
+            {note}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const CalculatorInput = ({ value, onChange, label }) => {
   const [displayValue, setDisplayValue] = useState(String(value !== undefined && value !== null ? value : '0'));
   const [expression, setExpression] = useState('');
@@ -538,6 +575,8 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
   const remaining = total - current;
   const isOverBudget = remaining < 0;
   const remainingPercentage = total > 0 ? (Math.max(0, remaining) / total) * 100 : 0;
+  // 剩餘不到 10%（含超支）→ 進度條呼吸光警示
+  const isCritical = total > 0 && remaining / total < 0.10;
 
   const theme = COLOR_VARIANTS[colorTheme] || COLOR_VARIANTS.slate;
 
@@ -562,7 +601,7 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
           </div>
         )}
       </div>
-      <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}>
+      <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden ${isCritical ? 'budget-alert-glow' : ''}`}>
         <div className={`h-full transition-all duration-1000 ease-out ${statusColor}`} style={{ width: `${remainingPercentage}%` }} />
       </div>
       {showDetails && variant === 'main' && (
@@ -603,6 +642,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
   const isOverBudget = group.used > group.budget;
   const remaining = group.budget - group.used;
   const remainingPercentage = group.budget > 0 ? (Math.max(0, remaining) / group.budget) * 100 : 0;
+  const isCritical = group.budget > 0 && remaining / group.budget < 0.10;
 
   let statusBarColor = theme.bar;
   if (!isOverBudget && group.budget > 0) {
@@ -625,7 +665,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
             <span className={`text-sm tabular-nums font-bold ${isOverBudget ? 'text-[#C0392B]' : 'text-slate-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         </div>
-        <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden`}>
+        <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden ${isCritical ? 'budget-alert-glow' : ''}`}>
           <div className={`h-full transition-all duration-500 ${statusBarColor}`} style={{ width: `${remainingPercentage}%` }} />
         </div>
       </div>
@@ -639,7 +679,7 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
               <span>{item.name}</span>
               <span className={`tabular-nums ${itemIsOver ? 'text-[#C0392B]' : 'text-slate-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
             </div>
-            <div className={`w-full bg-slate-100/50 rounded-full h-1 overflow-hidden`}>
+            <div className={`w-full bg-slate-100/50 rounded-full h-1 overflow-hidden ${item.budget > 0 && itemRemaining / item.budget < 0.10 ? 'budget-alert-glow' : ''}`}>
               <div className={`h-full transition-all duration-500 ${!itemIsOver && item.budget > 0
                 ? (itemPercent < 20 ? 'bg-[#E59A8E]' : itemPercent < 50 ? 'bg-[#E8BE6E]' : theme.bar)
                 : theme.bar
@@ -2896,7 +2936,7 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
       <div className="space-y-4">
         <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex gap-2">
           <span className="text-amber-600 font-bold shrink-0">💡</span>
-          <span className="text-xs text-amber-700">可設定每月的入帳日 (1-31)。若當月無該日期 (如2月30日)，將自動紀錄於該月最後一天。</span>
+          <span className="text-xs text-amber-700">啟用中的項目會在每月第一次開啟 App 時「自動入帳」（多台裝置也只會入帳一次）。可設定入帳日 (1-31)，若當月無該日期將記於該月最後一天。</span>
         </div>
 
         {!isAdding && (
@@ -2981,46 +3021,6 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
           )}
         </div>
         {!isAdding && <button onClick={handleSave} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg mt-4">儲存設定</button>}
-      </div>
-    </ModalWrapper>
-  );
-};
-
-
-
-const RecurringConfirmModal = ({ isOpen, onClose, items, onConfirm, onSkip, isSubmitting = false }) => {
-  if (!isOpen || items.length === 0) return null;
-  const total = items.reduce((sum, i) => sum + Number(i.amount), 0);
-  return (
-    <ModalWrapper title="本月固定支出確認" onClose={onClose}>
-      <div className="space-y-4">
-        <div className="text-center py-4">
-          <div className="text-sm text-slate-500 mb-1">檢測到新的月份，是否加入以下固定支出？</div>
-          <div className="text-2xl font-bold text-slate-800 tabular-nums">${total.toLocaleString()}</div>
-        </div>
-        <div className="space-y-2 bg-slate-50 p-3 rounded-xl max-h-[40vh] overflow-y-auto">
-          {items.map(item => (
-            <div key={item.id} className="flex justify-between items-center text-sm border-b border-slate-100 last:border-0 pb-2 last:pb-0">
-              <span className="text-slate-600 font-medium">{item.name}</span>
-              <span className="tabular-nums font-bold text-slate-700">${Number(item.amount).toLocaleString()}</span>
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 gap-3 pt-2">
-          {/* 入帳需向伺服器確認（防止兩台裝置重複記帳），因此保留處理中狀態 */}
-          <button onClick={onConfirm} disabled={isSubmitting} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-60">
-            {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-            {isSubmitting ? '入帳中...' : '確認入帳'}
-          </button>
-          <div className="grid grid-cols-2 gap-3">
-            <button onClick={onClose} disabled={isSubmitting} className="bg-white border border-slate-200 text-slate-600 py-3 rounded-xl font-bold disabled:opacity-60">
-              稍後提醒
-            </button>
-            <button onClick={onSkip} disabled={isSubmitting} className="bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-xs disabled:opacity-60">
-              本月不入帳
-            </button>
-          </div>
-        </div>
       </div>
     </ModalWrapper>
   );
@@ -3311,8 +3311,6 @@ function AppContent() {
 
   // Recurring Manager State
   const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
-  const [isRecurringConfirmOpen, setIsRecurringConfirmOpen] = useState(false);
-  const [recurringConfirmItems, setRecurringConfirmItems] = useState([]);
 
   // Form States
   // Default amount 0 to prevent layout shift
@@ -3533,58 +3531,35 @@ function AppContent() {
     return () => unsubSettings();
   }, [user, selectedDate.getFullYear()]);
 
-  // Recurring Check
-  // 只在「檢視年份 = 今年」且設定已與伺服器核對後評估，避免：
-  // (a) 另一台裝置已入帳、本機用快取舊狀態誤跳提醒
-  // (b) 瀏覽舊年份時拿到舊 config 的 lastRecurringCheck 誤觸發
-  // recurringPromptedMonthRef：按「稍後提醒」後，本次開啟不再重複跳出
-  const recurringPromptedMonthRef = useRef('');
+  // Recurring — 每月固定支出「全自動」入帳（不跳確認視窗）：
+  // 觸發條件：檢視年份 = 今年、設定已與伺服器核對（避免快取舊狀態誤判）、
+  // 本月尚未入帳。實際寫入用 Firestore transaction 原子鎖定當月 —
+  // 多台裝置同時開啟也只會有一台成功入帳，其餘靜默跳過。
+  const recurringRunMonthRef = useRef(''); // 本次開啟已嘗試過的月份（防重入）
   useEffect(() => {
     if (!settings.monthlyGroups) return;
     if (!settingsFromServer) return;
     if (selectedDate.getFullYear() !== new Date().getFullYear()) return;
 
     const currentMonth = getTodayString().substring(0, 7);
+    if (settings.lastRecurringCheck === currentMonth) return;
     const activeItems = (settings.recurringItems || []).filter(i => i.active);
-
-    if (settings.lastRecurringCheck === currentMonth) {
-      // 本月已處理（可能剛由另一台裝置完成）：若提醒還開著就收起
-      if (isRecurringConfirmOpen) {
-        setIsRecurringConfirmOpen(false);
-        showToast('本月固定支出已在其他裝置完成', 'warning');
-      }
-      return;
-    }
     if (activeItems.length === 0) return;
-    if (recurringPromptedMonthRef.current === currentMonth) return;
+    if (recurringRunMonthRef.current === currentMonth) return;
+    recurringRunMonthRef.current = currentMonth;
 
-    recurringPromptedMonthRef.current = currentMonth;
-    setRecurringConfirmItems(activeItems);
-    setIsRecurringConfirmOpen(true);
-  }, [settings, settingsFromServer, selectedDate, isRecurringConfirmOpen, showToast]);
-
-  const handleSaveRecurring = (items) => {
-    const year = selectedDate.getFullYear();
-    const updates = { recurringItems: items };
-    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${year}`), updates, { merge: true }));
-    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true }));
-  };
-
-  const handleBatchAddRecurring = async () => {
-    const currentMonth = getTodayString().substring(0, 7);
-    const currentYear = new Date().getFullYear();
-    withSubmission(async () => {
+    const autoPost = async () => {
+      const currentYear = new Date().getFullYear();
       const yearConfigRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${currentYear}`);
       const globalConfigRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2');
       const txCollection = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions');
       try {
-        // Firestore transaction：先向伺服器確認本月尚未入帳才寫入。
-        // 兩台裝置同時按「確認入帳」時只有一台會成功，杜絕重複記帳。
-        const claimed = await runTransaction(db, async (tx) => {
+        const result = await runTransaction(db, async (tx) => {
           const snap = await tx.get(yearConfigRef);
-          if (snap.exists() && snap.data().lastRecurringCheck === currentMonth) return false;
+          if (snap.exists() && snap.data().lastRecurringCheck === currentMonth) return null; // 另一台已完成
 
-          for (const item of recurringConfirmItems) {
+          let total = 0;
+          for (const item of activeItems) {
             const day = parseInt(item.day || 1, 10);
             const [y, m] = currentMonth.split('-').map(Number);
             const daysInMonth = new Date(y, m, 0).getDate();
@@ -3599,33 +3574,31 @@ function AppContent() {
               payer: item.payer || 'myself',
               createdAt: serverTimestamp()
             });
+            total += Number(item.amount);
           }
           tx.set(yearConfigRef, { lastRecurringCheck: currentMonth }, { merge: true });
           tx.set(globalConfigRef, { lastRecurringCheck: currentMonth }, { merge: true });
-          return true;
+          return { count: activeItems.length, total };
         });
 
-        setIsRecurringConfirmOpen(false);
-        if (claimed) {
+        if (result) {
           haptic(15);
-          showToast('已完成批量入帳');
-        } else {
-          showToast('本月固定支出已在其他裝置完成', 'warning');
+          showToast(`已自動入帳本月固定支出 ${result.count} 筆，共 $${result.total.toLocaleString()}`);
         }
       } catch (e) {
-        console.error('Recurring batch failed:', e);
-        showToast('網路連線不穩，入帳未完成，請稍後再試', 'error');
+        // 離線或連線不穩：這次先跳過，允許下一次設定同步時重試
+        console.warn('Auto recurring post failed (will retry):', e);
+        recurringRunMonthRef.current = '';
       }
-    });
-  };
+    };
+    autoPost();
+  }, [settings, settingsFromServer, selectedDate, showToast]);
 
-  const handleSkipRecurring = () => {
-    const currentMonth = getTodayString().substring(0, 7);
-    const currentYear = new Date().getFullYear();
-    const updates = { lastRecurringCheck: currentMonth };
-    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${currentYear}`), updates, { merge: true }));
+  const handleSaveRecurring = (items) => {
+    const year = selectedDate.getFullYear();
+    const updates = { recurringItems: items };
+    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${year}`), updates, { merge: true }));
     commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true }));
-    setIsRecurringConfirmOpen(false);
   };
 
   // Form Defaults Logic
@@ -3899,13 +3872,13 @@ function AppContent() {
   // --- Main Render ---
   return (
     <div className="flex flex-col h-screen bg-[#f7fbfc] text-slate-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
-      {/* Colour orbs behind the glass — frosted cards blur these so they read as real glass.
-          Kept soft, but present (a flat bg gives the blur nothing to work with). */}
-      <div className="absolute top-[-8%] left-[-15%] w-[65%] h-[40%] bg-[#8FD3F4]/45 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="absolute top-[22%] right-[-15%] w-[55%] h-[35%] bg-[#B9C4F5]/40 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="absolute top-[52%] left-[-10%] w-[60%] h-[35%] bg-[#9FE8D6]/38 rounded-full blur-[85px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-8%] right-[-10%] w-[60%] h-[38%] bg-[#C9B6F0]/38 rounded-full blur-[85px] pointer-events-none z-0"></div>
-      <div className="absolute top-[78%] left-[25%] w-[55%] h-[28%] bg-[#F5D6B0]/30 rounded-full blur-[90px] pointer-events-none z-0"></div>
+      {/* Colour orbs behind the glass — cards are now more transparent, so these are
+          kept pale (roughly 60% of the old strength) to avoid tinting the content. */}
+      <div className="absolute top-[-8%] left-[-15%] w-[65%] h-[40%] bg-[#8FD3F4]/28 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute top-[22%] right-[-15%] w-[55%] h-[35%] bg-[#B9C4F5]/25 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute top-[52%] left-[-10%] w-[60%] h-[35%] bg-[#9FE8D6]/24 rounded-full blur-[85px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-8%] right-[-10%] w-[60%] h-[38%] bg-[#C9B6F0]/24 rounded-full blur-[85px] pointer-events-none z-0"></div>
+      <div className="absolute top-[78%] left-[25%] w-[55%] h-[28%] bg-[#F5D6B0]/18 rounded-full blur-[90px] pointer-events-none z-0"></div>
 
       {/* Loading Screen - completely covers viewport until done, then unmounts */}
       {appPhase === 'loading' && (
@@ -3937,7 +3910,7 @@ function AppContent() {
           )}
 
           {/* ── Header (fixed positioning avoids sticky-in-flex glitch) */}
-          <header className="bg-white/70 backdrop-blur-xl px-6 flex items-center justify-between fixed top-0 left-0 right-0 z-20 border-b border-white/30 animate-in fade-in duration-300 header-safe max-w-md mx-auto" style={{ paddingBottom: '0.75rem' }}>
+          <header className="bg-white/55 backdrop-blur-2xl backdrop-saturate-[1.8] px-6 flex items-center justify-between fixed top-0 left-0 right-0 z-20 border-b border-white/40 animate-in fade-in duration-300 header-safe max-w-md mx-auto" style={{ paddingBottom: '0.75rem' }}>
             <div className="flex items-center gap-2 shrink-0">
               <img src={icon} className="w-7 h-7 rounded-lg shadow-sm" alt="Logo" />
             </div>
@@ -4343,7 +4316,13 @@ function AppContent() {
                   <InputField label="金額" type="number" value={newMortgageExp.amount} onChange={e => setNewMortgageExp({ ...newMortgageExp, amount: e.target.value })} required />
                   <InputField label="日期" type="date" value={newMortgageExp.date} onChange={e => setNewMortgageExp({ ...newMortgageExp, date: e.target.value })} required />
                   {mortgageExpType === 'misc_appliances' && (<InputField label="品牌" value={newMortgageExp.brand} onChange={e => setNewMortgageExp({ ...newMortgageExp, brand: e.target.value })} placeholder="品牌" />)}
-                  <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} />
+                  <div>
+                    <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} />
+                    <NoteQuickPicks
+                      records={mortgageExpenses.filter(e => e.type === mortgageExpType)}
+                      onPick={(note) => setNewMortgageExp(prev => ({ ...prev, note }))}
+                    />
+                  </div>
                   <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
                 </form>
               </ModalWrapper>
@@ -4362,7 +4341,13 @@ function AppContent() {
                   </div>
                   <InputField label="股數 (選填)" type="number" value={newMortgageFunding.shares} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, shares: e.target.value })} placeholder="0" />
                   <InputField label="日期" type="date" value={newMortgageFunding.date} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, date: e.target.value })} required />
-                  <InputField label="備註" value={newMortgageFunding.note} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, note: e.target.value })} />
+                  <div>
+                    <InputField label="備註" value={newMortgageFunding.note} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, note: e.target.value })} />
+                    <NoteQuickPicks
+                      records={mortgageFunding}
+                      onPick={(note) => setNewMortgageFunding(prev => ({ ...prev, note }))}
+                    />
+                  </div>
                   <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
                 </form>
               </ModalWrapper>
@@ -4388,7 +4373,24 @@ function AppContent() {
                   <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
                   <div className="space-y-1.5"><label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-slate-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
                   <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
-                  <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
+                  <div>
+                    <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
+                    <NoteQuickPicks
+                      records={incomes.filter(i => i.owner === newIncome.owner)}
+                      label="常用備註 (點擊自動帶入分類)"
+                      onPick={(note) => {
+                        // 帶入備註，並套用該備註歷史上最常對應的收入分類
+                        const counts = {};
+                        incomes.forEach(i => {
+                          if (i.owner === newIncome.owner && (i.note || '').trim() === note) {
+                            counts[i.category] = (counts[i.category] || 0) + 1;
+                          }
+                        });
+                        const bestCat = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+                        setNewIncome(prev => ({ ...prev, note, category: bestCat && INCOME_CATEGORIES.includes(bestCat) ? bestCat : prev.category }));
+                      }}
+                    />
+                  </div>
                   <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認入帳'}</GlassButton>
                 </form>
               </ModalWrapper>
@@ -4409,7 +4411,13 @@ function AppContent() {
                     <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">{[10000, 25000, 30000, 50000].map(amt => (<button key={amt} type="button" onClick={() => setNewPartnerTx({ ...newPartnerTx, amount: amt })} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-slate-600 whitespace-nowrap transition-colors">${amt.toLocaleString()}</button>))}</div>
                   </div>
                   <InputField label="日期" type="date" value={newPartnerTx.date} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, date: e.target.value })} required />
-                  <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
+                  <div>
+                    <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
+                    <NoteQuickPicks
+                      records={partnerTransactions.filter(t => t.type === newPartnerTx.type)}
+                      onPick={(note) => setNewPartnerTx(prev => ({ ...prev, note }))}
+                    />
+                  </div>
                   <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
                 </form>
               </ModalWrapper>
@@ -4476,14 +4484,6 @@ function AppContent() {
             items={settings.recurringItems || []}
             onSave={handleSaveRecurring}
             groups={settings.monthlyGroups || []}
-          />
-          <RecurringConfirmModal
-            isOpen={isRecurringConfirmOpen}
-            onClose={() => setIsRecurringConfirmOpen(false)}
-            items={recurringConfirmItems}
-            onConfirm={handleBatchAddRecurring}
-            onSkip={handleSkipRecurring}
-            isSubmitting={isSubmitting}
           />
         </>
       )
