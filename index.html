@@ -15,6 +15,9 @@
   <meta name="theme-color" content="#f7fbfc" />
   <!-- PWA: Web App Manifest -->
   <link rel="manifest" href="/finance-tracker/manifest.webmanifest" />
+  <!-- 提前與 Firebase 端點握手，縮短第一筆資料同步的等待 -->
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
   <title>記帳助手</title>
   <style>
     body { margin: 0; background: #f7fbfc; }
@@ -91,6 +94,17 @@
       </div>
     </div>
   </div>
+  <script>
+    // 看門狗：若 12 秒後 React 仍未掛載（pre-loader 還在），多半是資源載入
+    // 在版本交接或網路異常時失敗 — 自動重整一次自救（旗標防無限循環，
+    // 成功掛載時由 App 清除）
+    setTimeout(function () {
+      if (document.getElementById('pre-loader') && !sessionStorage.getItem('pl-reloaded')) {
+        sessionStorage.setItem('pl-reloaded', '1');
+        location.reload();
+      }
+    }, 12000);
+  </script>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 

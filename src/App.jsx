@@ -21,6 +21,7 @@ import {
   serverTimestamp,
   updateDoc,
   getDoc,
+  runTransaction,
   where
 } from 'firebase/firestore';
 import {
@@ -922,7 +923,8 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
     return () => unsub();
   }, [holdingsRef, fetchPrices]);
 
-  const saveHoldings = async (newGroups) => { if (holdingsRef) await setDoc(holdingsRef, { groups: newGroups }); };
+  // 不等伺服器回覆（本地快取即時生效），離線也能操作
+  const saveHoldings = async (newGroups) => { if (holdingsRef) setDoc(holdingsRef, { groups: newGroups }).catch(e => console.error('holdings sync failed:', e)); };
 
   const addHoldingsGroup = async () => {
     if (!newHoldingsGroupName.trim() || isSubmitting) return;
@@ -2508,10 +2510,10 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
     } });
   };
   const handleAddSnapshot = () => {
-    requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: async () => {
-      await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), {
+    requestConfirmation({ message: `確定結算 ${snapshotDate} 的金額？`, title: '結算確認', onConfirm: () => {
+      addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history'), {
         date: new Date(snapshotDate).toISOString(), netPrincipal: netWorth, details: config, createdAt: serverTimestamp()
-      });
+      }).catch(e => console.error('snapshot sync failed:', e));
     } });
   };
   const handleDeleteHistory = (id) => requestDelete('刪除此紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'principal_history', id)));
@@ -2986,7 +2988,7 @@ const RecurringManagerModal = ({ isOpen, onClose, items, onSave, groups }) => {
 
 
 
-const RecurringConfirmModal = ({ isOpen, onClose, items, onConfirm, onSkip }) => {
+const RecurringConfirmModal = ({ isOpen, onClose, items, onConfirm, onSkip, isSubmitting = false }) => {
   if (!isOpen || items.length === 0) return null;
   const total = items.reduce((sum, i) => sum + Number(i.amount), 0);
   return (
@@ -3005,14 +3007,16 @@ const RecurringConfirmModal = ({ isOpen, onClose, items, onConfirm, onSkip }) =>
           ))}
         </div>
         <div className="grid grid-cols-1 gap-3 pt-2">
-          <button onClick={onConfirm} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
-            <CheckCircle2 className="w-4 h-4" /> 確認入帳
+          {/* 入帳需向伺服器確認（防止兩台裝置重複記帳），因此保留處理中狀態 */}
+          <button onClick={onConfirm} disabled={isSubmitting} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-60">
+            {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            {isSubmitting ? '入帳中...' : '確認入帳'}
           </button>
           <div className="grid grid-cols-2 gap-3">
-            <button onClick={onClose} className="bg-white border border-slate-200 text-slate-600 py-3 rounded-xl font-bold">
+            <button onClick={onClose} disabled={isSubmitting} className="bg-white border border-slate-200 text-slate-600 py-3 rounded-xl font-bold disabled:opacity-60">
               稍後提醒
             </button>
-            <button onClick={onSkip} className="bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-xs">
+            <button onClick={onSkip} disabled={isSubmitting} className="bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-xs disabled:opacity-60">
               本月不入帳
             </button>
           </div>
@@ -3249,6 +3253,9 @@ function AppContent() {
   const [salaryHistory, setSalaryHistory] = useState([]);
   const [partnerTransactions, setPartnerTransactions] = useState([]);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  // 設定資料是否已與伺服器核對過（而非只來自本地快取）。
+  // 固定支出提醒必須等這個為 true 才能判斷，否則會拿舊快取誤跳提醒。
+  const [settingsFromServer, setSettingsFromServer] = useState(false);
 
   const [mortgageExpenses, setMortgageExpenses] = useState([]);
   const [mortgageAnalysis, setMortgageAnalysis] = useState([]);
@@ -3286,11 +3293,21 @@ function AppContent() {
   useEffect(() => {
     const preLoader = document.getElementById('pre-loader');
     if (preLoader) preLoader.remove();
+    // React 成功掛載 — 重置看門狗旗標（見 index.html），下次異常仍可自救
+    try { sessionStorage.removeItem('pl-reloaded'); } catch { /* ignore */ }
   }, []);
 
   const handleLoadingDone = useCallback(() => {
     setAppPhase('ready');
   }, []);
+
+  // 保險絲：首次使用（快取全空）又遇到極差網路時，最多等 10 秒就先進入畫面，
+  // 之後資料由 onSnapshot 陸續補上，避免載入條無限卡住
+  useEffect(() => {
+    if (appPhase !== 'loading') return;
+    const timer = setTimeout(() => setAppPhase('ready'), 10000);
+    return () => clearTimeout(timer);
+  }, [appPhase]);
 
   // Recurring Manager State
   const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
@@ -3487,7 +3504,11 @@ function AppContent() {
     const viewYear = selectedDate.getFullYear();
     const settingsRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${viewYear}`);
 
-    const unsubSettings = onSnapshot(settingsRef, async (docSnap) => {
+    // includeMetadataChanges: 即使資料內容和快取相同，伺服器核對完成時也會再收到
+    // 一次 fromCache=false 的快照 — 固定支出提醒靠這個訊號避免誤判
+    setSettingsFromServer(false);
+    const unsubSettings = onSnapshot(settingsRef, { includeMetadataChanges: true }, async (docSnap) => {
+      setSettingsFromServer(!docSnap.metadata.fromCache);
       if (docSnap.exists()) {
         setSettings(docSnap.data());
         // Mark settings as loaded
@@ -3513,69 +3534,97 @@ function AppContent() {
   }, [user, selectedDate.getFullYear()]);
 
   // Recurring Check
+  // 只在「檢視年份 = 今年」且設定已與伺服器核對後評估，避免：
+  // (a) 另一台裝置已入帳、本機用快取舊狀態誤跳提醒
+  // (b) 瀏覽舊年份時拿到舊 config 的 lastRecurringCheck 誤觸發
+  // recurringPromptedMonthRef：按「稍後提醒」後，本次開啟不再重複跳出
+  const recurringPromptedMonthRef = useRef('');
   useEffect(() => {
     if (!settings.monthlyGroups) return;
-    const currentMonth = getTodayString().substring(0, 7);
-    if (settings.lastRecurringCheck !== currentMonth && settings.recurringItems && settings.recurringItems.length > 0) {
-      const activeItems = settings.recurringItems.filter(i => i.active);
-      if (activeItems.length > 0) {
-        setRecurringConfirmItems(activeItems);
-        setIsRecurringConfirmOpen(true);
-      }
-    }
-  }, [settings.lastRecurringCheck, settings.recurringItems]);
+    if (!settingsFromServer) return;
+    if (selectedDate.getFullYear() !== new Date().getFullYear()) return;
 
-  const handleSaveRecurring = async (items) => {
+    const currentMonth = getTodayString().substring(0, 7);
+    const activeItems = (settings.recurringItems || []).filter(i => i.active);
+
+    if (settings.lastRecurringCheck === currentMonth) {
+      // 本月已處理（可能剛由另一台裝置完成）：若提醒還開著就收起
+      if (isRecurringConfirmOpen) {
+        setIsRecurringConfirmOpen(false);
+        showToast('本月固定支出已在其他裝置完成', 'warning');
+      }
+      return;
+    }
+    if (activeItems.length === 0) return;
+    if (recurringPromptedMonthRef.current === currentMonth) return;
+
+    recurringPromptedMonthRef.current = currentMonth;
+    setRecurringConfirmItems(activeItems);
+    setIsRecurringConfirmOpen(true);
+  }, [settings, settingsFromServer, selectedDate, isRecurringConfirmOpen, showToast]);
+
+  const handleSaveRecurring = (items) => {
     const year = selectedDate.getFullYear();
     const updates = { recurringItems: items };
-    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${year}`), updates, { merge: true });
-    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true });
+    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${year}`), updates, { merge: true }));
+    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true }));
   };
 
   const handleBatchAddRecurring = async () => {
     const currentMonth = getTodayString().substring(0, 7);
+    const currentYear = new Date().getFullYear();
     withSubmission(async () => {
-      const batch = [];
-      for (const item of recurringConfirmItems) {
-        const { id, active, ...txData } = item;
+      const yearConfigRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${currentYear}`);
+      const globalConfigRef = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2');
+      const txCollection = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions');
+      try {
+        // Firestore transaction：先向伺服器確認本月尚未入帳才寫入。
+        // 兩台裝置同時按「確認入帳」時只有一台會成功，杜絕重複記帳。
+        const claimed = await runTransaction(db, async (tx) => {
+          const snap = await tx.get(yearConfigRef);
+          if (snap.exists() && snap.data().lastRecurringCheck === currentMonth) return false;
 
-        // Calculate dynamic date
-        const day = parseInt(txData.day || 1);
-        const [yearStr, monthStr] = currentMonth.split('-');
-        const year = parseInt(yearStr);
-        const month = parseInt(monthStr);
-        const daysInMonth = new Date(year, month, 0).getDate();
-        const validDay = Math.min(day, daysInMonth);
-        const finalDate = `${currentMonth}-${validDay.toString().padStart(2, '0')}`;
+          for (const item of recurringConfirmItems) {
+            const day = parseInt(item.day || 1, 10);
+            const [y, m] = currentMonth.split('-').map(Number);
+            const daysInMonth = new Date(y, m, 0).getDate();
+            const finalDate = `${currentMonth}-${String(Math.min(day, daysInMonth)).padStart(2, '0')}`;
+            tx.set(doc(txCollection), {
+              amount: Number(item.amount),
+              type: 'monthly',
+              group: item.group,
+              category: item.category,
+              note: item.name,
+              date: finalDate,
+              payer: item.payer || 'myself',
+              createdAt: serverTimestamp()
+            });
+          }
+          tx.set(yearConfigRef, { lastRecurringCheck: currentMonth }, { merge: true });
+          tx.set(globalConfigRef, { lastRecurringCheck: currentMonth }, { merge: true });
+          return true;
+        });
 
-        batch.push(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), {
-          amount: Number(txData.amount),
-          type: 'monthly',
-          group: txData.group,
-          category: txData.category,
-          note: txData.name,
-          date: finalDate,
-          payer: txData.payer || 'myself',
-          createdAt: serverTimestamp()
-        }));
+        setIsRecurringConfirmOpen(false);
+        if (claimed) {
+          haptic(15);
+          showToast('已完成批量入帳');
+        } else {
+          showToast('本月固定支出已在其他裝置完成', 'warning');
+        }
+      } catch (e) {
+        console.error('Recurring batch failed:', e);
+        showToast('網路連線不穩，入帳未完成，請稍後再試', 'error');
       }
-      await Promise.all(batch);
-      const year = selectedDate.getFullYear();
-      const updates = { lastRecurringCheck: currentMonth };
-      await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${year}`), updates, { merge: true });
-      await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true });
-
-      setIsRecurringConfirmOpen(false);
-      showToast('已完成批量入帳');
     });
   };
 
-  const handleSkipRecurring = async () => {
+  const handleSkipRecurring = () => {
     const currentMonth = getTodayString().substring(0, 7);
-    const year = selectedDate.getFullYear();
+    const currentYear = new Date().getFullYear();
     const updates = { lastRecurringCheck: currentMonth };
-    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${year}`), updates, { merge: true });
-    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true });
+    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${currentYear}`), updates, { merge: true }));
+    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true }));
     setIsRecurringConfirmOpen(false);
   };
 
@@ -3652,8 +3701,23 @@ function AppContent() {
   }, [transactions, settings, selectedDate]);
 
   // --- Action Wrapper ---
+  // Firestore 的寫入 Promise 要等「伺服器回覆」才 resolve，但本地快取在呼叫當下
+  // 就已寫入、onSnapshot 也立即更新畫面。因此 UI 流程不等網路：commit() 送出寫入
+  // 後立刻返回，罕見的同步失敗（如權限被拒）才用 toast 提示。
+  // 離線時 Promise 會持續等待（不會 reject），資料已排入本地佇列、連線後自動同步。
+  const commit = useCallback((promise) => {
+    promise.catch(e => {
+      console.error('Firestore write failed:', e);
+      showToast('資料同步失敗：' + e.message, 'error');
+    });
+  }, [showToast]);
+
+  // 寫入改為非阻塞後 isSubmitting 幾乎立刻歸位，改用時間戳擋快速連點造成的重複送出
+  const submitLockRef = useRef(0);
   const withSubmission = async (action) => {
-    if (isSubmitting) return;
+    const now = Date.now();
+    if (isSubmitting || now - submitLockRef.current < 400) return;
+    submitLockRef.current = now;
     setIsSubmitting(true);
     try { await action(); } catch (e) { console.error(e); showToast('發生錯誤: ' + e.message, 'error'); } finally { setIsSubmitting(false); }
   };
@@ -3674,11 +3738,11 @@ function AppContent() {
 
         // Clean data: remove ID from body and ensure numeric amount
         const { id, ...updateData } = saveTrans;
-        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...updateData, amount: Number(saveTrans.amount) }, { merge: true });
+        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...updateData, amount: Number(saveTrans.amount) }, { merge: true }));
       } else {
 
         const { id, ...createData } = saveTrans;
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...createData, amount: Number(saveTrans.amount), createdAt: serverTimestamp() });
+        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...createData, amount: Number(saveTrans.amount), createdAt: serverTimestamp() }));
       }
       haptic(15);
       // Clear amount + note for the next entry; keep group/category/payer/date as-is
@@ -3692,15 +3756,15 @@ function AppContent() {
       }
     });
   };
-  const deleteTransaction = (id) => requestDelete("確定刪除此筆支出紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', id)));
+  const deleteTransaction = (id) => requestDelete("確定刪除此筆支出紀錄？", () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', id))));
 
   const handleAddIncome = (e) => {
     e.preventDefault();
     withSubmission(async () => {
       if (editingId) {
-        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', editingId), { ...newIncome, amount: Number(newIncome.amount) }, { merge: true });
+        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', editingId), { ...newIncome, amount: Number(newIncome.amount) }, { merge: true }));
       } else {
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes'), { ...newIncome, amount: Number(newIncome.amount), createdAt: serverTimestamp() });
+        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes'), { ...newIncome, amount: Number(newIncome.amount), createdAt: serverTimestamp() }));
       }
       haptic(15);
       showToast(editingId ? '已更新收入' : '已入帳');
@@ -3709,15 +3773,15 @@ function AppContent() {
       setEditingId(null);
     });
   };
-  const handleDeleteIncome = (id) => requestDelete("確定刪除此筆收入紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', id)));
+  const handleDeleteIncome = (id) => requestDelete("確定刪除此筆收入紀錄？", () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', id))));
 
   const handleAddSalaryRecord = (e) => {
     e.preventDefault();
     withSubmission(async () => {
       if (editingId) {
-        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', editingId), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount) }, { merge: true });
+        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', editingId), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount) }, { merge: true }));
       } else {
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history'), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount), createdAt: serverTimestamp() });
+        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history'), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount), createdAt: serverTimestamp() }));
       }
       haptic(15);
       showToast(editingId ? '已更新調薪' : '已儲存調薪');
@@ -3726,15 +3790,15 @@ function AppContent() {
       setEditingId(null);
     });
   };
-  const handleDeleteSalaryRecord = (id) => requestDelete("確定刪除此調薪紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', id)));
+  const handleDeleteSalaryRecord = (id) => requestDelete("確定刪除此調薪紀錄？", () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', id))));
 
   const handleAddPartnerTx = (e) => {
     e.preventDefault();
     withSubmission(async () => {
       if (editingId) {
-        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', editingId), { ...newPartnerTx, amount: Number(newPartnerTx.amount) }, { merge: true });
+        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', editingId), { ...newPartnerTx, amount: Number(newPartnerTx.amount) }, { merge: true }));
       } else {
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings'), { ...newPartnerTx, amount: Number(newPartnerTx.amount), createdAt: serverTimestamp() });
+        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings'), { ...newPartnerTx, amount: Number(newPartnerTx.amount), createdAt: serverTimestamp() }));
       }
       haptic(15);
       showToast(editingId ? '已更新紀錄' : '已儲存紀錄');
@@ -3743,15 +3807,15 @@ function AppContent() {
       setEditingId(null);
     });
   };
-  const deletePartnerTx = (id) => requestDelete("確定刪除此筆儲蓄/支出紀錄？", async () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', id)));
+  const deletePartnerTx = (id) => requestDelete("確定刪除此筆儲蓄/支出紀錄？", () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', id))));
 
   const handleAddMortgageExp = (e) => {
     e.preventDefault();
     withSubmission(async () => {
       if (editingId) {
-        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses', editingId), { ...newMortgageExp, amount: Number(newMortgageExp.amount), type: mortgageExpType });
+        commit(updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses', editingId), { ...newMortgageExp, amount: Number(newMortgageExp.amount), type: mortgageExpType }));
       } else {
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses'), { ...newMortgageExp, amount: Number(newMortgageExp.amount), type: mortgageExpType, createdAt: serverTimestamp() });
+        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses'), { ...newMortgageExp, amount: Number(newMortgageExp.amount), type: mortgageExpType, createdAt: serverTimestamp() }));
       }
       haptic(15);
       showToast(editingId ? '已更新項目' : '已儲存項目');
@@ -3760,15 +3824,15 @@ function AppContent() {
       setEditingId(null);
     });
   };
-  const deleteMortgageExp = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses', id)));
+  const deleteMortgageExp = (id) => requestDelete('刪除此項目？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses', id))));
 
   const handleAddMortgageAnalysis = (e) => {
     e.preventDefault();
     withSubmission(async () => {
       if (editingId) {
-        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis', editingId), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount) });
+        commit(updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis', editingId), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount) }));
       } else {
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis'), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount), createdAt: serverTimestamp() });
+        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis'), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount), createdAt: serverTimestamp() }));
       }
       haptic(15);
       showToast(editingId ? '已更新項目' : '已儲存項目');
@@ -3777,15 +3841,15 @@ function AppContent() {
       setEditingId(null);
     });
   };
-  const deleteMortgageAnalysis = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis', id)));
+  const deleteMortgageAnalysis = (id) => requestDelete('刪除此項目？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis', id))));
 
   const handleAddMortgageFunding = (e) => {
     e.preventDefault();
     withSubmission(async () => {
       if (editingId) {
-        await updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', editingId), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount) });
+        commit(updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', editingId), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount) }));
       } else {
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding'), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount), createdAt: serverTimestamp() });
+        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding'), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount), createdAt: serverTimestamp() }));
       }
       haptic(15);
       showToast(editingId ? '已更新來源' : '已儲存來源');
@@ -3794,22 +3858,22 @@ function AppContent() {
       setEditingId(null);
     });
   };
-  const deleteMortgageFunding = (id) => requestDelete('刪除此項目？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', id)));
+  const deleteMortgageFunding = (id) => requestDelete('刪除此項目？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', id))));
 
-  const handleAddStockGoalYear = async () => {
+  const handleAddStockGoalYear = () => {
     const maxYear = stockGoals.length > 0 ? stockGoals[0].year : 2021;
     const nextYear = maxYear + 1;
-    await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals'), { year: nextYear, roi: 0, firstrade: 0, ib: 0, withdrawal: 0, createdAt: serverTimestamp() });
+    commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals'), { year: nextYear, roi: 0, firstrade: 0, ib: 0, withdrawal: 0, createdAt: serverTimestamp() }));
   };
-  const handleDeleteStockGoalYear = (id) => requestDelete('確定刪除此年份的存股計畫？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id)));
-  const handleUpdateStockGoal = async (id, field, value) => { await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id), { [field]: Number(value) }, { merge: true }); };
+  const handleDeleteStockGoalYear = (id) => requestDelete('確定刪除此年份的存股計畫？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id))));
+  const handleUpdateStockGoal = (id, field, value) => { commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id), { [field]: Number(value) }, { merge: true })); };
 
   const handleAddExchange = (e) => {
     e.preventDefault(); withSubmission(async () => {
       if (editingId) {
-        await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges', editingId), { ...newExchange, updatedAt: serverTimestamp() }, { merge: true });
+        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges', editingId), { ...newExchange, updatedAt: serverTimestamp() }, { merge: true }));
       } else {
-        await addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges'), { ...newExchange, createdAt: serverTimestamp() });
+        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges'), { ...newExchange, createdAt: serverTimestamp() }));
       }
       haptic(15);
       showToast(editingId ? '已更新換匯' : '已儲存換匯');
@@ -3818,16 +3882,16 @@ function AppContent() {
       setIsAddExchangeModalOpen(false);
     });
   };
-  const handleDeleteExchange = (id) => requestDelete('刪除此換匯紀錄？', () => deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges', id)));
+  const handleDeleteExchange = (id) => requestDelete('刪除此換匯紀錄？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges', id))));
 
-  const updateSettings = async (newGroups, type) => {
+  const updateSettings = (newGroups, type) => {
     const newSettings = { ...settings };
     if (type === 'monthly') newSettings.monthlyGroups = newGroups;
     else newSettings.annualGroups = newGroups;
 
     // Write to the currently selected year's config
     const viewYear = selectedDate.getFullYear();
-    await setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${viewYear}`), newSettings);
+    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${viewYear}`), newSettings));
   };
 
   const handleDateNavigate = (direction) => { const newDate = new Date(selectedDate); if (currentView === 'income' || currentView === 'settings') newDate.setFullYear(selectedDate.getFullYear() + direction); else newDate.setMonth(selectedDate.getMonth() + direction); setSelectedDate(newDate); };
@@ -4419,6 +4483,7 @@ function AppContent() {
             items={recurringConfirmItems}
             onConfirm={handleBatchAddRecurring}
             onSkip={handleSkipRecurring}
+            isSubmitting={isSubmitting}
           />
         </>
       )
