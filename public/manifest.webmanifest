@@ -21,5 +21,21 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "記一筆支出",
+      "short_name": "記一筆",
+      "description": "直接開啟新增支出視窗",
+      "url": "/finance-tracker/?action=add-expense",
+      "icons": [{ "src": "/finance-tracker/icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "支出分析",
+      "short_name": "分析",
+      "description": "查看本月支出分析",
+      "url": "/finance-tracker/?action=analysis",
+      "icons": [{ "src": "/finance-tracker/icon.png", "sizes": "192x192" }]
+    }
   ]
 }

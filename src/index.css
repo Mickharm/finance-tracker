@@ -80,3 +80,105 @@ html, body {
 .budget-alert-glow {
   animation: budgetAlertPulse 1.6s ease-in-out infinite;
 }
+
+/* ─── Glass 質感（陰影 / 內光，深淺色各自適配）────────────────────── */
+:root { color-scheme: light; }
+.app-bg { background-color: #f7fbfc; }
+.glass-card-fx {
+  box-shadow: 0 8px 30px -8px rgba(40, 80, 140, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+.glass-input-fx {
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.75);
+}
+.chart-grid { stroke: #e2e8f0; }
+
+/* ─── Dark Mode（跟隨系統，deep-navy 玻璃）───────────────────────────
+   策略：這是單檔 App，不逐行加 dark: variant，改在此集中「重對映」
+   全 App 使用到的色彩工具類別。Tailwind v4 的 utilities 在 cascade layer
+   內，這裡的未分層規則必定勝出。 */
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; } /* 原生 date/select 控件跟著變深 */
+  .app-bg { background-color: #0b1120; }
+  .bg-blob { opacity: 0.5; }
+
+  .glass-card-fx {
+    box-shadow: 0 8px 30px -8px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.10);
+  }
+  .glass-input-fx { box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08); }
+  .chart-grid { stroke: rgba(255, 255, 255, 0.14); }
+
+  .tab-bar {
+    background: rgba(11, 17, 32, 0.72);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  /* 文字階（slate → 亮階） */
+  .text-slate-800 { color: #e8eef7; }
+  .text-slate-700 { color: #d5deeb; }
+  .text-slate-600 { color: #b7c3d6; }
+  .text-slate-500 { color: #93a2b8; }
+  .text-slate-400 { color: #7d8ba1; }
+  .text-slate-300 { color: #5d6b83; }
+
+  /* 白玻璃填充 → 深色玻璃 / 亮度微光 */
+  .bg-white\/95 { background-color: rgba(15, 23, 42, 0.95); }
+  .bg-white\/90 { background-color: rgba(15, 23, 42, 0.92); }
+  .bg-white\/80 { background-color: rgba(255, 255, 255, 0.14); }
+  .bg-white\/70 { background-color: rgba(255, 255, 255, 0.12); }
+  .bg-white\/60 { background-color: rgba(255, 255, 255, 0.12); }
+  .bg-white\/55 { background-color: rgba(11, 17, 32, 0.70); } /* header */
+  .bg-white\/50 { background-color: rgba(255, 255, 255, 0.10); }
+  .bg-white\/40 { background-color: rgba(255, 255, 255, 0.08); }
+  .bg-white\/35 { background-color: rgba(255, 255, 255, 0.07); } /* glass cards */
+  .bg-white\/30 { background-color: rgba(255, 255, 255, 0.06); }
+  .bg-white     { background-color: rgba(255, 255, 255, 0.15); }
+  .focus\:bg-white\/70:focus { background-color: rgba(255, 255, 255, 0.15); }
+  .hover\:bg-white\/80:hover { background-color: rgba(255, 255, 255, 0.15); }
+  .hover\:bg-white\/50:hover { background-color: rgba(255, 255, 255, 0.12); }
+
+  /* Slate 填充階 */
+  .bg-slate-50      { background-color: rgba(255, 255, 255, 0.06); }
+  .bg-slate-50\/50  { background-color: rgba(255, 255, 255, 0.04); }
+  .bg-slate-50\/80  { background-color: rgba(255, 255, 255, 0.06); }
+  .bg-slate-100     { background-color: rgba(255, 255, 255, 0.09); }
+  .bg-slate-100\/50 { background-color: rgba(255, 255, 255, 0.07); }
+  .bg-slate-100\/70 { background-color: rgba(255, 255, 255, 0.08); }
+  .bg-slate-100\/80 { background-color: rgba(255, 255, 255, 0.09); }
+  .bg-slate-200     { background-color: rgba(255, 255, 255, 0.15); }
+  .bg-slate-200\/60 { background-color: rgba(255, 255, 255, 0.13); }
+  .bg-slate-300     { background-color: rgba(255, 255, 255, 0.22); }
+  .bg-slate-400     { background-color: rgba(255, 255, 255, 0.30); }
+  .hover\:bg-slate-100:hover { background-color: rgba(255, 255, 255, 0.12); }
+  .hover\:bg-slate-200:hover { background-color: rgba(255, 255, 255, 0.16); }
+
+  /* 主要按鈕／深色元件 → 提亮為 elevated navy（維持白字） */
+  .bg-slate-800 { background-color: #33456b; }
+  .bg-slate-700 { background-color: #3c5077; }
+  .hover\:bg-slate-900:hover { background-color: #2a3a5c; }
+  .bg-slate-800\/90 { background-color: rgba(38, 51, 78, 0.95); } /* toast */
+  .border-slate-800 { border-color: #33456b; }
+
+  /* 邊框 */
+  .border-white\/60 { border-color: rgba(255, 255, 255, 0.14); }
+  .border-white\/40 { border-color: rgba(255, 255, 255, 0.10); }
+  .border-white\/25 { border-color: rgba(255, 255, 255, 0.08); }
+  .border-white\/20 { border-color: rgba(255, 255, 255, 0.07); }
+  .border-slate-100 { border-color: rgba(255, 255, 255, 0.08); }
+  .border-slate-100\/50 { border-color: rgba(255, 255, 255, 0.06); }
+  .border-slate-200 { border-color: rgba(255, 255, 255, 0.12); }
+  .border-slate-200\/50 { border-color: rgba(255, 255, 255, 0.08); }
+  .border-slate-200\/60 { border-color: rgba(255, 255, 255, 0.09); }
+  .hover\:border-slate-300:hover { border-color: rgba(255, 255, 255, 0.18); }
+
+  /* 主題色文字（COLOR_VARIANTS .text 會直接用在玻璃上）→ 亮階對映 */
+  [class*="text-[#4A5A6A]"] { color: #aebccd; }
+  [class*="text-[#54636F]"] { color: #a9b7c6; }
+  [class*="text-[#5A7099]"] { color: #9db4dd; }
+  [class*="text-[#7A6690]"] { color: #baa8d3; }
+  [class*="text-[#C0392B]"] { color: #f2948a; }
+  [class*="text-[#2D6A4F]"] { color: #83d3a8; }
+  [class*="text-[#9A7D0A]"] { color: #dfc367; }
+  [class*="text-[#4E5D82]"] { color: #a2b3dd; }
+  [class*="text-[#3E8285]"] { color: #82c8cb; }
+}

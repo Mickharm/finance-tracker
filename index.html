@@ -11,8 +11,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="記帳助手" />
-  <!-- PWA: Theme color -->
-  <meta name="theme-color" content="#f7fbfc" />
+  <!-- PWA: Theme color（跟隨深淺色） -->
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7fbfc" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1120" />
   <!-- PWA: Web App Manifest -->
   <link rel="manifest" href="/finance-tracker/manifest.webmanifest" />
   <!-- 提前與 Firebase 端點握手，縮短第一筆資料同步的等待 -->
@@ -72,6 +73,21 @@
     @keyframes pl-bar-grow {
       0% { width: 0%; }
       100% { width: 15%; }
+    }
+    /* 深色模式：pre-loader 與 body 底色跟隨系統 */
+    @media (prefers-color-scheme: dark) {
+      body { background: #0b1120; }
+      #pre-loader { background: #0b1120; }
+      #pre-loader .pl-blob-1, #pre-loader .pl-blob-2, #pre-loader .pl-blob-3 { opacity: 0.5; }
+      #pre-loader .pl-icon-box {
+        background-color: rgba(255, 255, 255, 0.10);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -4px rgba(0, 0, 0, 0.45);
+      }
+      #pre-loader .pl-icon-box svg { color: #b7c3d6; }
+      #pre-loader .pl-title { color: #d5deeb; }
+      #pre-loader .pl-bar-track { background-color: rgba(255, 255, 255, 0.13); }
+      #pre-loader .pl-bar-fill { background: linear-gradient(to right, #64748b, #94a3b8); }
+      #pre-loader .pl-text { color: #7d8ba1; }
     }
   </style>
 </head>

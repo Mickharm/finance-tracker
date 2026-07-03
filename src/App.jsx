@@ -84,8 +84,9 @@ const LEDGER_ID = 'Mick';
 // translucent glass (background colour shows through). Crisp light border + inset
 // top highlight give the pane its edge. Background blobs are kept pale so content
 // stays readable through the more transparent surface.
-const GLASS_CARD = "bg-white/35 backdrop-blur-3xl backdrop-saturate-[1.8] border border-white/60 shadow-[0_8px_30px_-8px_rgba(40,80,140,0.16),inset_0_1px_1px_rgba(255,255,255,0.9)] rounded-3xl relative overflow-hidden group";
-const GLASS_INPUT = "w-full min-w-0 max-w-full box-border bg-white/40 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/60 focus:bg-white/70 focus:border-[#7FB3D5] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.75)]";
+// 陰影/內光抽到 index.css 的 .glass-card-fx / .glass-input-fx，深色模式一併適配
+const GLASS_CARD = "glass-card-fx bg-white/35 backdrop-blur-3xl backdrop-saturate-[1.8] border border-white/60 rounded-3xl relative overflow-hidden group";
+const GLASS_INPUT = "glass-input-fx w-full min-w-0 max-w-full box-border bg-white/40 backdrop-blur-2xl backdrop-saturate-[1.8] border border-white/60 focus:bg-white/70 focus:border-[#7FB3D5] transition-all duration-300 outline-none rounded-2xl text-base p-4 appearance-none";
 
 const COLOR_VARIANTS = {
   slate: {
@@ -360,10 +361,10 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
   }, [isComplete, onDone]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#f7fbfc]">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#CDEBFB]/45 rounded-full blur-[80px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#D8E4FA]/40 rounded-full blur-[80px] pointer-events-none"></div>
-      <div className="absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-[#E4F5FB]/40 rounded-full blur-[100px] pointer-events-none"></div>
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center app-bg">
+      <div className="bg-blob absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#CDEBFB]/45 rounded-full blur-[80px] pointer-events-none"></div>
+      <div className="bg-blob absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#D8E4FA]/40 rounded-full blur-[80px] pointer-events-none"></div>
+      <div className="bg-blob absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-[#E4F5FB]/40 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="relative z-10 flex flex-col items-center">
         <div className="w-20 h-20 rounded-2xl bg-white/80 backdrop-blur-xl shadow-lg shadow-slate-200/50 flex items-center justify-center mb-8 animate-pulse">
           <Wallet className="w-10 h-10 text-slate-600" />
@@ -627,7 +628,7 @@ const PrincipalTrendChart = ({ history }) => {
   const areaD = `M${pts[0].x},${height - padding} ` + pts.map(p => `L${p.x},${p.y}`).join(' ') + ` L${pts[pts.length - 1].x},${height - padding} Z`;
   const currentNet = values[values.length - 1]; const prevNet = values.length > 1 ? values[values.length - 2] : currentNet; const growth = currentNet - prevNet;
   return (
-    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-slate-800 tabular-nums tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><defs><linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#5A7099" stopOpacity="0.3" /><stop offset="100%" stopColor="#5A7099" stopOpacity="0" /></linearGradient></defs><line x1={padding} y1={padding} x2={width - padding} y2={padding} stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" /><line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" /><path d={areaD} fill="url(#netGrad)" /><polyline points={lineStr} fill="none" stroke="#5A7099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{pts.map((p, i) => (<circle key={i} cx={p.x} cy={p.y} r={i === pts.length - 1 ? 2 : 1} className={i === pts.length - 1 ? "fill-[#5A7099]" : "fill-white stroke-[#5A7099] stroke-[0.5]"} />))}</svg></div><div className="flex justify-between text-[10px] text-slate-400 tabular-nums mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
+    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-slate-800 tabular-nums tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><defs><linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#5A7099" stopOpacity="0.3" /><stop offset="100%" stopColor="#5A7099" stopOpacity="0" /></linearGradient></defs><line className="chart-grid" x1={padding} y1={padding} x2={width - padding} y2={padding} strokeWidth="0.5" strokeDasharray="2" /><line className="chart-grid" x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} strokeWidth="0.5" strokeDasharray="2" /><path d={areaD} fill="url(#netGrad)" /><polyline points={lineStr} fill="none" stroke="#5A7099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{pts.map((p, i) => (<circle key={i} cx={p.x} cy={p.y} r={i === pts.length - 1 ? 2 : 1} className={i === pts.length - 1 ? "fill-[#5A7099]" : "fill-white stroke-[#5A7099] stroke-[0.5]"} />))}</svg></div><div className="flex justify-between text-[10px] text-slate-400 tabular-nums mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
   );
 };
 
@@ -3309,6 +3310,29 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [appPhase]);
 
+  // Deep link：主畫面捷徑（manifest shortcuts）帶 ?action=… 進來時直接跳到目標動作。
+  // 處理完立刻清掉參數，避免之後重新整理重複觸發。
+  useEffect(() => {
+    if (appPhase !== 'ready') return;
+    const action = new URLSearchParams(window.location.search).get('action');
+    if (!action) return;
+    window.history.replaceState(null, '', window.location.pathname);
+    if (action === 'add-expense') {
+      setNewTrans(prev => ({ ...prev, date: getTodayString() }));
+      setIsAddTxModalOpen(true);
+    } else if (action === 'analysis') {
+      setCurrentView('visualization');
+    }
+  }, [appPhase]);
+
+  // Service Worker 更新在「開啟 20 秒後」才完成時不自動重整（避免打斷輸入），
+  // 改由 main.jsx 發出事件、這裡提示使用者
+  useEffect(() => {
+    const onSwUpdated = () => showToast('新版本已就緒，重新開啟 App 後生效', 'warning');
+    window.addEventListener('sw-updated', onSwUpdated);
+    return () => window.removeEventListener('sw-updated', onSwUpdated);
+  }, [showToast]);
+
   // Recurring Manager State
   const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
 
@@ -3871,14 +3895,15 @@ function AppContent() {
 
   // --- Main Render ---
   return (
-    <div className="flex flex-col h-screen bg-[#f7fbfc] text-slate-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
+    <div className="flex flex-col h-screen app-bg text-slate-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
       {/* Colour orbs behind the glass — cards are now more transparent, so these are
-          kept pale (roughly 60% of the old strength) to avoid tinting the content. */}
-      <div className="absolute top-[-8%] left-[-15%] w-[65%] h-[40%] bg-[#8FD3F4]/28 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="absolute top-[22%] right-[-15%] w-[55%] h-[35%] bg-[#B9C4F5]/25 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="absolute top-[52%] left-[-10%] w-[60%] h-[35%] bg-[#9FE8D6]/24 rounded-full blur-[85px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-8%] right-[-10%] w-[60%] h-[38%] bg-[#C9B6F0]/24 rounded-full blur-[85px] pointer-events-none z-0"></div>
-      <div className="absolute top-[78%] left-[25%] w-[55%] h-[28%] bg-[#F5D6B0]/18 rounded-full blur-[90px] pointer-events-none z-0"></div>
+          kept pale (roughly 60% of the old strength) to avoid tinting the content.
+          .bg-blob 讓深色模式再壓暗一階（同色球在深底上會變成柔和的極光）。 */}
+      <div className="bg-blob absolute top-[-8%] left-[-15%] w-[65%] h-[40%] bg-[#8FD3F4]/28 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="bg-blob absolute top-[22%] right-[-15%] w-[55%] h-[35%] bg-[#B9C4F5]/25 rounded-full blur-[80px] pointer-events-none z-0"></div>
+      <div className="bg-blob absolute top-[52%] left-[-10%] w-[60%] h-[35%] bg-[#9FE8D6]/24 rounded-full blur-[85px] pointer-events-none z-0"></div>
+      <div className="bg-blob absolute bottom-[-8%] right-[-10%] w-[60%] h-[38%] bg-[#C9B6F0]/24 rounded-full blur-[85px] pointer-events-none z-0"></div>
+      <div className="bg-blob absolute top-[78%] left-[25%] w-[55%] h-[28%] bg-[#F5D6B0]/18 rounded-full blur-[90px] pointer-events-none z-0"></div>
 
       {/* Loading Screen - completely covers viewport until done, then unmounts */}
       {appPhase === 'loading' && (
@@ -4289,6 +4314,21 @@ function AppContent() {
                       <div className="flex-1">
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">日期</label>
                         <input type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required className={`${GLASS_INPUT} h-[52px] py-0`} />
+                        {/* 日期快捷：補記昨天/前天的支出不用開日曆選 */}
+                        <div className="flex gap-1.5 mt-2">
+                          {[['今天', 0], ['昨天', 1], ['前天', 2]].map(([label, off]) => {
+                            const d = new Date();
+                            d.setDate(d.getDate() - off);
+                            const val = toLocalISOString(d);
+                            const active = newTrans.date === val;
+                            return (
+                              <button key={label} type="button" onClick={() => setNewTrans(prev => ({ ...prev, date: val }))}
+                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 border ${active ? 'bg-slate-800 text-white border-slate-800' : 'bg-white/50 text-slate-500 border-white/60'}`}>
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
 

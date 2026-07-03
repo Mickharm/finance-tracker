@@ -20,8 +20,9 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     if (!hadController || reloaded) return
     reloaded = true
     // 剛開啟不久（尚未開始輸入）就自動重整以套用新版；
-    // 之後才完成的更新則留到下次開啟時生效，避免打斷輸入中的表單
+    // 之後才完成的更新不打斷輸入，改通知 App 顯示提示（下次開啟生效）
     if (performance.now() < 20000) window.location.reload()
+    else window.dispatchEvent(new CustomEvent('sw-updated'))
   })
 
   window.addEventListener('load', () => {
