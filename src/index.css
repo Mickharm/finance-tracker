@@ -81,6 +81,14 @@ html, body {
   animation: budgetAlertPulse 1.6s ease-in-out infinite;
 }
 
+/* ─── 搜尋命中標示（支出分析的搜尋結果）──────────────────────────── */
+.search-hit {
+  background-color: rgba(255, 205, 90, 0.5);
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 1px;
+}
+
 /* ─── Glass 質感（陰影 / 內光，深淺色各自適配）────────────────────── */
 :root { color-scheme: light; }
 .app-bg { background-color: #f7fbfc; }
@@ -106,6 +114,7 @@ html, body {
   }
   .glass-input-fx { box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08); }
   .chart-grid { stroke: rgba(255, 255, 255, 0.14); }
+  .search-hit { background-color: rgba(255, 200, 80, 0.24); color: #ffdf9e; }
 
   .tab-bar {
     background: rgba(11, 17, 32, 0.72);

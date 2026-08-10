@@ -1,8 +1,30 @@
 import { useState, useEffect, useMemo } from 'react';
-import { X, PieChart, ChevronDown, ChevronUp, ToggleLeft, ToggleRight } from 'lucide-react';
+import { X, Search, PieChart, ChevronDown, ChevronUp, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Card } from '../components/ui';
 import { GLASS_CARD, GLASS_INPUT } from '../lib/constants';
 import { formatDetailedDate } from '../lib/utils';
+
+const SEARCH_RESULT_LIMIT = 30; // 手機上一次最多渲染幾筆搜尋結果
+
+// 把命中的字串片段包成 <mark>，讓使用者一眼看到是哪裡對上的
+const highlightMatch = (text, query) => {
+  const src = String(text ?? '');
+  if (!query) return src;
+  const lower = src.toLowerCase();
+  const needle = query.toLowerCase();
+  if (!lower.includes(needle)) return src;
+
+  const parts = [];
+  let cursor = 0;
+  let key = 0;
+  for (let idx = lower.indexOf(needle, cursor); idx !== -1; idx = lower.indexOf(needle, cursor)) {
+    if (idx > cursor) parts.push(src.slice(cursor, idx));
+    parts.push(<mark key={key++} className="search-hit">{src.slice(idx, idx + needle.length)}</mark>);
+    cursor = idx + needle.length;
+  }
+  if (cursor < src.length) parts.push(src.slice(cursor));
+  return parts;
+};
 
 
 const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit }) => {
@@ -11,6 +33,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); // Drill-down state: month — default to current month for monthly reconciliation
 
+  const [searchQuery, setSearchQuery] = useState(''); // 支出搜尋：金額或部分名稱
   const [selectedFilter, setSelectedFilter] = useState(null); // { type: 'group'|'category', value: string }
   const [sortMode, setSortMode] = useState('budget'); // 'amount' | 'budget' — budget order is the monthly reconciliation default
   const [expandedGroups, setExpandedGroups] = useState({}); // { groupName: boolean }
@@ -128,8 +151,108 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [transactions, baseYear, selectedMonth, selectedFilter]);
 
+  // ─── 支出搜尋（範圍＝上方選擇的年份，不受月份／分類篩選影響）───────────────
+  const trimmedQuery = searchQuery.trim();
+  const searchResults = useMemo(() => {
+    if (!trimmedQuery) return [];
+
+    const needle = trimmedQuery.toLowerCase();
+    // 純數字（可帶 $ , . 空白）→ 同時比對金額；帶中英文的一律只當名稱搜尋
+    const isAmountQuery = /^[\d.,$\s]+$/.test(trimmedQuery);
+    const digits = trimmedQuery.replace(/[^\d]/g, '');
+    // 帶 - 或 / 才比對日期，避免純數字把整月的紀錄都撈進來
+    const matchDate = /[-/]/.test(trimmedQuery);
+
+    const hits = [];
+    transactions.forEach(t => {
+      if (new Date(t.date).getFullYear() !== baseYear) return;
+
+      const amountStr = String(Math.round(Number(t.amount) || 0));
+      const amountHit = isAmountQuery && digits.length > 0 && amountStr.includes(digits);
+      const text = `${t.category || ''} ${t.group || ''} ${t.note || ''}${matchDate ? ` ${t.date || ''}` : ''}`.toLowerCase();
+      if (!amountHit && !text.includes(needle)) return;
+
+      hits.push({ t, exact: amountHit && amountStr === digits });
+    });
+
+    // 金額完全相符的排最前面，其餘依日期由新到舊
+    return hits
+      .sort((a, b) => (a.exact !== b.exact ? (a.exact ? -1 : 1) : String(b.t.date || '').localeCompare(String(a.t.date || ''))))
+      .map(h => h.t);
+  }, [transactions, baseYear, trimmedQuery]);
+
+  const searchTotal = useMemo(() => searchResults.reduce((sum, t) => sum + Number(t.amount || 0), 0), [searchResults]);
+
   return (
     <div className="space-y-6 pb-24 animate-in fade-in">
+      {/* ─── 搜尋支出（金額或部分名稱）─────────────────────────────── */}
+      <Card>
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+            enterKeyHint="search"
+            autoComplete="off"
+            placeholder={`搜尋 ${baseYear} 年支出：金額或名稱`}
+            className={`${GLASS_INPUT} pl-11 pr-11 font-medium text-slate-700`}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="清除搜尋"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors z-10"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {trimmedQuery && (
+          <div className="mt-4 animate-in fade-in duration-200">
+            {searchResults.length > 0 ? (
+              <>
+                <div className="flex items-baseline justify-between mb-3 px-1">
+                  <span className="text-xs font-bold text-slate-500">{baseYear} 年找到 {searchResults.length} 筆</span>
+                  <span className="text-sm font-bold text-slate-800 tabular-nums">合計 ${searchTotal.toLocaleString()}</span>
+                </div>
+                <div className="space-y-2">
+                  {searchResults.slice(0, SEARCH_RESULT_LIMIT).map(t => (
+                    <div
+                      key={t.id}
+                      onClick={() => onEdit && onEdit(t)}
+                      className="bg-white/50 border border-white/60 rounded-2xl p-3 flex justify-between items-center gap-3 cursor-pointer hover:bg-white/80 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-slate-700 flex items-center gap-2 min-w-0">
+                          <span className="truncate">{highlightMatch(t.category, trimmedQuery)}</span>
+                          {t.group && <span className="shrink-0 text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">{t.group}</span>}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                          {formatDetailedDate(t.date)}{t.note && <> • {highlightMatch(t.note, trimmedQuery)}</>}
+                        </div>
+                      </div>
+                      <span className="tabular-nums font-bold text-slate-800 shrink-0">${Number(t.amount).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+                {searchResults.length > SEARCH_RESULT_LIMIT && (
+                  <div className="text-center text-[11px] text-slate-400 pt-3">僅顯示前 {SEARCH_RESULT_LIMIT} 筆，請輸入更精確的金額或名稱</div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <div className="text-sm text-slate-400">{baseYear} 年找不到「{trimmedQuery}」的支出</div>
+                <div className="text-[11px] text-slate-300 mt-1">可切換下方年份，或改用部分名稱／金額搜尋</div>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+
       <Card>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-slate-800">{isCompareMode ? '年度支出比較' : '年度支出分析'}</h2>
