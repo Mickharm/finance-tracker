@@ -185,74 +185,6 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
 
   return (
     <div className="space-y-6 pb-24 animate-in fade-in">
-      {/* ─── 搜尋支出（金額或部分名稱）─────────────────────────────── */}
-      <Card>
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-            enterKeyHint="search"
-            autoComplete="off"
-            placeholder={`搜尋 ${baseYear} 年支出：金額或名稱`}
-            className={`${GLASS_INPUT} pl-11 pr-11 font-medium text-slate-700`}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              aria-label="清除搜尋"
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors z-10"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {trimmedQuery && (
-          <div className="mt-4 animate-in fade-in duration-200">
-            {searchResults.length > 0 ? (
-              <>
-                <div className="flex items-baseline justify-between mb-3 px-1">
-                  <span className="text-xs font-bold text-slate-500">{baseYear} 年找到 {searchResults.length} 筆</span>
-                  <span className="text-sm font-bold text-slate-800 tabular-nums">合計 ${searchTotal.toLocaleString()}</span>
-                </div>
-                <div className="space-y-2">
-                  {searchResults.slice(0, SEARCH_RESULT_LIMIT).map(t => (
-                    <div
-                      key={t.id}
-                      onClick={() => onEdit && onEdit(t)}
-                      className="bg-white/50 border border-white/60 rounded-2xl p-3 flex justify-between items-center gap-3 cursor-pointer hover:bg-white/80 transition-colors"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-sm font-bold text-slate-700 flex items-center gap-2 min-w-0">
-                          <span className="truncate">{highlightMatch(t.category, trimmedQuery)}</span>
-                          {t.group && <span className="shrink-0 text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">{t.group}</span>}
-                        </div>
-                        <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                          {formatDetailedDate(t.date)}{t.note && <> • {highlightMatch(t.note, trimmedQuery)}</>}
-                        </div>
-                      </div>
-                      <span className="tabular-nums font-bold text-slate-800 shrink-0">${Number(t.amount).toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-                {searchResults.length > SEARCH_RESULT_LIMIT && (
-                  <div className="text-center text-[11px] text-slate-400 pt-3">僅顯示前 {SEARCH_RESULT_LIMIT} 筆，請輸入更精確的金額或名稱</div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-4">
-                <div className="text-sm text-slate-400">{baseYear} 年找不到「{trimmedQuery}」的支出</div>
-                <div className="text-[11px] text-slate-300 mt-1">可切換下方年份，或改用部分名稱／金額搜尋</div>
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
-
       <Card>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-slate-800">{isCompareMode ? '年度支出比較' : '年度支出分析'}</h2>
@@ -443,6 +375,74 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
           )}
         </>
       )}
+
+      {/* ─── 搜尋支出（金額或部分名稱）─────────────────────────────── */}
+      <Card>
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+            enterKeyHint="search"
+            autoComplete="off"
+            placeholder={`搜尋 ${baseYear} 年支出：金額或名稱`}
+            className={`${GLASS_INPUT} pl-11 pr-11 font-medium text-slate-700`}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="清除搜尋"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors z-10"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {trimmedQuery && (
+          <div className="mt-4 animate-in fade-in duration-200">
+            {searchResults.length > 0 ? (
+              <>
+                <div className="flex items-baseline justify-between mb-3 px-1">
+                  <span className="text-xs font-bold text-slate-500">{baseYear} 年找到 {searchResults.length} 筆</span>
+                  <span className="text-sm font-bold text-slate-800 tabular-nums">合計 ${searchTotal.toLocaleString()}</span>
+                </div>
+                <div className="space-y-2">
+                  {searchResults.slice(0, SEARCH_RESULT_LIMIT).map(t => (
+                    <div
+                      key={t.id}
+                      onClick={() => onEdit && onEdit(t)}
+                      className="bg-white/50 border border-white/60 rounded-2xl p-3 flex justify-between items-center gap-3 cursor-pointer hover:bg-white/80 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-slate-700 flex items-center gap-2 min-w-0">
+                          <span className="truncate">{highlightMatch(t.category, trimmedQuery)}</span>
+                          {t.group && <span className="shrink-0 text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">{t.group}</span>}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                          {formatDetailedDate(t.date)}{t.note && <> • {highlightMatch(t.note, trimmedQuery)}</>}
+                        </div>
+                      </div>
+                      <span className="tabular-nums font-bold text-slate-800 shrink-0">${Number(t.amount).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+                {searchResults.length > SEARCH_RESULT_LIMIT && (
+                  <div className="text-center text-[11px] text-slate-400 pt-3">僅顯示前 {SEARCH_RESULT_LIMIT} 筆，請輸入更精確的金額或名稱</div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <div className="text-sm text-slate-400">{baseYear} 年找不到「{trimmedQuery}」的支出</div>
+                <div className="text-[11px] text-slate-300 mt-1">可切換上方年份，或改用部分名稱／金額搜尋</div>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
     </div>
   );
 };
