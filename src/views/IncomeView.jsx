@@ -82,7 +82,7 @@ const IncomeTrendChart = ({ incomes, variant }) => {
       <div className="h-16 flex items-end gap-1">
         {data.map((v, i) => (
           <div key={i} className="flex-1 flex flex-col justify-end items-center group relative h-full">
-            <div className={`w-full min-w-[4px] rounded-t-sm transition-all duration-500 ${v > 0 ? theme.bg : 'bg-slate-100/50'}`} style={{ height: `${(v / max) * 100}%`, opacity: v > 0 ? 0.8 : 1 }}></div>
+            <div className={`w-full min-w-[4px] rounded-t-sm transition-all duration-500 ${v > 0 ? theme.bar : 'bg-slate-100/50'}`} style={{ height: `${(v / max) * 100}%`, opacity: v > 0 ? 0.8 : 1 }}></div>
             {v > 0 && <div className="absolute bottom-full mb-1 text-[8px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-white/90 px-1 rounded shadow-sm">${(v / 1000).toFixed(0)}k</div>}
           </div>
         ))}
