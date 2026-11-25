@@ -36,14 +36,12 @@ const TxRow = ({ t, bucket, onEdit, onDelete }) => (
 );
 
 // 2.0 明細：月曆每格顯示當天金額；也可切成卡片（依日期分組）＋搜尋
-const LedgerView = ({ transactions, settings, selectedDate, focusDate, onFocusConsumed, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
-  const [viewDate, setViewDate] = useState(selectedDate);
+const LedgerView = ({ transactions, settings, focusDate, onFocusConsumed, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
+  // 每次進明細都從「這個月」開始（不跟總覽翻到的月份走）；從總覽點某天進來則跳到那天
+  const [viewDate, setViewDate] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState(null);
   const [asList, setAsList] = useState(false);
   const [query, setQuery] = useState('');
-  // 外部月份改變時跟著換（render 期間調整 state，避免 effect 連鎖重繪）
-  const [prevSelected, setPrevSelected] = useState(selectedDate);
-  if (selectedDate !== prevSelected) { setPrevSelected(selectedDate); setViewDate(selectedDate); }
 
   // 從總覽點某一天進來：跳到那天並打開當日明細
   const [prevFocus, setPrevFocus] = useState(null);

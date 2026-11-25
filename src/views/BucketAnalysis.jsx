@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { YearSwitch } from '../components/v2';
 import { GLASS_CARD } from '../lib/constants';
 import { makeFixedMatcher, budgetPlan, yearByMonth, bucketOf } from '../lib/budget';
 import CategoryIcon from '../components/CategoryIcon';
@@ -49,11 +49,7 @@ const BucketAnalysis = ({ transactions, settings, flexMonthly, onRequestHistory 
       <section className={`${GLASS_CARD} p-4`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-bold text-slate-800">每月支出</h3>
-          <div className="flex items-center gap-1">
-            <button type="button" onClick={() => go(-1)} className="p-1 rounded-full hover:bg-slate-100 text-slate-500" aria-label="前一年"><ChevronLeft className="w-4 h-4" /></button>
-            <span className="text-sm font-bold text-slate-700 tabular-nums">{year}</span>
-            <button type="button" onClick={() => go(1)} className="p-1 rounded-full hover:bg-slate-100 text-slate-500" aria-label="下一年"><ChevronRight className="w-4 h-4" /></button>
-          </div>
+          <YearSwitch year={year} onChange={(ny) => go(ny - year)} />
         </div>
         <div className="text-[10px] text-slate-400 mb-1 flex items-center gap-1.5"><span className="w-4 border-t border-dashed border-slate-500" />每月預算：固定＋彈性 {k(plan.fixed + plan.flex)}</div>
         <div className="relative h-40">

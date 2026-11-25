@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Plus, ChevronLeft, ChevronRight, Check, Briefcase, TrendingUp } from 'lucide-react';
+import { Plus, Check, Briefcase, TrendingUp } from 'lucide-react';
 import { ViewLoader } from '../components/ui';
 import { INCOME_CATEGORIES } from '../lib/constants';
 import { getTodayString } from '../lib/utils';
 import { getDevicePayer } from '../lib/quickAdd';
 import { fmt, pct, short, PEOPLE } from '../lib/format';
 import {
-  Hero, HeroButton, Section, LinkButton, Row, Divided, Empty, PersonDot, PersonPick, MoneyInput, Chips, Field, DatePick, Sheet, StackBar,
+  Hero, HeroButton, Section, LinkButton, Row, Divided, Empty, PersonDot, PersonPick, MoneyInput, Chips, Field, DatePick, Sheet, StackBar, YearSwitch,
 } from '../components/v2';
 
 const CAT_LABEL = { 薪水: '薪水', 年終獎金: '年終', 激勵獎金: '激勵', 其他獎金: '其他' };
@@ -81,8 +81,9 @@ const SalarySheet = ({ owner, history, onSave, onDelete, onClose }) => {
 };
 
 // 2.0 收入頁：今年收入 → 這個月薪水進帳了沒 → 每月長條（點月份篩選）→ 組成 → 月薪 → 明細
-const IncomeView = ({ incomes, salaryHistory, selectedDate, loading = false, onSave, onRemove, onRequestHistory }) => {
-  const [year, setYear] = useState(selectedDate.getFullYear());
+const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove, onRequestHistory }) => {
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const changeYear = (y) => { setYear(y); setSelMonth(null); if (onRequestHistory) { onRequestHistory(y); onRequestHistory(y - 1); } };
   const [selMonth, setSelMonth] = useState(null);
   const [sheet, setSheet] = useState(null); // { kind: 'income', initial } | { kind: 'salary', owner }
 
@@ -133,13 +134,7 @@ const IncomeView = ({ incomes, salaryHistory, selectedDate, loading = false, onS
   return (
     <div className="space-y-6 pb-24 animate-in fade-in">
       <Hero
-        label={(
-          <span className="flex items-center gap-1">
-            <button type="button" onClick={() => { setYear(year - 1); setSelMonth(null); if (onRequestHistory) { onRequestHistory(year - 1); onRequestHistory(year - 2); } }} className="p-0.5 -ml-1 text-slate-400" aria-label="前一年"><ChevronLeft className="w-3.5 h-3.5" /></button>
-            {year} 年收入
-            <button type="button" onClick={() => { setYear(year + 1); setSelMonth(null); if (onRequestHistory) onRequestHistory(year + 1); }} className="p-0.5 text-slate-400" aria-label="下一年"><ChevronRight className="w-3.5 h-3.5" /></button>
-          </span>
-        )}
+        label={<YearSwitch year={year} onChange={changeYear} suffix=" 年收入" />}
         value={fmt(total)}
         sub={yoy !== null ? <>比去年{isThisYear ? '同期' : ''} <b className={yoy >= 0 ? 'text-emerald-700' : 'text-rose-700'}>{pct(yoy)}</b>（{fmt(lastSame)}）</> : '去年沒有資料可以比'}
         action={<HeroButton icon={Plus} label="記收入" onClick={() => openNew()} />}

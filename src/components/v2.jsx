@@ -1,12 +1,22 @@
 import { createElement, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getTodayString, toLocalISOString } from '../lib/utils';
 import { PEOPLE, short } from '../lib/format';
 
 // ─── 2.0 共用小元件：收入、資產各頁統一的版型與操作 ─────────────────────────
 // 原則：重點數字直接寫在紙上（不包卡片）；一頁一張圖；清單是一列一列，
 // 點一列就從下方拉出抽屜編輯；新增也用同一個抽屜。
+
+// 切換年份（各頁共用）：按鈕夠大好點；最多到今年（未來的年份沒有資料）
+export const YearSwitch = ({ year, onChange, suffix = '', max = new Date().getFullYear() }) => (
+  <span className="inline-flex items-center -ml-2">
+    <button type="button" onClick={() => onChange(year - 1)} className="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 active:bg-slate-100" aria-label="前一年"><ChevronLeft className="w-4 h-4" /></button>
+    <span className="text-sm font-bold text-slate-700 tabular-nums">{year}{suffix}</span>
+    <button type="button" onClick={() => year < max && onChange(year + 1)} disabled={year >= max}
+      className={`w-8 h-8 flex items-center justify-center rounded-full active:bg-slate-100 ${year >= max ? 'text-slate-200' : 'text-slate-500'}`} aria-label="下一年"><ChevronRight className="w-4 h-4" /></button>
+  </span>
+);
 
 // 頁首大數字
 export const Hero = ({ label, value, sub, action, tone = 'text-slate-800' }) => (

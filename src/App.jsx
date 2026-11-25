@@ -700,7 +700,20 @@ function AppContent() {
     commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `config_${viewYear}`), newSettings));
   };
 
-  const handleDateNavigate = (direction) => { const newDate = new Date(selectedDate); if (currentView === 'income' || currentView === 'settings') newDate.setFullYear(selectedDate.getFullYear() + direction); else newDate.setMonth(selectedDate.getMonth() + direction); setSelectedDate(newDate); };
+  // 總覽右上角切換月份（用每月 1 號計算，避免 31 號跳過小月）
+  const handleDateNavigate = (direction) => { setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + direction, 1)); };
+
+  // App 在手機背景放很久（例如跨月）再打開：回到「今天」，不停留在舊的月份
+  const lastActiveDayRef = useRef(getTodayString());
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      const today = getTodayString();
+      if (today !== lastActiveDayRef.current) { lastActiveDayRef.current = today; setSelectedDate(new Date()); }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   // --- Main Render ---
   return (
@@ -729,10 +742,10 @@ function AppContent() {
               {currentView === 'home' && (
                 <button onClick={() => handleViewChange('settings')} className="p-1.5 mr-1.5 rounded-full text-slate-400 hover:bg-slate-100 active:scale-95" aria-label="預算設定"><SettingsIcon className="w-4 h-4" /></button>
               )}
-              {(currentView === 'home' || activeView === 'income') && (
+              {currentView === 'home' && (
                 <div className="flex items-center bg-white rounded-full px-1 py-0.5 border border-slate-200 shadow-sm">
                   <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95"><ChevronLeft className="w-3 h-3 text-slate-600" /></button>
-                  <span className="text-xs font-bold text-slate-700 mx-1 tabular-nums whitespace-nowrap">{currentView === 'home' ? `${selectedDate.getMonth() + 1} 月` : `${selectedDate.getFullYear()} 年`}</span>
+                  <span className="text-xs font-bold text-slate-700 mx-1 tabular-nums whitespace-nowrap">{selectedDate.getFullYear() !== new Date().getFullYear() ? `${selectedDate.getFullYear()}/` : ''}{selectedDate.getMonth() + 1} 月</span>
                   <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95"><ChevronRight className="w-3 h-3 text-slate-600" /></button>
                 </div>
               )}
@@ -780,7 +793,7 @@ function AppContent() {
               <BucketAnalysis transactions={transactions} settings={settings} flexMonthly={flexMonthly} onRequestHistory={requestHistory} />
             )}
             {activeView === 'income' && (
-              <IncomeView loading={!loadingStates.incomes} incomes={incomes} salaryHistory={salaryHistory} selectedDate={selectedDate} onRequestHistory={requestHistory} onSave={saveRecord} onRemove={removeRecord} />
+              <IncomeView loading={!loadingStates.incomes} incomes={incomes} salaryHistory={salaryHistory} onRequestHistory={requestHistory} onSave={saveRecord} onRemove={removeRecord} />
             )}
             {activeView === 'partner' && (
               <PartnerView loading={!loadingStates.partnerTransactions} partnerTransactions={partnerTransactions} onSave={saveRecord} onRemove={removeRecord} />
@@ -789,7 +802,6 @@ function AppContent() {
               <LedgerView
                 transactions={transactions}
                 settings={settings}
-                selectedDate={selectedDate}
                 focusDate={ledgerFocus}
                 onFocusConsumed={clearLedgerFocus}
                 deleteTransaction={deleteTransaction}

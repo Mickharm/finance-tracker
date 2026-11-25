@@ -14,6 +14,7 @@ const PEOPLE = {
 };
 
 const OPS = ['+', '−'];
+const NO_SPEND_NOTE = new Set([...NO_SPEND_OPTIONS, '請客/自煮', '減肥/斷食', '減肥/沒吃']);
 const toExpr = (s) => s.replace(/−/g, '-');
 const hasOp = (s) => /[+−]/.test(s.slice(1));
 const valueOf = (s) => {
@@ -105,12 +106,14 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
     return tx;
   };
 
-  const blocker = amount <= 0 ? '先輸入金額' : !note.trim() ? '寫一下買了什麼' : !cat ? '選一個分類' : null;
+  // $0 只允許「沒花錢」的紀錄（請客／自煮／沒吃），例如編輯一筆兩人一起的自煮晚餐
+  const zeroOk = amount === 0 && NO_SPEND_NOTE.has(note.trim());
+  const blocker = amount <= 0 && !zeroOk ? '先輸入金額' : !note.trim() ? '寫一下買了什麼' : !cat ? '選一個分類' : null;
 
   const save = () => {
     if (blocker || isSubmitting) {
       if (!note.trim() && amount > 0) noteRef.current?.focus();
-      if (!cat && note.trim() && amount > 0) setPicking(true);
+      if (!cat && note.trim() && (amount > 0 || zeroOk)) setPicking(true);
       return;
     }
     onSave(buildTx(), { keepOpen: editing ? false : keepOpen, edit: editing });
