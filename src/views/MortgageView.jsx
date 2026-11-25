@@ -130,11 +130,11 @@ const MortgagePlanView = () => {
                     <span>狀態</span><span>日期</span><span className="text-center">期數</span><span className="text-right">金額</span><span className="text-right">利率</span>
                   </div>
                   {rows.map(row => (
-                    <div key={row.id} className={`grid grid-cols-5 text-xs px-3 py-2 border-b border-slate-100 last:border-0 items-center ${row.isPaid ? 'bg-[#F1FAEE]/40' : 'hover:bg-slate-50/30'}`}>
-                      <span>{row.isPaid ? <CheckCircle2 className="w-3 h-3 text-[#52B788]" /> : <span className="w-3 h-3 rounded-full border border-slate-200 block"></span>}</span>
-                      <span className={`tabular-nums ${row.isPaid ? 'text-[#2D6A4F] font-bold' : 'text-slate-500'}`}>{row.date.getMonth() + 1}月</span>
+                    <div key={row.id} className={`grid grid-cols-5 text-xs px-3 py-2 border-b border-slate-100 last:border-0 items-center ${row.isPaid ? 'bg-[#F1F6F4]/40' : 'hover:bg-slate-50/30'}`}>
+                      <span>{row.isPaid ? <CheckCircle2 className="w-3 h-3 text-[#6B9A8D]" /> : <span className="w-3 h-3 rounded-full border border-slate-200 block"></span>}</span>
+                      <span className={`tabular-nums ${row.isPaid ? 'text-[#4D7D70] font-bold' : 'text-slate-500'}`}>{row.date.getMonth() + 1}月</span>
                       <span className="text-center text-slate-400">#{row.id}</span>
-                      <span className={`text-right font-bold tabular-nums ${row.isPaid ? 'text-[#2D6A4F]' : 'text-slate-700'}`}>${row.amount.toLocaleString()}</span>
+                      <span className={`text-right font-bold tabular-nums ${row.isPaid ? 'text-[#4D7D70]' : 'text-slate-700'}`}>${row.amount.toLocaleString()}</span>
                       <span className="text-right text-slate-400">{row.rate}%</span>
                     </div>
                   ))}

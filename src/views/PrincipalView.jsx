@@ -8,7 +8,7 @@ import { getTodayString } from '../lib/utils';
 
 
 const AssetGroup = ({ title, items, section, groupKey, onUpdate, onAdd, onDelete, accentColor = 'stone' }) => {
-  const colorHex = { emerald: '#52B788', rose: '#E57373', stone: '#CBD5E1' };
+  const colorHex = { emerald: '#6B9A8D', rose: '#C08480', stone: '#CFCDC7' };
   const subtotal = (items || []).reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
   return (
     <div className={`${GLASS_CARD} p-0 mb-4 border-l-4`} style={{ borderLeftColor: colorHex[accentColor] || colorHex.stone }}>
@@ -114,7 +114,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3">
-        <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#52B788' }}>
+        <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#6B9A8D' }}>
           <div className="flex items-center gap-1.5 mb-2">
             <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
             <span className="text-[10px] text-slate-400 font-bold uppercase">總資產</span>
@@ -125,7 +125,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
             <span className="text-[9px] text-slate-400 tabular-nums">投資 ${totalInvest.toLocaleString()}</span>
           </div>
         </div>
-        <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#E57373' }}>
+        <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#C08480' }}>
           <div className="flex items-center gap-1.5 mb-2">
             <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
             <span className="text-[10px] text-slate-400 font-bold uppercase">總負債</span>

@@ -3,7 +3,6 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, setDoc, serverTimestamp, updateDoc, getDoc, runTransaction, where } from 'firebase/firestore';
 import { Menu, ChevronLeft, ChevronRight, Plus, Calendar, DollarSign, PieChart, Home, Target, Users, Settings as SettingsIcon, BarChart2, Building2, Clock, ClipboardList, PenTool, Layers } from 'lucide-react';
-import icon from './assets/icon.png';
 import { ToastProvider, useToast } from './components/Toast';
 import { GroupSettingsEditor, RecurringManagerModal } from './components/settings';
 import { CalculatorInput, ConfirmationModal, GlassButton, InputField, LoadingScreen, ModalWrapper, NoteQuickPicks } from './components/ui';
@@ -891,15 +890,6 @@ function AppContent() {
   // --- Main Render ---
   return (
     <div className="flex flex-col h-screen app-bg text-slate-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
-      {/* Colour orbs behind the glass — cards are now more transparent, so these are
-          kept pale (roughly 60% of the old strength) to avoid tinting the content.
-          .bg-blob 讓深色模式再壓暗一階（同色球在深底上會變成柔和的極光）。 */}
-      <div className="bg-blob absolute top-[-8%] left-[-15%] w-[65%] h-[40%] bg-[#8FD3F4]/28 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="bg-blob absolute top-[22%] right-[-15%] w-[55%] h-[35%] bg-[#B9C4F5]/25 rounded-full blur-[80px] pointer-events-none z-0"></div>
-      <div className="bg-blob absolute top-[52%] left-[-10%] w-[60%] h-[35%] bg-[#9FE8D6]/24 rounded-full blur-[85px] pointer-events-none z-0"></div>
-      <div className="bg-blob absolute bottom-[-8%] right-[-10%] w-[60%] h-[38%] bg-[#C9B6F0]/24 rounded-full blur-[85px] pointer-events-none z-0"></div>
-      <div className="bg-blob absolute top-[78%] left-[25%] w-[55%] h-[28%] bg-[#F5D6B0]/18 rounded-full blur-[90px] pointer-events-none z-0"></div>
-
       {/* Loading Screen - completely covers viewport until done, then unmounts */}
       {appPhase === 'loading' && (
         <LoadingScreen progress={loadingProgress} isComplete={isDataReady} onDone={handleLoadingDone} />
@@ -930,9 +920,9 @@ function AppContent() {
           )}
 
           {/* ── Header (fixed positioning avoids sticky-in-flex glitch) */}
-          <header className="bg-white/55 backdrop-blur-2xl backdrop-saturate-[1.8] px-6 flex items-center justify-between fixed top-0 left-0 right-0 z-20 border-b border-white/40 animate-in fade-in duration-300 header-safe max-w-md mx-auto" style={{ paddingBottom: '0.75rem' }}>
+          <header className="app-header px-6 flex items-center justify-between fixed top-0 left-0 right-0 z-20 animate-in fade-in duration-300 header-safe max-w-md mx-auto" style={{ paddingBottom: '0.75rem' }}>
             <div className="flex items-center gap-2 shrink-0">
-              <img src={icon} className="w-7 h-7 rounded-lg shadow-sm" alt="Logo" />
+              <span className="seal" aria-label="記帳助手">帳</span>
             </div>
             <div className="flex-1 flex justify-center min-w-0 px-3">
               <h1 className="text-base font-bold text-slate-700 tracking-wide flex items-center gap-1.5 truncate">
@@ -944,10 +934,10 @@ function AppContent() {
             </div>
             <div className="w-auto min-w-[36px] flex justify-end shrink-0">
               {(currentView === 'home' || currentView === 'income' || currentView === 'settings') && (
-                <div className="flex items-center bg-white/40 backdrop-blur-md rounded-full px-1 py-0.5 border border-white/20 shadow-sm">
-                  <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-white/50 rounded-full transition-colors active:scale-95"><ChevronLeft className="w-3 h-3 text-slate-600" /></button>
+                <div className="flex items-center bg-white rounded-full px-1 py-0.5 border border-slate-200 shadow-sm">
+                  <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95"><ChevronLeft className="w-3 h-3 text-slate-600" /></button>
                   <span className="text-xs font-bold text-slate-700 mx-1 tabular-nums whitespace-nowrap">{currentView === 'home' ? `${selectedDate.getMonth() + 1} 月` : `${selectedDate.getFullYear()} 年`}</span>
-                  <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-white/50 rounded-full transition-colors active:scale-95"><ChevronRight className="w-3 h-3 text-slate-600" /></button>
+                  <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95"><ChevronRight className="w-3 h-3 text-slate-600" /></button>
                 </div>
               )}
             </div>
@@ -1069,11 +1059,11 @@ function AppContent() {
             )}
             {currentView === 'settings' && (
               <div className="pb-24">
-                <div className="bg-[#FEF9E7] border border-[#FCF3CF] rounded-xl p-4 mb-6 flex items-start gap-3">
-                  <div className="p-2 bg-[#FCF3CF] rounded-lg text-[#9A7D0A]"><SettingsIcon className="w-5 h-5" /></div>
+                <div className="bg-[#FAF6EE] border border-[#F3EBDA] rounded-xl p-4 mb-6 flex items-start gap-3">
+                  <div className="p-2 bg-[#F3EBDA] rounded-lg text-[#8F7439]"><SettingsIcon className="w-5 h-5" /></div>
                   <div>
-                    <h3 className="font-bold text-[#7D6608] text-sm">正在編輯 {selectedDate.getFullYear()} 年度預算</h3>
-                    <p className="text-xs text-[#9A7D0A] mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
+                    <h3 className="font-bold text-[#6F5A2D] text-sm">正在編輯 {selectedDate.getFullYear()} 年度預算</h3>
+                    <p className="text-xs text-[#8F7439] mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
                   </div>
                 </div>
                 <div className="mb-6">
@@ -1318,7 +1308,7 @@ function AppContent() {
                             const active = newTrans.date === val;
                             return (
                               <button key={label} type="button" onClick={() => setNewTrans(prev => ({ ...prev, date: val }))}
-                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 border ${active ? 'bg-slate-800 text-white border-slate-800' : 'bg-white/50 text-slate-500 border-white/60'}`}>
+                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 border ${active ? 'bg-slate-800 text-white border-slate-800' : 'bg-white/50 text-slate-500 border-slate-200'}`}>
                                 {label}
                               </button>
                             );

@@ -53,8 +53,8 @@ const StockGoalCard = ({ yearData, prevYearTotal, onUpdate, onDelete }) => {
       {isDragging && (
         <div className="absolute inset-0 rounded-3xl flex items-center justify-center" style={{ backgroundColor: `rgba(192, 57, 43, ${swipeProgress * 0.15})` }}>
           <div className="flex items-center gap-2" style={{ opacity: swipeProgress }}>
-            <X className="w-5 h-5 text-[#C0392B]" />
-            <span className="text-sm font-bold text-[#C0392B]">{swipeProgress >= 1 ? '放開以刪除' : '左滑刪除'}</span>
+            <X className="w-5 h-5 text-[#95564F]" />
+            <span className="text-sm font-bold text-[#95564F]">{swipeProgress >= 1 ? '放開以刪除' : '左滑刪除'}</span>
           </div>
         </div>
       )}
@@ -112,16 +112,16 @@ const ExchangeItem = ({ item, onDelete, onEdit }) => {
   const isFT = item.account === 'FT';
   const twdAmount = Math.round(Number(item.usdAmount) * Number(item.rate));
   const accountTheme = isFT
-    ? { bg: 'bg-[#D6DEEB]/60', text: 'text-[#485A85]', border: 'border-[#B4C4DE]' }
-    : { bg: 'bg-[#F0EAC2]/60', text: 'text-[#8F8335]', border: 'border-[#E0D695]' };
+    ? { bg: 'bg-[#E3E2DD]/60', text: 'text-[#445F7E]', border: 'border-[#B2C8DE]' }
+    : { bg: 'bg-[#F3EBDA]/60', text: 'text-[#8F7439]', border: 'border-[#DFCCA2]' };
 
   return (
-    <div onClick={() => onEdit && onEdit(item)} className={`${GLASS_CARD} p-4 group border-l-4 ${onEdit ? 'cursor-pointer hover:bg-white/60' : ''} transition-all`} style={{ borderLeftColor: isSell ? '#C48286' : '#4DA391' }}>
+    <div onClick={() => onEdit && onEdit(item)} className={`${GLASS_CARD} p-4 group border-l-4 ${onEdit ? 'cursor-pointer hover:bg-white/60' : ''} transition-all`} style={{ borderLeftColor: isSell ? '#C08480' : '#6B9A8D' }}>
       {/* Row 1: Account + Type + Amount + Delete */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className={`px-2 py-1 rounded-lg font-bold text-xs ${accountTheme.bg} ${accountTheme.text} border ${accountTheme.border}`}>{isFT ? 'Firstrade' : 'IB'}</div>
-          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isSell ? 'bg-[#E8D3D1]/60 text-[#A65E62]' : 'bg-[#D1E6E1]/60 text-[#2F7567]'}`}>{isSell ? '賣出' : '買入'}</span>
+          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${isSell ? 'bg-[#EDCDCA]/60 text-[#95564F]' : 'bg-[#C9DDD6]/60 text-[#4D7D70]'}`}>{isSell ? '賣出' : '買入'}</span>
           <span className="text-base font-bold text-slate-800 tabular-nums">${Number(item.usdAmount).toLocaleString()}</span>
         </div>
         <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="text-slate-300 hover:text-rose-400 transition-all p-1"><X className="w-4 h-4" /></button>
@@ -131,7 +131,7 @@ const ExchangeItem = ({ item, onDelete, onEdit }) => {
         {formatDetailedDate(item.date)} • 匯率 {Number(item.rate).toFixed(2)}
       </div>
       {/* Row 3: TWD Amount */}
-      <div className={`text-sm tabular-nums font-bold mt-1 ${isSell ? 'text-[#A65E62]' : 'text-[#2F7567]'}`}>
+      <div className={`text-sm tabular-nums font-bold mt-1 ${isSell ? 'text-[#95564F]' : 'text-[#4D7D70]'}`}>
         {isSell ? '+' : '-'} NT$ {twdAmount.toLocaleString()}
       </div>
     </div>
@@ -160,7 +160,7 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, on
         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
           {/* Net Position Card - TOP */}
           <div className={`${GLASS_CARD} p-5 relative overflow-hidden`}>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#B4C4DE] rounded-full -mr-10 -mt-10 blur-xl opacity-40"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#B2C8DE] rounded-full -mr-10 -mt-10 blur-xl opacity-40"></div>
             <div className="relative z-10">
               <div className="text-xs text-slate-400 uppercase font-bold mb-1">淨持有美金</div>
               <div className="text-2xl font-bold text-slate-800 tabular-nums">
@@ -175,8 +175,8 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, on
 
           {/* Buy/Sell Summary Cards */}
           <div className="grid grid-cols-2 gap-3">
-            <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#4DA391' }}>
-              <div className="text-lg font-bold text-[#2F7567] tabular-nums">${(() => {
+            <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#6B9A8D' }}>
+              <div className="text-lg font-bold text-[#4D7D70] tabular-nums">${(() => {
                 const buyRecords = exchanges.filter(e => e.type !== 'sell');
                 return buyRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
               })()}</div>
@@ -187,8 +187,8 @@ const StockGoalView = ({ goals, exchanges, onUpdate, onAddYear, onDeleteYear, on
                 return totalUSD > 0 ? (totalTWD / totalUSD).toFixed(2) : '0';
               })()}</div>
             </div>
-            <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#C48286' }}>
-              <div className="text-lg font-bold text-[#A65E62] tabular-nums">${(() => {
+            <div className={`${GLASS_CARD} p-4 border-l-4`} style={{ borderLeftColor: '#C08480' }}>
+              <div className="text-lg font-bold text-[#95564F] tabular-nums">${(() => {
                 const sellRecords = exchanges.filter(e => e.type === 'sell');
                 return sellRecords.reduce((sum, e) => sum + Number(e.usdAmount), 0).toLocaleString();
               })()}</div>

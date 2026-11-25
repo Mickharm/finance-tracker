@@ -6,7 +6,7 @@ import { COLOR_VARIANTS, GLASS_CARD } from '../lib/constants';
 
 const SalaryHistoryCard = ({ history, owner, onAdd, onDelete, onEdit, embedded = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const containerClass = embedded ? "bg-white/15 rounded-xl p-3 border border-white/25" : `${GLASS_CARD} p-5`;
+  const containerClass = embedded ? "bg-slate-50 rounded-xl p-3 border border-slate-100" : `${GLASS_CARD} p-5`;
 
   return (
     <div className={containerClass}>
@@ -77,7 +77,7 @@ const IncomeTrendChart = ({ incomes, variant }) => {
   const max = Math.max(...data, 1);
 
   return (
-    <div className="bg-white/15 p-3 rounded-xl border border-white/25 mb-4">
+    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4">
       <h5 className="text-xs font-bold text-slate-500 mb-2">月度收入趨勢</h5>
       <div className="h-16 flex items-end gap-1">
         {data.map((v, i) => (

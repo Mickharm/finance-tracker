@@ -11,22 +11,27 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="記帳助手" />
-  <!-- PWA: Theme color（跟隨深淺色） -->
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7fbfc" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1120" />
+  <!-- PWA: Theme color（只用淺色主題） -->
+  <meta name="theme-color" content="#F5F4F0" />
+  <meta name="color-scheme" content="light only" />
   <!-- PWA: Web App Manifest -->
   <link rel="manifest" href="manifest.webmanifest" />
   <!-- 提前與 Firebase 端點握手，縮短第一筆資料同步的等待 -->
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
+  <!-- 字體：標題 Noto Serif TC、金額 Shippori Mincho（display=swap：字體下載前先用系統字，不擋畫面） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Shippori+Mincho:wght@500;700&display=swap" />
   <title>記帳助手</title>
   <style>
-    body { margin: 0; background: #f7fbfc; }
+    body { margin: 0; background: #F5F4F0; }
     #pre-loader {
       position: fixed; inset: 0; z-index: 200;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: #f7fbfc;
+      background: #F5F4F0;
     }
+    #pre-loader .pl-blob-1, #pre-loader .pl-blob-2, #pre-loader .pl-blob-3 { display: none; }
     #pre-loader .pl-blob-1 {
       position: absolute; top: -10%; left: -10%; width: 50%; height: 40%;
       background: rgba(205,235,251,0.5); border-radius: 50%; filter: blur(80px);
@@ -42,28 +47,27 @@
     #pre-loader .pl-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
     #pre-loader .pl-icon-box {
       width: 5rem; height: 5rem; border-radius: 1rem;
-      background-color: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(24px);
-      box-shadow: 0 10px 15px -3px rgba(148,163,184,0.35), 0 4px 6px -4px rgba(148,163,184,0.35);
+      background-color: #FDFDFB;
+      box-shadow: 0 1px 2px rgba(46,49,51,0.04), 0 6px 18px -8px rgba(46,49,51,0.10);
       display: flex; align-items: center; justify-content: center;
       margin-bottom: 2rem; animation: pl-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
-    #pre-loader .pl-icon-box svg { width: 2.5rem; height: 2.5rem; color: #475569; }
+    #pre-loader .pl-icon-box svg { width: 2.5rem; height: 2.5rem; color: #6A6D70; }
     #pre-loader .pl-title {
-      font-size: 1.25rem; font-weight: 700; color: #334155;
+      font-size: 1.25rem; font-weight: 700; color: #2E3133;
       margin-bottom: 1.5rem; letter-spacing: -0.025em; font-family: ui-sans-serif, system-ui, sans-serif;
     }
     #pre-loader .pl-bar-track {
-      width: 12rem; height: 0.375rem; background-color: rgba(203,213,225,0.6);
+      width: 12rem; height: 0.375rem; background-color: #E3E2DD;
       border-radius: 9999px; overflow: hidden; backdrop-filter: blur(4px);
     }
     #pre-loader .pl-bar-fill {
       height: 100%; width: 0%; border-radius: 9999px;
-      background: linear-gradient(to right, #94a3b8, #475569);
+      background: #86AFA3;
       animation: pl-bar-grow 2s ease-out forwards;
     }
     #pre-loader .pl-text {
-      font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem;
+      font-size: 0.75rem; color: #85888A; margin-top: 0.75rem;
       font-family: ui-sans-serif, system-ui, sans-serif;
     }
     @keyframes pl-pulse {
@@ -73,21 +77,6 @@
     @keyframes pl-bar-grow {
       0% { width: 0%; }
       100% { width: 15%; }
-    }
-    /* 深色模式：pre-loader 與 body 底色跟隨系統 */
-    @media (prefers-color-scheme: dark) {
-      body { background: #0b1120; }
-      #pre-loader { background: #0b1120; }
-      #pre-loader .pl-blob-1, #pre-loader .pl-blob-2, #pre-loader .pl-blob-3 { opacity: 0.5; }
-      #pre-loader .pl-icon-box {
-        background-color: rgba(255, 255, 255, 0.10);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -4px rgba(0, 0, 0, 0.45);
-      }
-      #pre-loader .pl-icon-box svg { color: #b7c3d6; }
-      #pre-loader .pl-title { color: #d5deeb; }
-      #pre-loader .pl-bar-track { background-color: rgba(255, 255, 255, 0.13); }
-      #pre-loader .pl-bar-fill { background: linear-gradient(to right, #64748b, #94a3b8); }
-      #pre-loader .pl-text { color: #7d8ba1; }
     }
   </style>
 </head>

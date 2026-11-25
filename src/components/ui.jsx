@@ -68,7 +68,7 @@ const ModalWrapper = ({ title, onClose, children }) => {
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity" onClick={onClose} />
       <div
         ref={modalRef}
-        className="relative w-full max-h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-10 animate-in slide-in-from-bottom duration-300 overflow-y-auto bg-white/90 backdrop-blur-2xl shadow-2xl"
+        className="relative w-full max-h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 pb-10 animate-in slide-in-from-bottom duration-300 overflow-y-auto bg-[#FDFDFB] shadow-2xl"
         style={{ transition: 'margin-bottom 0.2s ease-out' }}
       >
         <div className="flex justify-between items-center mb-6">
@@ -105,17 +105,14 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center app-bg">
-      <div className="bg-blob absolute top-[-10%] left-[-10%] w-[50%] h-[40%] bg-[#CDEBFB]/45 rounded-full blur-[80px] pointer-events-none"></div>
-      <div className="bg-blob absolute bottom-[-10%] right-[-10%] w-[50%] h-[40%] bg-[#D8E4FA]/40 rounded-full blur-[80px] pointer-events-none"></div>
-      <div className="bg-blob absolute top-[40%] left-[20%] w-[60%] h-[30%] bg-[#E4F5FB]/40 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="relative z-10 flex flex-col items-center">
-        <div className="w-20 h-20 rounded-2xl bg-white/80 backdrop-blur-xl shadow-lg shadow-slate-200/50 flex items-center justify-center mb-8 animate-pulse">
+        <div className="w-20 h-20 rounded-2xl glass-card-fx bg-white border flex items-center justify-center mb-8 animate-pulse">
           <Wallet className="w-10 h-10 text-slate-600" />
         </div>
-        <h1 className="text-xl font-bold text-slate-700 mb-6 tracking-tight">記帳助手</h1>
-        <div className="w-48 h-1.5 bg-slate-200/60 rounded-full overflow-hidden backdrop-blur-sm">
+        <h1 className="text-xl font-bold text-slate-800 mb-6 tracking-wide">記帳助手</h1>
+        <div className="w-48 h-1.5 bg-slate-200 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-slate-400 to-slate-600 rounded-full transition-all duration-500 ease-out"
+            className="h-full bg-emerald-400 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${Math.min(displayProgress, 100)}%` }}
           />
         </div>
@@ -187,7 +184,7 @@ const NoteQuickPicks = ({ records, onPick, label = '常用備註' }) => {
             key={note}
             type="button"
             onClick={() => onPick(note)}
-            className="flex-shrink-0 px-4 py-2 bg-white/50 hover:bg-white/80 text-slate-600 rounded-xl text-xs font-bold transition-all active:scale-95 border border-white/60 backdrop-blur-xl"
+            className="flex-shrink-0 px-4 py-2 bg-white/50 hover:bg-white/80 text-slate-600 rounded-xl text-xs font-bold transition-all active:scale-95 border border-slate-200"
           >
             {note}
           </button>
@@ -286,8 +283,8 @@ const CalculatorInput = ({ value, onChange, label }) => {
               type="button"
               onClick={() => handleButton(btn === '÷' ? '/' : btn === '×' ? '*' : btn)}
               className={`py-3.5 rounded-xl font-bold text-lg transition-all active:scale-95 shadow-sm
-                ${btn === 'AC' ? 'bg-[#FDECEA] text-[#C0392B]' :
-                  btn === '⌫' ? 'bg-[#FEF9E7] text-[#9A7D0A]' :
+                ${btn === 'AC' ? 'bg-[#FBF3F2] text-[#95564F]' :
+                  btn === '⌫' ? 'bg-[#FAF6EE] text-[#8F7439]' :
                     ['÷', '×', '-', '+', '='].includes(btn) ? 'bg-slate-200 text-slate-700' :
                       btn === '0' ? 'col-span-2 bg-white text-slate-800 border border-slate-200' :
                         'bg-white text-slate-800 border border-slate-200'
@@ -306,8 +303,8 @@ const CalculatorInput = ({ value, onChange, label }) => {
 const GlassButton = ({ onClick, children, className = "", disabled = false, variant = 'primary', type = "button" }) => {
   const variants = {
     primary: "bg-slate-700 text-white shadow-lg shadow-slate-400/30 hover:bg-slate-800",
-    danger: "bg-[#FDECEA] text-[#C0392B] border border-[#FADBD8] hover:bg-[#FADBD8]",
-    success: "bg-[#F1FAEE] text-[#2D6A4F] border border-[#D8F3DC] hover:bg-[#D8F3DC]",
+    danger: "bg-[#FBF3F2] text-[#95564F] border border-[#EDCDCA] hover:bg-[#EDCDCA]",
+    success: "bg-[#F1F6F4] text-[#4D7D70] border border-[#C9DDD6] hover:bg-[#C9DDD6]",
     ghost: "bg-white/60 text-slate-600 hover:bg-white/90 border border-slate-200/60"
   };
   return (
@@ -326,8 +323,8 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
 
   let statusColor = theme.bar;
   if (!isOverBudget && total > 0) {
-    if (remainingPercentage < 20) statusColor = 'bg-[#E59A8E]';
-    else if (remainingPercentage < 50) statusColor = 'bg-[#E8BE6E]';
+    if (remainingPercentage < 20) statusColor = 'bg-[#D49C98]';
+    else if (remainingPercentage < 50) statusColor = 'bg-[#D6BE8C]';
     else statusColor = theme.bar;
   }
 
@@ -336,12 +333,12 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
       <div className="flex justify-between items-end mb-2">
         <span className={`text-xs font-bold uppercase tracking-wider ${theme.text} opacity-80 flex items-center gap-2`}>
           {label}
-          {isOverBudget && showOverBudgetLabel && <span className="bg-[#FDECEA] text-[#C0392B] text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">已超支</span>}
+          {isOverBudget && showOverBudgetLabel && <span className="bg-[#FBF3F2] text-[#95564F] text-[10px] px-1.5 py-0.5 rounded-md shadow-sm">已超支</span>}
         </span>
         {showDetails && (
           <div className="flex items-baseline gap-1 text-right">
-            <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-[#E57373]' : 'text-slate-400'}`}>{isOverBudget ? '已超支' : '剩餘'}</span>
-            <span className={`tabular-nums font-bold ${isOverBudget ? 'text-[#C0392B]' : 'text-slate-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
+            <span className={`text-[10px] font-medium whitespace-nowrap ${isOverBudget ? 'text-[#C08480]' : 'text-slate-400'}`}>{isOverBudget ? '已超支' : '剩餘'}</span>
+            <span className={`tabular-nums font-bold ${isOverBudget ? 'text-[#95564F]' : 'text-slate-700'} ${Math.abs(remaining) > 1000000 ? 'text-sm' : ''}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         )}
       </div>
@@ -350,7 +347,7 @@ const BudgetProgressBar = ({ current, total, label, variant = 'main', colorTheme
       </div>
       {showDetails && variant === 'main' && (
         <div className="flex justify-between mt-1.5 text-[10px] text-slate-400 font-medium">
-          <span className={isOverBudget ? 'text-[#E57373]' : ''}>{Math.round(remainingPercentage)}% 剩餘</span>
+          <span className={isOverBudget ? 'text-[#C08480]' : ''}>{Math.round(remainingPercentage)}% 剩餘</span>
           <span>總額: ${total.toLocaleString()}</span>
         </div>
       )}
@@ -371,7 +368,7 @@ const PrincipalTrendChart = ({ history }) => {
   const areaD = `M${pts[0].x},${height - padding} ` + pts.map(p => `L${p.x},${p.y}`).join(' ') + ` L${pts[pts.length - 1].x},${height - padding} Z`;
   const currentNet = values[values.length - 1]; const prevNet = values.length > 1 ? values[values.length - 2] : currentNet; const growth = currentNet - prevNet;
   return (
-    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-slate-800 tabular-nums tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><defs><linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#5A7099" stopOpacity="0.3" /><stop offset="100%" stopColor="#5A7099" stopOpacity="0" /></linearGradient></defs><line className="chart-grid" x1={padding} y1={padding} x2={width - padding} y2={padding} strokeWidth="0.5" strokeDasharray="2" /><line className="chart-grid" x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} strokeWidth="0.5" strokeDasharray="2" /><path d={areaD} fill="url(#netGrad)" /><polyline points={lineStr} fill="none" stroke="#5A7099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{pts.map((p, i) => (<circle key={i} cx={p.x} cy={p.y} r={i === pts.length - 1 ? 2 : 1} className={i === pts.length - 1 ? "fill-[#5A7099]" : "fill-white stroke-[#5A7099] stroke-[0.5]"} />))}</svg></div><div className="flex justify-between text-[10px] text-slate-400 tabular-nums mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
+    <div className={`${GLASS_CARD} p-6 mb-6 relative overflow-hidden`}><div className="relative z-10 mb-4"><h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">資產淨值趨勢</h2><div className="flex items-baseline gap-2"><div className="text-3xl font-bold text-slate-800 tabular-nums tracking-tight">${currentNet.toLocaleString()}</div>{growth !== 0 && (<span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${growth > 0 ? 'bg-[#F1F6F4] text-[#4D7D70]' : 'bg-[#FBF3F2] text-[#95564F]'}`}>{growth > 0 ? '+' : ''}{growth.toLocaleString()}</span>)}</div></div><div className="w-full h-32 relative"><svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none"><defs><linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#557AA3" stopOpacity="0.3" /><stop offset="100%" stopColor="#557AA3" stopOpacity="0" /></linearGradient></defs><line className="chart-grid" x1={padding} y1={padding} x2={width - padding} y2={padding} strokeWidth="0.5" strokeDasharray="2" /><line className="chart-grid" x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} strokeWidth="0.5" strokeDasharray="2" /><path d={areaD} fill="url(#netGrad)" /><polyline points={lineStr} fill="none" stroke="#557AA3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />{pts.map((p, i) => (<circle key={i} cx={p.x} cy={p.y} r={i === pts.length - 1 ? 2 : 1} className={i === pts.length - 1 ? "fill-[#557AA3]" : "fill-white stroke-[#557AA3] stroke-[0.5]"} />))}</svg></div><div className="flex justify-between text-[10px] text-slate-400 tabular-nums mt-1 px-1"><span>{new Date(data[0].date).toLocaleDateString()}</span><span>{new Date(data[data.length - 1].date).toLocaleDateString()}</span></div></div>
   );
 };
 
@@ -390,8 +387,8 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
 
   let statusBarColor = theme.bar;
   if (!isOverBudget && group.budget > 0) {
-    if (remainingPercentage < 20) statusBarColor = 'bg-[#E59A8E]';
-    else if (remainingPercentage < 50) statusBarColor = 'bg-[#E8BE6E]';
+    if (remainingPercentage < 20) statusBarColor = 'bg-[#D49C98]';
+    else if (remainingPercentage < 50) statusBarColor = 'bg-[#D6BE8C]';
     else statusBarColor = theme.bar; // Theme Color
   }
 
@@ -402,11 +399,11 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
           <div className="flex items-center gap-3">
             <div className={`p-1.5 rounded-lg ${theme.iconBg} ${theme.iconText}`}>{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
             <h3 className="text-sm font-bold text-slate-700 tracking-tight">{group.name}</h3>
-            {isOverBudget && <span className="bg-[#FDECEA] text-[#C0392B] text-[10px] px-1.5 py-0.5 rounded-full font-bold">已超支</span>}
+            {isOverBudget && <span className="bg-[#FBF3F2] text-[#95564F] text-[10px] px-1.5 py-0.5 rounded-full font-bold">已超支</span>}
           </div>
           <div className="text-right flex items-baseline gap-1">
             <span className="text-[10px] text-slate-400">剩餘</span>
-            <span className={`text-sm tabular-nums font-bold ${isOverBudget ? 'text-[#C0392B]' : 'text-slate-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
+            <span className={`text-sm tabular-nums font-bold ${isOverBudget ? 'text-[#95564F]' : 'text-slate-800'}`}>{isOverBudget ? '-' : ''}${Math.abs(remaining).toLocaleString()}</span>
           </div>
         </div>
         <div className={`w-full bg-slate-100/50 rounded-full h-1.5 overflow-hidden ${isCritical ? 'budget-alert-glow' : ''}`}>
@@ -421,11 +418,11 @@ const GroupCard = ({ group, colorTheme = 'slate' }) => {
           <div key={idx}>
             <div className="flex justify-between text-xs mb-1.5 font-medium text-slate-500">
               <span>{item.name}</span>
-              <span className={`tabular-nums ${itemIsOver ? 'text-[#C0392B]' : 'text-slate-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
+              <span className={`tabular-nums ${itemIsOver ? 'text-[#95564F]' : 'text-slate-400'}`}>{itemIsOver ? '-' : ''}${Math.abs(itemRemaining).toLocaleString()}</span>
             </div>
             <div className={`w-full bg-slate-100/50 rounded-full h-1 overflow-hidden ${item.budget > 0 && itemRemaining / item.budget < 0.10 ? 'budget-alert-glow' : ''}`}>
               <div className={`h-full transition-all duration-500 ${!itemIsOver && item.budget > 0
-                ? (itemPercent < 20 ? 'bg-[#E59A8E]' : itemPercent < 50 ? 'bg-[#E8BE6E]' : theme.bar)
+                ? (itemPercent < 20 ? 'bg-[#D49C98]' : itemPercent < 50 ? 'bg-[#D6BE8C]' : theme.bar)
                 : theme.bar
                 }`} style={{ width: `${itemPercent}%` }} />
             </div>
@@ -489,10 +486,10 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
       </div>
 
       {isExpanded && (
-        <div className="p-5 pt-5 animate-in slide-in-from-top-2 duration-200 border-t border-white/10">
+        <div className="p-5 pt-5 animate-in slide-in-from-top-2 duration-200 border-t border-slate-100">
           <div className="space-y-3">
             {items.length === 0 ? <p className="text-center text-xs text-slate-300 py-4">無紀錄</p> : items.map((item) => (
-              <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-white/20 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-white/30 rounded-lg p-2 transition-colors' : ''}`}>
+              <div key={item.id} onClick={() => onEdit && onEdit(item)} className={`border-b border-slate-100 last:border-0 pb-3 last:pb-0 group relative pr-8 ${onEdit ? 'cursor-pointer hover:bg-white/30 rounded-lg p-2 transition-colors' : ''}`}>
                 {itemRenderer(item)}
                 <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="absolute top-1/2 -translate-y-1/2 right-2 z-10 p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-100">
                   <X className="w-4 h-4" />
@@ -501,7 +498,7 @@ const StandardList = ({ title, items, onDelete, onAdd, onEdit, icon: Icon, type,
             ))}
           </div>
           {totalLabel && (
-            <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{totalLabel}</span>
               <span className="text-xl font-bold text-slate-800 tabular-nums">${totalValue.toLocaleString()}</span>
             </div>

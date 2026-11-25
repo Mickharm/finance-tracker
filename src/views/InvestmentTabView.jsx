@@ -28,7 +28,7 @@ const HoldingsStockCard = ({ stock, currentPrice, priceChange, onAddPurchase, on
             <span className="font-bold text-slate-800 text-base">{stock.symbol}</span>
             <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold tabular-nums ${theme.bg} ${theme.text}`}>{percent.toFixed(1)}%</span>
             {hasPrice && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${priceChange >= 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${priceChange >= 0 ? 'bg-[#F1F6F4] text-[#4D7D70]' : 'bg-[#FBF3F2] text-[#95564F]'}`}>
                 {priceChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}{Math.abs(priceChange).toFixed(2)}%
               </span>
             )}
@@ -43,12 +43,12 @@ const HoldingsStockCard = ({ stock, currentPrice, priceChange, onAddPurchase, on
           <div className="text-right">
             <div className="text-sm font-bold text-slate-800 tabular-nums">${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
             {hasPrice && (
-              <div className={`text-[10px] font-bold tabular-nums ${isUp ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>
+              <div className={`text-[10px] font-bold tabular-nums ${isUp ? 'text-[#4D7D70]' : 'text-[#95564F]'}`}>
                 {isUp ? '+' : ''}{pnlPercent.toFixed(1)}% · {isUp ? '+' : ''}${pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
             )}
           </div>
-          <button onClick={(e) => { e.stopPropagation(); onDeleteStock(); }} className="text-slate-300 hover:text-[#C0392B] p-1 transition-colors">
+          <button onClick={(e) => { e.stopPropagation(); onDeleteStock(); }} className="text-slate-300 hover:text-[#95564F] p-1 transition-colors">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -77,7 +77,7 @@ const HoldingsStockCard = ({ stock, currentPrice, priceChange, onAddPurchase, on
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="tabular-nums text-slate-500">${(Number(p.shares) * Number(p.price)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                    <button onClick={(e) => { e.stopPropagation(); onDeletePurchase(p.id); }} className="text-slate-300 hover:text-[#C0392B] p-0.5">
+                    <button onClick={(e) => { e.stopPropagation(); onDeletePurchase(p.id); }} className="text-slate-300 hover:text-[#95564F] p-0.5">
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -137,10 +137,10 @@ const HoldingsGroupCard = ({ group, prices, onAddStock, onDeleteStock, onAddPurc
           <div className="text-right">
             <div className="text-sm font-bold text-slate-800 tabular-nums">${stats.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
             {stats.cost > 0 && (
-              <div className={`text-[10px] font-bold tabular-nums ${stats.pnl >= 0 ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>{stats.pnl >= 0 ? '+' : ''}{stats.pnlPercent.toFixed(1)}%</div>
+              <div className={`text-[10px] font-bold tabular-nums ${stats.pnl >= 0 ? 'text-[#4D7D70]' : 'text-[#95564F]'}`}>{stats.pnl >= 0 ? '+' : ''}{stats.pnlPercent.toFixed(1)}%</div>
             )}
           </div>
-          <button onClick={(e) => { e.stopPropagation(); onDeleteGroup(); }} className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:bg-[#FDECEA] hover:text-[#C0392B] transition-all">
+          <button onClick={(e) => { e.stopPropagation(); onDeleteGroup(); }} className="p-1.5 rounded-lg bg-slate-100 text-slate-400 hover:bg-[#FBF3F2] hover:text-[#95564F] transition-all">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -180,7 +180,7 @@ const HoldingsDonutChart = ({ data, colors: colorProp }) => {
   if (!data || data.length === 0) return null;
   const total = data.reduce((sum, d) => sum + d.value, 0);
   if (total <= 0) return null;
-  const colors = colorProp || ['#52B788', '#7A96BE', '#D4AC0D', '#E57373', '#9A85B0', '#5DAAAD', '#8A8884', '#7889B0', '#9C9690'];
+  const colors = colorProp || ['#6B9A8D', '#7C9DC0', '#C2A66E', '#C08480', '#8F8EB3', '#6FA3A4', '#8A8884', '#8F8EB3', '#9C9690'];
   const cx = 50, cy = 50, r = 35, innerR = 22;
   let cumAngle = -90;
   const arcs = data.map((d, i) => {
@@ -340,7 +340,7 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
           <h2 className="text-xl font-bold text-slate-800">持股組合</h2>
           <p className="text-xs text-slate-400 mt-1 tabular-nums">{lastUpdated ? `更新於 ${lastUpdated.toLocaleTimeString()}` : '更新中...'}</p>
         </div>
-        <button onClick={() => fetchPrices(holdingsGroups)} className="p-2 rounded-xl bg-white shadow-sm border border-slate-100 text-[#5A7099]">
+        <button onClick={() => fetchPrices(holdingsGroups)} className="p-2 rounded-xl bg-white shadow-sm border border-slate-100 text-[#557AA3]">
           <RefreshCw className={`w-5 h-5 ${pricesLoading ? 'animate-spin' : ''}`} />
         </button>
       </div>
@@ -352,7 +352,7 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
               <div className="text-xs text-slate-400 uppercase font-bold mb-1">目前總市值</div>
               <div className="text-2xl font-bold text-slate-800 tabular-nums">${summary.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
             </div>
-            <span className={`text-sm font-bold px-2.5 py-1 rounded-xl ${summary.pnl >= 0 ? 'bg-[#F1FAEE] text-[#2D6A4F]' : 'bg-[#FDECEA] text-[#C0392B]'}`}>
+            <span className={`text-sm font-bold px-2.5 py-1 rounded-xl ${summary.pnl >= 0 ? 'bg-[#F1F6F4] text-[#4D7D70]' : 'bg-[#FBF3F2] text-[#95564F]'}`}>
               {summary.pnl >= 0 ? '+' : ''}{summary.pnlPercent.toFixed(2)}%
             </span>
           </div>
@@ -362,8 +362,8 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
               <div className="text-sm font-bold text-slate-700 tabular-nums">${summary.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
             </div>
             <div className="text-right">
-              <div className={`text-[10px] font-bold uppercase mb-1 ${summary.pnl >= 0 ? 'text-[#52B788]' : 'text-[#E57373]'}`}>總損益</div>
-              <div className={`text-sm font-bold tabular-nums ${summary.pnl >= 0 ? 'text-[#2D6A4F]' : 'text-[#C0392B]'}`}>{summary.pnl >= 0 ? '+' : ''}${summary.pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              <div className={`text-[10px] font-bold uppercase mb-1 ${summary.pnl >= 0 ? 'text-[#6B9A8D]' : 'text-[#C08480]'}`}>總損益</div>
+              <div className={`text-sm font-bold tabular-nums ${summary.pnl >= 0 ? 'text-[#4D7D70]' : 'text-[#95564F]'}`}>{summary.pnl >= 0 ? '+' : ''}${summary.pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
             </div>
           </div>
           {summary.pieData.length > 0 && <HoldingsDonutChart data={summary.pieData} colors={summary.pieColors} />}
@@ -372,7 +372,7 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
 
       <div>
         {!isAddHoldingsGroupOpen ? (
-          <button onClick={() => setIsAddHoldingsGroupOpen(true)} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-sm hover:border-[#7A96BE] hover:text-[#5A7099] transition-all flex items-center justify-center gap-2">
+          <button onClick={() => setIsAddHoldingsGroupOpen(true)} className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-sm hover:border-[#7C9DC0] hover:text-[#557AA3] transition-all flex items-center justify-center gap-2">
             <Plus className="w-4 h-4" /> 新增群組
           </button>
         ) : (

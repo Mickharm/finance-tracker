@@ -29,10 +29,10 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
         </div>
         <div className="mb-4">
           <div className="w-full bg-slate-100/70 rounded-full h-2 overflow-hidden">
-            <div className={`h-full rounded-full transition-all duration-700 ${isOverBudget ? 'bg-[#E57373]' : usedPct > 85 ? 'bg-[#E8BE6E]' : 'bg-[#52B788]'}`} style={{ width: `${Math.min(usedPct, 100)}%` }} />
+            <div className={`h-full rounded-full transition-all duration-700 ${isOverBudget ? 'bg-[#C08480]' : usedPct > 85 ? 'bg-[#D6BE8C]' : 'bg-[#6B9A8D]'}`} style={{ width: `${Math.min(usedPct, 100)}%` }} />
           </div>
           <div className="flex justify-between mt-1.5 text-[10px] font-medium text-slate-400">
-            <span className={isOverBudget ? 'text-[#C0392B] font-bold' : ''}>已用 {Math.round(usedPct)}%</span>
+            <span className={isOverBudget ? 'text-[#95564F] font-bold' : ''}>已用 {Math.round(usedPct)}%</span>
             <span>全年進度</span>
           </div>
         </div>
@@ -42,8 +42,8 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
             <div className="text-base sm:text-lg font-bold text-slate-700 tabular-nums truncate">${totalAnnualUsed.toLocaleString()}</div>
           </div>
           <div className="flex-1 overflow-hidden text-right">
-            <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-[#E57373]' : 'text-[#52B788]'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
-            <div className={`text-base sm:text-lg font-bold tabular-nums truncate ${isOverBudget ? 'text-[#C0392B]' : 'text-[#2D6A4F]'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
+            <div className={`text-[10px] font-bold uppercase mb-1 ${isOverBudget ? 'text-[#C08480]' : 'text-[#6B9A8D]'}`}>{isOverBudget ? '超支' : '剩餘'}</div>
+            <div className={`text-base sm:text-lg font-bold tabular-nums truncate ${isOverBudget ? 'text-[#95564F]' : 'text-[#4D7D70]'}`}>{isOverBudget ? '-' : ''}${Math.abs(totalRemaining).toLocaleString()}</div>
           </div>
         </div>
         <div className="mt-3 pt-3 border-t border-slate-200/40 flex justify-between items-center">
@@ -54,7 +54,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
 
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
-          <div className="w-8 h-8 rounded-full bg-[#F1FAEE] flex items-center justify-center text-[#2D6A4F]"><Calendar className="w-4 h-4" /></div>
+          <div className="w-8 h-8 rounded-full bg-[#F1F6F4] flex items-center justify-center text-[#4D7D70]"><Calendar className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-slate-800 leading-tight">月度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">經常性支出</p></div>
         </div>
         <div className={`${GLASS_CARD} p-5 mb-4 relative overflow-hidden`}>
@@ -64,7 +64,7 @@ const HomeView = ({ monthlyStats, annualStats, yearlyTotalStats }) => {
       </section>
       <section>
         <div className="flex items-center gap-2 mb-4 px-1 mt-10">
-          <div className="w-8 h-8 rounded-full bg-[#EAEEF6] flex items-center justify-center text-[#4E5D82]"><Target className="w-4 h-4" /></div>
+          <div className="w-8 h-8 rounded-full bg-[#F4F4F8] flex items-center justify-center text-[#66659A]"><Target className="w-4 h-4" /></div>
           <div><h2 className="text-lg font-bold text-slate-800 leading-tight">年度預算</h2><p className="text-xs text-slate-400 font-bold tracking-wide uppercase">年度支出</p></div>
         </div>
 

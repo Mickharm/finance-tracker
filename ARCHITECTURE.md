@@ -142,17 +142,17 @@ setIsModalOpen(false);
 - `index.html` 有 12 秒**白畫面看門狗**：pre-loader 若還在就自動 reload 一次自救（sessionStorage 防循環，App 掛載成功會清旗標）。
 - ⚠️ `dist/` 與 `sw.js` 都是 build 產物，**不要手動編輯**；SW 邏輯要改就改 `vite.config.js` 的模板。
 
-### 5.5 深色模式（跟隨系統）
-- 策略：**不逐行加 `dark:` variant**。`src/index.css` 的
-  `@media (prefers-color-scheme: dark)` 區塊集中「重對映」全 App 用到的色彩工具類別
-  （`.text-slate-800`、`.bg-white\/35`、`.border-slate-200`、主要按鈕 `.bg-slate-800`…，
-  以及 COLOR_VARIANTS 主題色文字的 `[class*="text-[#…]"]` 屬性選擇器）。
-  Tailwind v4 的 utilities 在 cascade layer 裡，此處未分層的規則必定勝出。
-- 掛點：底色用 `.app-bg`、背景色球用 `.bg-blob`（深色再壓暗）、玻璃陰影用
-  `.glass-card-fx` / `.glass-input-fx`、圖表格線用 `.chart-grid`；原生控件靠 `color-scheme: dark`。
-- ⚠️ **新增顏色 utility class 時**（尤其新的 `bg-slate-*`、`text-slate-*`、`bg-white/*` 透明度階、
-  或直接用在玻璃上的 arbitrary 色碼文字），記得到 index.css 深色區塊補對映，否則深色下會突兀。
-- `index.html` 的 pre-loader 與 `theme-color` meta 也各有深色版本。
+### 5.5 色票與字體（2.0：只用淺色）
+- **不支援深色模式**（刻意的設計決定）。`index.html` 宣告 `color-scheme: light only`。
+- 色票在 `src/index.css` 的 `@theme`：**直接覆寫 Tailwind 色系變數**，既有的
+  `slate/rose/emerald/blue/amber/indigo/cyan/gray` 工具類別全部換成低彩度日本傳統色：
+  slate＝墨與鼠、rose＝退紅、emerald＝青磁（彈性）、blue＝勿忘草（士程）、amber＝枯色（年度）、
+  indigo＝藤鼠（固定）、cyan＝水淺蔥。新增顏色請用這些色系，不要再寫任意色碼。
+- 卡片：`GLASS_CARD`/`GLASS_INPUT` 名稱沿用，實際是紙卡（`.glass-card-fx`：實色 `--card`、
+  髮絲線 `--hair`、柔和陰影），底色 `--paper`。頁首 `.app-header` 有一條淡青海波紋、左上「帳」印章 `.seal`。
+- 字體（Google Fonts，`display=swap`）：標題 h1–h4 用 Noto Serif TC；`text-2xl` 以上的大字
+  與 `.font-num` 用 Shippori Mincho（明朝體數字）。離線時退回系統字。
+- 分類圖示：`lib/categoryIcons.js`（分類→Lucide 圖示、三桶色調），元件 `components/CategoryIcon.jsx`。
 
 ### 5.6 帳號與多裝置
 - 使用者用 `signInAnonymously` 匿名登入（每台裝置一個匿名 UID），但資料都讀寫
@@ -180,7 +180,7 @@ setIsModalOpen(false);
 
 ## 6. UI 慣例
 
-- **玻璃卡片**：一律用 `GLASS_CARD` / `GLASS_INPUT`（`lib/constants.js`），不要自己拼玻璃樣式。
+- **卡片**：一律用 `GLASS_CARD` / `GLASS_INPUT`（`lib/constants.js`，2.0 起是紙卡樣式），不要自己拼卡片樣式。
 - **主題色**：從 `COLOR_VARIANTS` 取（slate/sky/rose/emerald/amber/indigo/cyan…），
   每個主題含 bg/border/text/iconBg/iconText/bar。
 - **Modal**：內容包在 `ModalWrapper`（處理鍵盤頂起、focus 捲動）；刪除確認用
