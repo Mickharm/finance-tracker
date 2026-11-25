@@ -1,11 +1,12 @@
-import { createElement, useMemo, useRef, useState } from 'react';
-import { X, Delete, CalendarDays, ChevronDown, Sun, Moon, Users, Trash2 } from 'lucide-react';
+import { createElement, useEffect, useMemo, useRef, useState } from 'react';
+import { X, Delete, CalendarDays, ChevronDown, Sun, Moon, Users, Trash2, Sparkles } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 import { evalArithmetic, getTodayString, toLocalISOString, haptic } from '../lib/utils';
 import {
-  buildNoteIndex, classifyNote, getSuggestions, listCategories,
+  buildNoteIndex, classifyNote, getSuggestions, listCategories, normNote,
   getDevicePayer, setDevicePayer, NO_SPEND_OPTIONS, FOOD_CATEGORY,
 } from '../lib/quickAdd';
+import { getGeminiKey, suggestCategory } from '../lib/gemini';
 
 const PEOPLE = {
   myself: { name: '士程', short: '士', on: 'bg-blue-100 text-blue-700 border-blue-300' },
@@ -44,6 +45,24 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
 
   const auto = useMemo(() => classifyNote(note, payer, index, settings), [note, payer, index, settings]);
   const cat = manualCat || auto;
+
+  // 第 3 層：前兩層都分不出來時，停止打字 0.8 秒後問 Gemini（有設定金鑰才會問）。只當建議，點了才採用。
+  const [ai, setAi] = useState(null); // { note, cat, loading, error }
+  const geminiKey = useMemo(() => getGeminiKey(), []);
+  const noteKey = normNote(note);
+  const wantAi = !!geminiKey && !editing && !cat && noteKey.length >= 1;
+  useEffect(() => {
+    if (!wantAi) return undefined;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      setAi({ note: noteKey, cat: null, loading: true });
+      suggestCategory(noteKey, { key: geminiKey, settings, index, signal: ctrl.signal })
+        .then((c) => setAi({ note: noteKey, cat: c, loading: false }))
+        .catch((e) => { if (e.name !== 'AbortError') setAi({ note: noteKey, cat: null, loading: false, error: e.message }); });
+    }, 800);
+    return () => { clearTimeout(timer); ctrl.abort(); };
+  }, [wantAi, noteKey, geminiKey, settings, index]);
+  const aiNow = wantAi && ai && ai.note === noteKey ? ai : null;
   const isFood = cat?.category === FOOD_CATEGORY;
   // 餐別只對日常飲食有意義；改成其他分類時直接視為沒選
   const effMeal = isFood || !cat ? meal : null;
@@ -198,6 +217,21 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
             </button>
           </div>
         </div>
+
+        {/* ── AI 建議（Gemini）：點一下才採用 */}
+        {!picking && aiNow && (
+          <div className="px-5 mt-2 flex items-center gap-2 text-xs">
+            <Sparkles className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+            {aiNow.loading ? <span className="text-slate-400">AI 想想看…</span>
+              : aiNow.cat ? (
+                <button type="button" onClick={() => { setManualCat(aiNow.cat); haptic(8); }}
+                  className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full font-bold bg-violet-50 text-violet-800 border border-violet-200 active:scale-95">
+                  <CategoryIcon category={aiNow.cat.category} group={aiNow.cat.group} type={aiNow.cat.type} size="sm" />
+                  AI 建議：{aiNow.cat.category}<span className="font-normal opacity-70">（點一下採用）</span>
+                </button>
+              ) : <span className="text-slate-400">{aiNow.error ? `AI 沒回應：${aiNow.error}` : 'AI 也沒把握，請自己選分類'}</span>}
+          </div>
+        )}
 
         {/* ── 常用建議（只看這個人的紀錄） */}
         {!picking && suggestions.length > 0 && (

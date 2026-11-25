@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Plus, Sparkles, Smartphone, Check } from 'lucide-react';
+import { Plus, Sparkles, Smartphone, Check, KeyRound } from 'lucide-react';
 import { budgetPlan, FLEX_DEFAULT } from '../lib/budget';
 import { backtestClassifier, getDevicePayer, setDevicePayer } from '../lib/quickAdd';
 import { fmt } from '../lib/format';
+import { getGeminiKey, setGeminiKey, backtestGemini } from '../lib/gemini';
 import CategoryIcon from '../components/CategoryIcon';
 import { Hero, Section, Row, Divided, Empty, Chips, Seg, PersonPick, MoneyInput, Field, SmallInput, Sheet } from '../components/v2';
 
@@ -76,6 +77,67 @@ const FixedSheet = ({ initial, monthlyCats, onSave, onDelete, onClose }) => {
           onChange={(k) => { const c = monthlyCats.find((x) => `${x.group}|${x.name}` === k); set({ group: c.group, category: c.name }); }} />
       </Field>
     </Sheet>
+  );
+};
+
+// AI 分類（Gemini）：金鑰只存在這支手機；可以用今年的紀錄回測準確度
+const GeminiPanel = ({ transactions, settings, year }) => {
+  const [key, setKey] = useState(() => getGeminiKey());
+  const [draft, setDraft] = useState('');
+  const [test, setTest] = useState(null); // { loading } | { error } | result
+  const save = () => { const k = draft.trim(); if (!k) return; setGeminiKey(k); setKey(k); setDraft(''); setTest(null); };
+  const clear = () => { setGeminiKey(''); setKey(''); setTest(null); };
+  const run = async () => {
+    setTest({ loading: true });
+    try { setTest(await backtestGemini(transactions, settings, key, `${year}-01-01`)); } catch (e) { setTest({ error: e.message }); }
+  };
+  const acc = test && test.total ? test.ok / (test.total - test.unsure || 1) : null;
+  return (
+    <div className="glass-card-fx border rounded-2xl p-4 text-sm">
+      <p className="text-xs text-slate-400">前兩層（同備註、關鍵字）都分不出來時，請 Gemini 給一個建議。只是建議，要你點一下才會採用。</p>
+      {key ? (
+        <div className="mt-3 flex items-center gap-2">
+          <KeyRound className="w-4 h-4 text-emerald-600" />
+          <span className="flex-1 text-slate-600">已設定金鑰 <span className="tabular-nums text-slate-400">••••{key.slice(-4)}</span></span>
+          <button type="button" onClick={clear} className="px-3 py-1.5 rounded-full text-xs font-bold text-rose-600 border border-rose-200">移除</button>
+        </div>
+      ) : (
+        <div className="mt-3 space-y-2">
+          <div className="flex gap-2">
+            <input type="password" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="貼上 Gemini API 金鑰" autoComplete="off"
+              className="flex-1 min-w-0 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-400" />
+            <button type="button" onClick={save} disabled={!draft.trim()} className={`px-4 rounded-xl text-sm font-bold ${draft.trim() ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-400'}`}>儲存</button>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">到 Google AI Studio（aistudio.google.com）登入後按「Get API key」取得。金鑰只存在這支手機的瀏覽器，不會進帳本，兩支手機要各貼一次。建議在 Google 後台把金鑰限制成只能從 mickharm.github.io 使用，並設定用量上限。</p>
+        </div>
+      )}
+      {key && (
+        <div className="mt-3 pt-3 border-t border-slate-100">
+          {!test || test.error ? (
+            <>
+              <button type="button" onClick={run} className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold">AI 回測（同時測試金鑰）</button>
+              <p className="text-[11px] text-slate-400 mt-1.5">拿今年前兩層分不出來的備註（最多 40 則），問 Gemini 一次，和你們實際選的比對。</p>
+              {test?.error && <p className="text-xs text-rose-600 mt-1.5">{test.error}</p>}
+            </>
+          ) : test.loading ? <p className="text-xs text-slate-400 text-center py-2">Gemini 回測中…</p> : test.total === 0 ? (
+            <p className="text-xs text-slate-500">今年沒有前兩層分不出來的紀錄，可以之後再測。</p>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex justify-between"><span className="text-slate-500">測試備註</span><span className="tabular-nums">{test.total} 則</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">AI 有給答案的正確率</span><b className={`tabular-nums ${acc >= 0.97 ? 'text-emerald-700' : 'text-amber-700'}`}>{pctOf(test.ok, test.total - test.unsure)}</b></div>
+              <div className="flex justify-between"><span className="text-slate-500">AI 說沒把握</span><span className="tabular-nums">{test.unsure} 則</span></div>
+              {test.misses.length > 0 && (
+                <div className="pt-2 border-t border-slate-100">
+                  <div className="text-xs font-bold text-slate-400 mb-1">AI 分錯的</div>
+                  {test.misses.map((m) => <div key={m} className="text-xs text-slate-500 truncate">{m}</div>)}
+                </div>
+              )}
+              <p className="text-[11px] text-slate-400">{acc >= 0.97 ? '準確度達 97%，但仍維持「點一下才採用」。' : '準確度未達 97%，所以只當建議，不會自動填入。'}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -209,10 +271,13 @@ const BudgetView = ({ year, settings, flexMonthly, transactions, onSaveFlex, onS
                   {bt.misses.map(([k, n]) => <div key={k} className="text-xs text-slate-500 flex justify-between gap-2"><span className="truncate">{k}</span><span className="tabular-nums shrink-0">{n} 次</span></div>)}
                 </div>
               )}
-              <p className="text-[11px] text-slate-400 pt-1">AI（Gemini）分類還沒啟用：需要 Gemini API 金鑰，而且要先用這個回測證明準確度 ≥ 97%，頭兩週只建議、不自動寫入。</p>
             </div>
           )}
         </div>
+      </Section>
+
+      <Section title={<span className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-violet-500" />AI 分類（Gemini）</span>}>
+        <GeminiPanel transactions={transactions} settings={settings} year={year} />
       </Section>
 
       <Section title={<span className="flex items-center gap-2"><Smartphone className="w-4 h-4 text-slate-400" />這支手機是誰在記帳</span>}>

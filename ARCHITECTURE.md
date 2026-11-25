@@ -160,7 +160,7 @@ setIsModalOpen(false);
   編輯既有紀錄也用同一個抽屜（`setQuickAdd({ edit: t })`），可刪除；儲存時整筆覆寫，取消的餐別／一起吃會移除。
 - `lib/quickAdd.js`：
   - 自動分類第 1 層＝同備註的歷史多數分類（自己的紀錄優先、一致率 ≥60%）；第 2 層＝包含已知備註或關鍵字表，
-    只當猜測（畫面標「？」）；都對不上就要使用者自己選。第 3 層 Gemini 在 P7。
+    只當猜測（畫面標「？」）；都對不上就要使用者自己選。第 3 層 Gemini 見 `lib/gemini.js`（下方）。
   - 常用建議只看該記帳人自己的紀錄（近 90 天為主）；金額幾乎固定的備註會一併帶出金額。
   - 這支手機的記帳人存在 `localStorage['ft-device-payer']`，第一次開抽屜時詢問。
 - 新欄位（只在日常飲食）：`meal: 'lunch' | 'dinner'`、`together: true`（晚餐兩人一起）。
@@ -173,7 +173,10 @@ setIsModalOpen(false);
   不動正式版的 `config_{year}`）；年度＝annualGroups 的金額。年度總預算＝固定×12＋彈性×12＋年度。
   交易歸桶：type annual → 年度；備註＋分類對上固定支出項目 → 固定；其餘 → 彈性。
 - 兩人每餐（`lib/meals.js`）：午餐各自算；晚餐有人標「兩人一起」兩個人都算；$0 的 請客／自煮／沒吃 算有交代。
-- 分類回測在預算設定頁（leave-one-out）。第 3 層 Gemini 尚未實作（需金鑰，且回測 ≥97% 才啟用）。
+- 分類回測在預算設定頁（leave-one-out）。
+- `lib/gemini.js`（第 3 層）：前兩層都分不出來、且這支手機設了金鑰時，停止打字 0.8 秒後問 Gemini（REST，`x-goog-api-key` 標頭，模型 `gemini-flash-latest`，404 時退回 `gemini-2.5-flash`；結構化 JSON、只能選現有分類或「不確定」）。
+  結果只顯示成「AI 建議」，點一下才採用，不會自動寫入。金鑰存 localStorage `ft-gemini-key`，**不進程式碼、不進 Firestore**。
+  預算設定頁可貼／移除金鑰，並做 AI 回測（今年前兩層分不出來的備註最多 40 則，一次請求）。
 
 ### 5.5d 收入與資產頁（2.0）
 - 六頁同一個版型（`components/v2.jsx`）：頁首大數字直接寫在紙上 → 一張圖 → 一列一列的清單；點一列從下方拉出 `Sheet` 編輯，新增也用同一個抽屜。
@@ -215,7 +218,7 @@ setIsModalOpen(false);
 - `FT_PREVIEW=1` 時 `vite.config.js`：`base` 改 `/finance-tracker/preview/`、**不產生 SW**
   （每次開都是最新版）、改寫 manifest（id/start_url/scope/名稱）與 iOS 主畫面名稱；
   程式內可用 `__FT_PREVIEW__` 判斷。正式版 SW 對 `/finance-tracker/preview/` 一律放行。
-- 預覽滿意後把 `preview` 合併回 `main` 即上線。
+- 預覽滿意後把 `preview` 合併回 `main` 即上線。2026-11-25 已把 2.0 合併進 main；舊版（1.x）保留在 `legacy/v1` 分支。
 
 ## 6. UI 慣例
 
