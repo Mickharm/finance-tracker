@@ -41,25 +41,27 @@ finance-tracker/
     │   ├── firebase.js     # Firebase 初始化；匯出 auth, db, appId, LEDGER_ID
     │   ├── constants.js    # GLASS_CARD/GLASS_INPUT 玻璃樣式、COLOR_VARIANTS 主題色、
     │   │                   # DEFAULT_SETTINGS、INCOME_CATEGORIES、選單定義
-    │   └── utils.js        # 日期工具、evalArithmetic 計算機、haptic、股價快取、千分位
+    │   ├── utils.js        # 日期工具、evalArithmetic 計算機、haptic、股價快取、千分位
+    │   └── format.js       # 2.0 數字格式（fmt、fmtSigned、pct、short 萬/億）與兩人設定 PEOPLE
     ├── components/
     │   ├── Toast.jsx       # ToastProvider / useToast（全域訊息提示）
     │   ├── ui.jsx          # 共用元件：ModalWrapper、ConfirmationModal、LoadingScreen、
     │   │                   # InputField、NoteQuickPicks、CalculatorInput、GlassButton、
     │   │                   # BudgetProgressBar、GroupCard、StandardList、AmountInput…
-    │   └── settings.jsx    # GroupSettingsEditor（預算群組編輯）、RecurringManagerModal（固定支出設定）
+    │   ├── settings.jsx    # GroupSettingsEditor（預算群組編輯）、RecurringManagerModal（固定支出設定）
+    │   └── v2.jsx          # 2.0 收入／資產頁共用：Hero、Section、Row、Divided、Seg、Chips、MoneyInput、Sheet、LineChart…
     └── views/              # 每個頁面一個檔案（皆為純呈現＋自身互動，資料多由 App.jsx 傳入）
         ├── HomeV2.jsx              # 2.0 總覽（本月還能花、今天兩人與每餐、這週、今年三桶）
-        ├── LedgerView.jsx          # 2.0 明細（日曆 濃淡/金額/用餐、週小計、當日明細、清單＋搜尋）
+        ├── LedgerView.jsx          # 2.0 明細（月曆顯示每日金額／卡片＋搜尋、當日明細）
         ├── BucketAnalysis.jsx      # 2.0 分析上半（每月三色長條、兩人比例、分類排行）
         ├── BudgetView.jsx          # 2.0 預算設定（三桶、分類回測、這支手機的記帳人）
         ├── VisualizationView.jsx   # 支出分析
-        ├── IncomeView.jsx          # 收入管理（雙人卡片、調薪紀錄）
-        ├── PartnerView.jsx         # 佳欣儲蓄
-        ├── InvestmentTabView.jsx   # 持股組合（自行訂閱 holdings_config、抓 Finnhub 報價）
-        ├── StockGoalView.jsx       # 存股計畫 + 美金換匯
-        ├── MortgageView.jsx        # 房產投資（雜支/試算/頭期款來源）
-        └── PrincipalView.jsx       # 資產淨值（自行訂閱 principal_config / principal_history）
+        ├── IncomeView.jsx          # 2.0 收入（今年收入、本月薪水進帳、每月長條、組成、月薪、明細）
+        ├── PartnerView.jsx         # 2.0 佳欣儲蓄（餘額、存入／提領、餘額走勢、依年紀錄）
+        ├── InvestmentTabView.jsx   # 2.0 持股（自行訂閱 holdings_config、抓 Finnhub 報價；買入抽屜）
+        ├── StockGoalView.jsx       # 2.0 存股（今年進度、每年實際 vs 目標、換匯）
+        ├── MortgageView.jsx        # 2.0 房產（本月房貸、月付階梯、每年還款、頭期款與雜支）
+        └── PrincipalView.jsx       # 2.0 淨值（自行訂閱 principal_config / principal_history；結算）
 ```
 
 **依賴方向**（不可反向、無循環）：`views / components → lib`；`App.jsx → 全部`。
@@ -151,7 +153,7 @@ setIsModalOpen(false);
   slate＝墨與鼠、rose＝退紅、emerald＝青磁（彈性）、blue＝勿忘草（士程）、amber＝枯色（年度）、
   indigo＝藤鼠（固定）、cyan＝水淺蔥。新增顏色請用這些色系，不要再寫任意色碼。
 - 卡片：`GLASS_CARD`/`GLASS_INPUT` 名稱沿用，實際是紙卡（`.glass-card-fx`：實色 `--card`、
-  髮絲線 `--hair`、柔和陰影），底色 `--paper`。頁首 `.app-header` 有一條淡青海波紋、左上「帳」印章 `.seal`。
+  髮絲線 `--hair`、柔和陰影），底色 `--paper`。整個 App 背景（`.app-bg`）與頁首疊一層極淡的和紙纖維顆粒（SVG feTurbulence），沒有圖案、沒有印章。
 - 字體（Google Fonts，`display=swap`）：標題 h1–h4 用 Noto Serif TC；`text-2xl` 以上的大字
   與 `.font-num` 用 Shippori Mincho（明朝體數字）。離線時退回系統字。
 - 分類圖示：`lib/categoryIcons.js`（分類→Lucide 圖示、三桶色調），元件 `components/CategoryIcon.jsx`。
@@ -175,6 +177,15 @@ setIsModalOpen(false);
   交易歸桶：type annual → 年度；備註＋分類對上固定支出項目 → 固定；其餘 → 彈性。
 - 兩人每餐（`lib/meals.js`）：午餐各自算；晚餐有人標「兩人一起」兩個人都算；$0 的 請客／自煮／沒吃 算有交代。
 - 分類回測在預算設定頁（leave-one-out）。第 3 層 Gemini 尚未實作（需金鑰，且回測 ≥97% 才啟用）。
+
+### 5.5d 收入與資產頁（2.0）
+- 六頁同一個版型（`components/v2.jsx`）：頁首大數字直接寫在紙上 → 一張圖 → 一列一列的清單；點一列從下方拉出 `Sheet` 編輯，新增也用同一個抽屜。
+  不再有右下角浮動 + 按鈕，也不再用 ModalWrapper 表單（App.jsx 裡舊的收入／儲蓄／調薪／換匯／房產表單已刪除）。
+- `Sheet` 用 portal 掛到 body，z-[55]：`<main>` 自成一層（relative z-10），放在裡面會被頁首與底部導覽蓋住；確認刪除對話框是 z-60，所以會疊在抽屜上面。
+- 寫入：App.jsx 的 `saveRecord(col, data, id, msg)`（有 id 就 setDoc merge，沒有就 addDoc）與 `removeRecord(col, id, message)`（經 requestDelete 確認）。
+  收入、佳欣儲蓄、存股、換匯、房產都走這兩個；持股與淨值仍各自寫自己的設定文件。
+- 收入預設載入今年與去年（比去年同期）；翻到其他年份時呼叫 `requestHistory(year)` 補載。
+- 記收入選「薪水」時可一鍵帶入「同上次」或「目前月薪」（salary_history 最新一筆）。
 
 ### 5.6 帳號與多裝置
 - 使用者用 `signInAnonymously` 匿名登入（每台裝置一個匿名 UID），但資料都讀寫

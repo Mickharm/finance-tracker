@@ -1,25 +1,12 @@
 import { createElement, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X, Search, Sun, Moon, Package, List, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Search, Sun, Moon, Package, LayoutList, CalendarDays } from 'lucide-react';
 import { GLASS_CARD } from '../lib/constants';
 import { getTodayString, toLocalISOString } from '../lib/utils';
-import { makeFixedMatcher, bucketOf } from '../lib/budget';
-import { dayMeals, hasMealData, isNoSpend } from '../lib/meals';
+import { isNoSpend } from '../lib/meals';
 import CategoryIcon from '../components/CategoryIcon';
 
 const fmt = (n) => `$${Math.round(n).toLocaleString()}`;
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
-const MODES = [['heat', '濃淡'], ['amount', '金額'], ['meal', '用餐']];
-const HEAT = ['', 'bg-emerald-50', 'bg-emerald-100', 'bg-emerald-200', 'bg-emerald-300'];
-
-const MealSquare = ({ status, tone }) => {
-  const look = {
-    paid: tone === 'partner' ? 'bg-rose-300' : 'bg-blue-300',
-    nospend: 'bg-white border border-dashed border-slate-400',
-    together: 'bg-indigo-300',
-  }[status] || 'bg-slate-100';
-  return <span className={`h-2 rounded-[3px] ${look}`} />;
-};
-
 const PayerTag = ({ payer }) => (
   <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${payer === 'partner' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'}`}>
     {payer === 'partner' ? '佳欣' : '士程'}
@@ -44,11 +31,10 @@ const TxRow = ({ t, onEdit, onDelete }) => (
   </div>
 );
 
-// 2.0 明細：日曆一格只顯示一種資訊（濃淡／金額／用餐），每週小計；也可切成清單＋搜尋
-const LedgerView = ({ transactions, settings, selectedDate, focusDate, onFocusConsumed, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
+// 2.0 明細：月曆每格顯示當天金額；也可切成卡片（依日期分組）＋搜尋
+const LedgerView = ({ transactions, selectedDate, focusDate, onFocusConsumed, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
   const [viewDate, setViewDate] = useState(selectedDate);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [mode, setMode] = useState('heat');
   const [asList, setAsList] = useState(false);
   const [query, setQuery] = useState('');
   // 外部月份改變時跟著換（render 期間調整 state，避免 effect 連鎖重繪）
@@ -68,7 +54,6 @@ const LedgerView = ({ transactions, settings, selectedDate, focusDate, onFocusCo
   }
   useEffect(() => { if (focusDate && onFocusConsumed) onFocusConsumed(); }, [focusDate, onFocusConsumed]);
 
-  const isFixed = useMemo(() => makeFixedMatcher(settings), [settings]);
   const y = viewDate.getFullYear();
   const m = viewDate.getMonth();
   const prefix = `${y}-${String(m + 1).padStart(2, '0')}`;
@@ -79,13 +64,6 @@ const LedgerView = ({ transactions, settings, selectedDate, focusDate, onFocusCo
     return map;
   }, [monthTx]);
   const monthTotal = monthTx.reduce((s, t) => s + (Number(t.amount) || 0), 0);
-
-  // 濃淡：依當天「彈性」支出在本月的位置分 4 階（固定、年度不影響顏色，另外用小點標年度）
-  const flexOf = (list) => list.filter((t) => bucketOf(t, isFixed) === 'flex').reduce((s, t) => s + (Number(t.amount) || 0), 0);
-  const flexDays = [...byDay.values()].map(flexOf).filter((v) => v > 0).sort((a, b) => a - b);
-  const q = (p) => flexDays.length ? flexDays[Math.min(flexDays.length - 1, Math.floor(p * flexDays.length))] : 0;
-  const cuts = [q(0.25), q(0.5), q(0.8)];
-  const heatLevel = (v) => (v <= 0 ? 0 : v <= cuts[0] ? 1 : v <= cuts[1] ? 2 : v <= cuts[2] ? 3 : 4);
 
   const changeMonth = (dir) => {
     const d = new Date(y, m + dir, 1);
@@ -98,7 +76,6 @@ const LedgerView = ({ transactions, settings, selectedDate, focusDate, onFocusCo
   const startDay = new Date(y, m, 1).getDay();
   const todayStr = getTodayString();
 
-  // 依週切成列，每列後面接一條小計
   const weeks = [];
   let row = Array(startDay).fill(null);
   for (let d = 1; d <= daysInMonth; d++) {
@@ -146,15 +123,11 @@ const LedgerView = ({ transactions, settings, selectedDate, focusDate, onFocusCo
 
       <div className="flex items-center gap-2 mb-3">
         <div className="flex flex-1 bg-slate-100 rounded-full p-0.5">
-          {MODES.map(([k, l]) => (
-            <button key={k} type="button" onClick={() => { setMode(k); setAsList(false); }}
-              className={`flex-1 py-1 rounded-full text-xs font-bold transition-all ${!asList && mode === k ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>{l}</button>
+          {[[false, '月曆', CalendarDays], [true, '卡片', LayoutList]].map(([v, l, Icon]) => (
+            <button key={l} type="button" onClick={() => setAsList(v)} aria-pressed={asList === v}
+              className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 ${asList === v ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>{createElement(Icon, { className: 'w-3.5 h-3.5' })}{l}</button>
           ))}
         </div>
-        <button type="button" onClick={() => setAsList(!asList)} aria-pressed={asList}
-          className={`p-2 rounded-full border transition-all ${asList ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200'}`} aria-label={asList ? '切回日曆' : '切成清單'}>
-          {asList ? <CalendarDays className="w-4 h-4" /> : <List className="w-4 h-4" />}
-        </button>
       </div>
 
       {asList ? (
@@ -184,7 +157,6 @@ const LedgerView = ({ transactions, settings, selectedDate, focusDate, onFocusCo
               {WEEK.map((d) => <div key={d} className="py-2 text-center text-xs font-bold text-slate-400">{d}</div>)}
             </div>
             {weeks.map((wk, wi) => {
-              const wkTotal = wk.reduce((s, d) => s + (d ? (byDay.get(toLocalISOString(new Date(y, m, d))) || []).reduce((a, t) => a + (Number(t.amount) || 0), 0) : 0), 0);
               return (
                 <div key={wi} className="border-b border-slate-100 last:border-b-0">
                   <div className="grid grid-cols-7">
@@ -193,64 +165,27 @@ const LedgerView = ({ transactions, settings, selectedDate, focusDate, onFocusCo
                       const ds = toLocalISOString(new Date(y, m, d));
                       const list = byDay.get(ds) || [];
                       const total = list.reduce((s, t) => s + (Number(t.amount) || 0), 0);
-                      const flex = flexOf(list);
                       const hasAnnual = list.some((t) => t.type === 'annual');
                       const isSel = selectedDay === d;
                       const isToday = ds === todayStr;
-                      const meals = mode === 'meal' ? dayMeals(list) : null;
                       return (
                         <button key={d} type="button" onClick={() => setSelectedDay(d)}
-                          className={`h-16 p-1 flex flex-col items-stretch justify-between relative transition-colors ${mode === 'heat' ? HEAT[heatLevel(flex)] : ''} ${isSel ? 'ring-2 ring-inset ring-blue-300' : ''}`}>
+                          className={`h-16 p-1 flex flex-col items-stretch justify-between relative transition-colors ${isSel ? 'ring-2 ring-inset ring-blue-300' : ''}`}>
                           <div className="flex justify-between items-start">
                             <span className={`text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full ${isToday ? 'bg-slate-800 text-white' : 'text-slate-500'}`}>{d}</span>
                             {hasAnnual && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 mr-0.5" title="有年度支出" />}
                           </div>
-                          {mode === 'amount' && total > 0 && (
+                          {total > 0 && (
                             <span className={`text-[10px] font-bold tabular-nums text-right ${hasAnnual ? 'text-amber-700' : 'text-slate-600'}`}>{total >= 10000 ? `${(total / 1000).toFixed(0)}k` : total.toLocaleString()}</span>
-                          )}
-                          {mode === 'meal' && (
-                            hasMealData(list) || ds <= todayStr ? (
-                              <div className="grid grid-cols-2 gap-0.5 px-0.5">
-                                <MealSquare status={meals.myself.lunch} tone="myself" />
-                                <MealSquare status={meals.myself.dinner} tone="myself" />
-                                <MealSquare status={meals.partner.lunch} tone="partner" />
-                                <MealSquare status={meals.partner.dinner} tone="partner" />
-                              </div>
-                            ) : <span />
                           )}
                         </button>
                       );
                     })}
                   </div>
-                  {mode !== 'meal' && wkTotal > 0 && (
-                    <div className="text-right text-[10px] text-slate-400 px-2 pb-1 -mt-0.5 tabular-nums">週小計 {fmt(wkTotal)}</div>
-                  )}
                 </div>
               );
             })}
           </div>
-
-          {mode === 'heat' && (
-            <div className="flex items-center justify-end gap-1 mt-2 text-[10px] text-slate-400 px-1">
-              少 {HEAT.slice(1).map((c) => <span key={c} className={`w-3 h-3 rounded-sm ${c}`} />)} 多（彈性支出）
-              <span className="ml-2 w-1.5 h-1.5 rounded-full bg-amber-400" /> 年度
-            </div>
-          )}
-          {mode === 'meal' && (
-            <div className="mt-2 px-1 text-[10px] text-slate-400 space-y-1">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span>每格：上排士程、下排佳欣；左午餐、右晚餐</span>
-              </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-[3px] bg-blue-300" />士程有記</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-[3px] bg-rose-300" />佳欣有記</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-[3px] bg-indigo-300" />一起吃</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-[3px] border border-dashed border-slate-400" />沒花錢</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-[3px] bg-slate-100" />沒交代</span>
-              </div>
-              <div>只有 2.0 起記帳時標了午餐／晚餐的紀錄才看得出來。</div>
-            </div>
-          )}
 
           {selectedDay && (
             <div className={`${GLASS_CARD} p-3 mt-4 animate-in fade-in duration-200`}>

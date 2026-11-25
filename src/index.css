@@ -167,7 +167,6 @@ html, body {
 }
 
 /* ─── 卡片與輸入框（紙卡：實色＋髮絲線＋柔和陰影）──────────────────── */
-.app-bg { background-color: var(--paper); }
 .glass-card-fx {
   background-color: var(--card);
   border-color: var(--hair);
@@ -180,31 +179,17 @@ html, body {
 .glass-input-fx:focus { border-color: #9DB7D3; }
 .chart-grid { stroke: #E3E2DD; }
 
-/* ─── 頁首：紙底＋髮絲線，背後一條很淡的青海波紋（全 App 唯一的和風紋樣）── */
+/* ─── 和紙質感：整個 App 背景一層極淡的紙纖維顆粒（不是圖案，只有質地）── */
+.app-bg {
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .42  0 0 0 0 .36  0 0 0 .05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* ─── 頁首：紙底＋髮絲線 ─────────────────────────────────────────── */
 .app-header {
-  background: rgba(245, 244, 240, 0.92);
+  background-color: rgba(245, 244, 240, 0.94);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .42  0 0 0 0 .36  0 0 0 .05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--hair);
-}
-.app-header::before {
-  content: "";
-  position: absolute; inset: 0;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'><g fill='none' stroke='%2386AFA3' stroke-opacity='.28' stroke-width='.8'><path d='M0 20a20 20 0 0 1 40 0'/><path d='M6 20a14 14 0 0 1 28 0'/><path d='M12 20a8 8 0 0 1 16 0'/><path d='M-20 10a20 20 0 0 1 40 0'/><path d='M20 10a20 20 0 0 1 40 0'/></g></svg>");
-  opacity: 0.6;
-  -webkit-mask: linear-gradient(#000, transparent);
-  mask: linear-gradient(#000, transparent);
-}
-.app-header > * { position: relative; }
-
-/* 「帳」字小印章（退紅） */
-.seal {
-  width: 26px; height: 26px;
-  border-radius: 6px;
-  border: 1.5px solid #D49C98;
-  color: #95564F;
-  display: grid; place-items: center;
-  font-family: var(--font-serif);
-  font-weight: 900; font-size: 14px; line-height: 1;
 }

@@ -2,9 +2,8 @@ import { createElement, useMemo, useState } from 'react';
 import { Sun, Moon, Users, Minus, ChevronRight } from 'lucide-react';
 import { GLASS_CARD } from '../lib/constants';
 import { getTodayString, toLocalISOString } from '../lib/utils';
-import { makeFixedMatcher, bucketOf, budgetPlan, yearByMonth, annualUsage } from '../lib/budget';
+import { makeFixedMatcher, bucketOf, budgetPlan, yearByMonth } from '../lib/budget';
 import { mealStatusFor, isNoSpend } from '../lib/meals';
-import CategoryIcon from '../components/CategoryIcon';
 
 const fmt = (n) => `$${Math.round(n).toLocaleString()}`;
 const PEOPLE = [
@@ -74,7 +73,6 @@ const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, 
   // ── 今年
   const ytd = months.reduce((a, m) => ({ fixed: a.fixed + m.fixed, flex: a.flex + m.flex, annual: a.annual + m.annual }), { fixed: 0, flex: 0, annual: 0 });
   const ytdTotal = ytd.fixed + ytd.flex + ytd.annual;
-  const upcoming = useMemo(() => annualUsage(transactions, settings, year).filter((i) => i.remaining > 0).sort((a, b) => b.remaining - a.remaining).slice(0, 4), [transactions, settings, year]);
   const bucketRows = [
     { key: 'fixed', label: '固定', used: ytd.fixed, budget: plan.fixed * 12, bar: 'bg-indigo-400' },
     { key: 'flex', label: '彈性', used: ytd.flex, budget: plan.flex * 12, bar: 'bg-emerald-400' },
@@ -207,20 +205,6 @@ const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, 
               </div>
             ))}
           </div>
-          {upcoming.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-slate-100">
-              <div className="text-xs font-bold text-slate-400 mb-2">年度項目還沒用完的</div>
-              <div className="space-y-1.5">
-                {upcoming.map((i) => (
-                  <div key={`${i.group}|${i.category}`} className="flex items-center gap-2 text-sm">
-                    <CategoryIcon category={i.category} group={i.group} type="annual" size="sm" />
-                    <span className="flex-1 truncate text-slate-600">{i.category}</span>
-                    <span className="text-xs text-slate-400 tabular-nums">剩 {fmt(i.remaining)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </section>
     </div>

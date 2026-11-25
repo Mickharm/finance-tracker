@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Building2, Clock, Calculator, Coins, Receipt, CheckCircle2 } from 'lucide-react';
-import { StandardList, ViewLoader } from '../components/ui';
-import { COLOR_VARIANTS, GLASS_CARD } from '../lib/constants';
-import { FINNHUB_API_KEY, formatDetailedDate, getCachedPrices, setCachedPrices } from '../lib/utils';
-
+import { Plus, Home, Sofa, Coins, Calculator } from 'lucide-react';
+import { ViewLoader } from '../components/ui';
+import { FINNHUB_API_KEY, getCachedPrices, getTodayString, setCachedPrices } from '../lib/utils';
+import { fmt, fmtSigned, short } from '../lib/format';
+import {
+  Hero, Section, LinkButton, Row, Divided, Empty, IconDot, MoneyInput, Field, SmallInput, Sheet,
+} from '../components/v2';
 
 // 新青安房貸（2025-02 撥款）。依青安 3.0「3+3」：2023/8/1 後撥款的案件自撥款日起
 // 享滿 3 年 1.775%，之後每年少半碼補貼，第 7 年回到原利率 2.275%（以郵局二年期定儲
@@ -49,289 +51,227 @@ const buildMortgageSchedule = ({ principal, startDate, totalMonths, graceMonths,
     cumulative += amount;
     const date = new Date(startY, startM - 1 + period - 1, 1);
     const isPaid = date.getFullYear() < today.getFullYear() || (date.getFullYear() === today.getFullYear() && date.getMonth() < today.getMonth());
-    rows.push({ id: period, date, amount, cumulative, rate, isPaid });
+    rows.push({ id: period, date, amount, cumulative, rate, isPaid, balance: Math.max(0, Math.round(balance)) });
   }
   return rows;
 };
 
-const MortgagePlanView = () => {
-  const schedule = useMemo(() => buildMortgageSchedule(MORTGAGE_LOAN), []);
+const n = (v) => Number(v) || 0;
+const ymLabel = (d) => `${d.getFullYear()}/${d.getMonth() + 1}`;
+const fundingTotal = (it) => n(it.amount) * (n(it.shares) > 0 ? n(it.shares) : 1) * (n(it.rate) > 0 ? n(it.rate) : 1);
+const COL = { down_payment: 'mortgage_expenses', misc_appliances: 'mortgage_expenses', analysis: 'mortgage_analysis', funding: 'mortgage_funding' };
 
-  const yearlyGroups = useMemo(() => {
-    const groups = {};
-    schedule.forEach(row => { const year = row.date.getFullYear(); if (!groups[year]) groups[year] = []; groups[year].push(row); });
-    return groups;
-  }, [schedule]);
+const TextInput = ({ value, onChange, ...props }) => (
+  <input value={value || ''} onChange={(e) => onChange(e.target.value)} {...props}
+    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-slate-400" />
+);
 
-
-
-  const [expandedYear, setExpandedYear] = useState(null);
-  const currentStatus = schedule.find(r => !r.isPaid) || schedule[schedule.length - 1];
-  const nextChange = schedule.find(r => r.id > currentStatus.id && r.amount !== currentStatus.amount);
-  const theme = COLOR_VARIANTS.cyan;
-
+// 房產相關紀錄的編輯抽屜（四種資料共用）
+const RecordSheet = ({ kind, initial, onSave, onDelete, onClose }) => {
+  const [f, setF] = useState(initial);
+  const set = (k) => (v) => setF((p) => ({ ...p, [k]: v }));
+  const titles = { down_payment: '頭期雜支', misc_appliances: '家電雜支', analysis: '划算試算項目', funding: '頭期款來源' };
+  let ok; let data;
+  if (kind === 'funding') {
+    ok = (f.source || '').trim() && n(f.amount) > 0;
+    data = { source: (f.source || '').trim(), symbol: (f.symbol || '').trim().toUpperCase(), amount: n(f.amount), shares: n(f.shares) || '', rate: n(f.rate) || '', date: f.date || getTodayString(), note: f.note || '' };
+  } else if (kind === 'analysis') {
+    ok = (f.name || '').trim() && n(f.amount) !== 0;
+    data = { name: (f.name || '').trim(), amount: n(f.amount) };
+  } else {
+    ok = (f.name || '').trim() && n(f.amount) > 0;
+    data = { name: (f.name || '').trim(), amount: n(f.amount), date: f.date || getTodayString(), note: f.note || '', brand: f.brand || '', type: kind };
+  }
   return (
-    <div className={`${GLASS_CARD} p-5 mb-6 ${theme.glow}`}>
-      <div onClick={() => setExpandedYear(expandedYear ? null : 'overview')} className="flex justify-between items-center mb-4 cursor-pointer">
-        <h3 className="font-bold text-slate-700 flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-cyan-100 text-cyan-600">
-            <Clock className="w-4 h-4" />
+    <Sheet title={`${f.id ? '編輯' : '新增'}${titles[kind]}`} onClose={onClose} submitDisabled={!ok} onSubmit={() => onSave(data, f.id)} onDelete={f.id ? () => onDelete(f.id) : undefined}>
+      {kind === 'funding' ? (
+        <>
+          <Field label="資金來源"><TextInput value={f.source} onChange={set('source')} placeholder="例如：賣 VOO、定存解約" autoFocus={!f.id} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <SmallInput label="金額／賣出單價" inputMode="decimal" value={f.amount ?? ''} onChange={(e) => set('amount')(e.target.value.replace(/[^\d.]/g, ''))} />
+            <SmallInput label="股數（選填）" inputMode="decimal" value={f.shares ?? ''} onChange={(e) => set('shares')(e.target.value.replace(/[^\d.]/g, ''))} suffix="股" />
+            <SmallInput label="匯率（台幣填 1）" inputMode="decimal" value={f.rate ?? ''} onChange={(e) => set('rate')(e.target.value.replace(/[^\d.]/g, ''))} placeholder="1" />
+            <SmallInput label="股票代碼（選填）" value={f.symbol || ''} onChange={(e) => set('symbol')(e.target.value.toUpperCase())} placeholder="VOO" />
           </div>
-          房貸還款計劃 (40年)
-        </h3>
-        {expandedYear ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-      </div>
-
-      {expandedYear && (
-        <div className="grid grid-cols-2 gap-3 mb-4 animate-in slide-in-from-top-2 duration-200">
-          <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
-            <div className="text-xs text-slate-400 mb-1">下期 ({currentStatus?.id}期)</div>
-            <div className="text-lg font-bold text-slate-800 tabular-nums">${currentStatus?.amount.toLocaleString()}</div>
-            <div className="text-[10px] text-slate-400">利率 {currentStatus?.rate}%</div>
-          </div>
-          <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
-            <div className="text-xs text-slate-400 mb-1">累計已還款</div>
-            <div className="text-lg font-bold text-slate-800 tabular-nums">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</div>
-          </div>
-        </div>
+          <div className="text-right text-sm text-slate-500">合計 <b className="font-num text-lg text-slate-800">{fmt(fundingTotal(f))}</b></div>
+        </>
+      ) : (
+        <>
+          <Field label="項目"><TextInput value={f.name} onChange={set('name')} placeholder={kind === 'misc_appliances' ? '例如：冰箱' : kind === 'analysis' ? '例如：契稅' : '例如：代書費'} autoFocus={!f.id} /></Field>
+          <Field label="金額"><MoneyInput value={f.amount ?? ''} onChange={set('amount')} /></Field>
+          {kind === 'misc_appliances' && <Field label="品牌"><TextInput value={f.brand} onChange={set('brand')} placeholder="選填" /></Field>}
+        </>
       )}
-
-      {!expandedYear && (
-        <div className="flex justify-between items-center px-2 pb-2">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 uppercase font-bold">下期金額</span>
-            <span className="tabular-nums font-bold text-slate-600 text-sm">${currentStatus?.amount.toLocaleString()}</span>
-          </div>
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] text-slate-400 uppercase font-bold">累計已還</span>
-            <span className="tabular-nums font-bold text-slate-600 text-sm">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</span>
-          </div>
-        </div>
+      {kind !== 'analysis' && (
+        <>
+          <Field label="日期"><input type="date" value={f.date || getTodayString()} onChange={(e) => set('date')(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm tabular-nums" /></Field>
+          <Field label="備註"><TextInput value={f.note} onChange={set('note')} placeholder="選填" /></Field>
+        </>
       )}
-
-      {nextChange && (
-        <div className="mx-2 mb-2 mt-1 pt-2 border-t border-slate-200/50 flex justify-between items-center text-[11px] text-slate-500">
-          <span>下次調整 {nextChange.date.getFullYear()}年{nextChange.date.getMonth() + 1}月（利率 {nextChange.rate}%）</span>
-          <span className="tabular-nums font-bold text-slate-600">${nextChange.amount.toLocaleString()}</span>
-        </div>
-      )}
-
-      {expandedYear && (
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 scrollbar-hide animate-in slide-in-from-top-4 duration-300">
-          {Object.entries(yearlyGroups).map(([year, rows]) => (
-            <div key={year} className="border border-slate-100 rounded-xl overflow-hidden">
-              <div onClick={(e) => { e.stopPropagation(); setExpandedYear(Number(year) === expandedYear ? 'overview' : Number(year)); }} className="bg-white/80 p-3 flex justify-between items-center text-xs font-bold text-slate-600 cursor-pointer hover:bg-slate-50">
-                <span>{year}年度 ({rows.length}期)</span>
-                {Number(year) === expandedYear ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </div>
-              {Number(year) === expandedYear && (
-                <div className="bg-white/50 backdrop-blur-sm">
-                  <div className="grid grid-cols-5 text-[10px] text-slate-400 px-3 py-2 border-b border-slate-100 bg-slate-50/50">
-                    <span>狀態</span><span>日期</span><span className="text-center">期數</span><span className="text-right">金額</span><span className="text-right">利率</span>
-                  </div>
-                  {rows.map(row => (
-                    <div key={row.id} className={`grid grid-cols-5 text-xs px-3 py-2 border-b border-slate-100 last:border-0 items-center ${row.isPaid ? 'bg-[#F1F6F4]/40' : 'hover:bg-slate-50/30'}`}>
-                      <span>{row.isPaid ? <CheckCircle2 className="w-3 h-3 text-[#6B9A8D]" /> : <span className="w-3 h-3 rounded-full border border-slate-200 block"></span>}</span>
-                      <span className={`tabular-nums ${row.isPaid ? 'text-[#4D7D70] font-bold' : 'text-slate-500'}`}>{row.date.getMonth() + 1}月</span>
-                      <span className="text-center text-slate-400">#{row.id}</span>
-                      <span className={`text-right font-bold tabular-nums ${row.isPaid ? 'text-[#4D7D70]' : 'text-slate-700'}`}>${row.amount.toLocaleString()}</span>
-                      <span className="text-right text-slate-400">{row.rate}%</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    </Sheet>
   );
 };
 
-const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, deleteMortgageExp, deleteMortgageAnalysis, deleteMortgageFunding, setMortgageExpType, setIsAddMortgageExpModalOpen, setIsAddMortgageAnalysisModalOpen, setIsAddMortgageFundingModalOpen, onEditExp, onEditAnalysis, onEditFunding, loading = false }) => {
-  const downPaymentExp = mortgageExpenses.filter(e => e.type === 'down_payment');
-  const applianceExp = mortgageExpenses.filter(e => e.type === 'misc_appliances');
-  const totalDownPaymentExp = downPaymentExp.reduce((sum, i) => sum + Number(i.amount), 0);
-  const totalApplianceExp = applianceExp.reduce((sum, i) => sum + Number(i.amount), 0);
-  const totalAnalysis = mortgageAnalysis.reduce((sum, i) => sum + Number(i.amount), 0);
-  const totalFunding = mortgageFunding.reduce((sum, item) => {
-    const amt = Number(item.amount);
-    const shares = item.shares && Number(item.shares) > 0 ? Number(item.shares) : 1;
-    const rate = item.rate && Number(item.rate) > 0 ? Number(item.rate) : 1;
-    return sum + (amt * shares * rate);
-  }, 0);
+// 月付金額隨時間的階梯圖，標出現在的位置與寬限期
+const PaymentSteps = ({ schedule, current }) => {
+  const W = 320; const H = 96; const padT = 16; const padB = 16;
+  const max = Math.max(...schedule.map((r) => r.amount));
+  const X = (i) => (i / (schedule.length - 1)) * W;
+  const Y = (v) => padT + (1 - v / max) * (H - padT - padB);
+  let d = `M0,${Y(schedule[0].amount).toFixed(1)}`;
+  schedule.forEach((r, i) => { if (i && r.amount !== schedule[i - 1].amount) d += ` H${X(i).toFixed(1)} V${Y(r.amount).toFixed(1)}`; });
+  d += ` H${W}`;
+  const ci = current.id - 1;
+  const graceEnd = MORTGAGE_LOAN.graceMonths;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }}>
+      <rect x="0" y={padT - 4} width={X(graceEnd)} height={H - padT - padB + 4} fill="#EEF3F1" />
+      <path d={d} fill="none" stroke="#557AA3" strokeWidth="2" />
+      <line x1={X(ci)} x2={X(ci)} y1="4" y2={H - padB} stroke="#2F2E2C" strokeDasharray="2 2" />
+      <text x={Math.min(W - 24, X(ci) + 4)} y="12" fontSize="10" fill="#2F2E2C">現在</text>
+      <text x="4" y={H - padB - 4} fontSize="9" fill="#4D7D70">寬限期</text>
+      <text x={W} y="12" fontSize="10" fill="#9C9690" textAnchor="end">{fmt(max)}</text>
+      <text x="0" y={H - 3} fontSize="10" fill="#9C9690">{schedule[0].date.getFullYear()}</text>
+      <text x={W} y={H - 3} fontSize="10" fill="#9C9690" textAnchor="end">{schedule[schedule.length - 1].date.getFullYear()}</text>
+    </svg>
+  );
+};
 
+const ListBlock = ({ title, items, total, icon, tone, render, onAdd, onOpen }) => (
+  <Section title={title} extra={<span className="flex items-center gap-2"><span className="text-xs font-bold tabular-nums text-slate-500">{fmt(total)}</span>
+    <button type="button" onClick={onAdd} className="p-1 rounded-full bg-slate-100 text-slate-500" aria-label={`新增${title}`}><Plus className="w-3.5 h-3.5" /></button></span>}>
+    {items.length === 0 ? <Empty>還沒有紀錄</Empty> : <Divided>{items.map((it) => <Row key={it.id} left={<IconDot icon={icon} tone={tone} />} {...render(it)} onClick={() => onOpen(it)} />)}</Divided>}
+  </Section>
+);
+
+// 2.0 房產：這個月房貸 → 還款進度與月付階梯 → 每年還款 → 買房花的錢與資金來源 → 划算試算
+const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, loading = false, onSave, onRemove }) => {
+  const schedule = useMemo(() => buildMortgageSchedule(MORTGAGE_LOAN), []);
+  const current = schedule.find((r) => !r.isPaid) || schedule[schedule.length - 1];
+  const paid = schedule.filter((r) => r.isPaid);
+  const paidTotal = paid.reduce((s, r) => s + r.amount, 0);
+  const balance = paid.length ? paid[paid.length - 1].balance : MORTGAGE_LOAN.principal;
+  const nextChange = schedule.find((r) => r.id > current.id && r.amount !== current.amount);
+  const years = useMemo(() => {
+    const m = new Map();
+    for (const r of schedule) { const y = r.date.getFullYear(); if (!m.has(y)) m.set(y, []); m.get(y).push(r); }
+    return [...m.entries()];
+  }, [schedule]);
+  const [showAllYears, setShowAllYears] = useState(false);
+  const [sheet, setSheet] = useState(null);
   const [prices, setPrices] = useState({});
 
   useEffect(() => {
-    const fetchFundingPrices = async () => {
-      const symbols = mortgageFunding
-        .filter(item => item.symbol && item.symbol.trim() !== '')
-        .map(item => item.symbol.trim().toUpperCase());
-
-      if (symbols.length === 0) return;
-
+    const symbols = mortgageFunding.map((i) => (i.symbol || '').trim().toUpperCase()).filter(Boolean);
+    if (!symbols.length) return undefined;
+    let alive = true;
+    (async () => {
       const cached = getCachedPrices();
-      const newPrices = {};
-      const symbolsToFetch = [];
-      for (const symbol of symbols) {
-        if (cached[symbol]) { newPrices[symbol] = cached[symbol].price || cached[symbol]; }
-        else { symbolsToFetch.push(symbol); }
+      const next = {}; const toFetch = [];
+      for (const s of symbols) { if (cached[s]) next[s] = cached[s].price || cached[s]; else toFetch.push(s); }
+      for (const s of toFetch) {
+        try { const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${FINNHUB_API_KEY}`); if (res.ok) { const d = await res.json(); if (d.c) next[s] = d.c; } } catch (e) { console.warn(e); }
       }
-      for (const symbol of symbolsToFetch) {
-        try {
-          const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.c) newPrices[symbol] = data.c;
-          }
-        } catch (e) { console.warn(e); }
-        await new Promise(r => setTimeout(r, 50));
-      }
-      if (symbolsToFetch.length > 0) {
-        const cacheUpdate = {};
-        symbolsToFetch.forEach(s => { if (newPrices[s]) cacheUpdate[s] = { price: newPrices[s], change: 0 }; });
-        setCachedPrices(cacheUpdate);
-      }
-      setPrices(newPrices);
-    };
-    fetchFundingPrices();
+      if (toFetch.length) { const up = {}; toFetch.forEach((s) => { if (next[s]) up[s] = { price: next[s], change: 0 }; }); setCachedPrices(up); }
+      if (alive) setPrices(next);
+    })();
+    return () => { alive = false; };
   }, [mortgageFunding]);
 
+  const down = mortgageExpenses.filter((e) => e.type === 'down_payment').sort((a, b) => (a.date < b.date ? 1 : -1));
+  const misc = mortgageExpenses.filter((e) => e.type === 'misc_appliances').sort((a, b) => (a.date < b.date ? 1 : -1));
+  const sum = (l) => l.reduce((s, i) => s + n(i.amount), 0);
+  const fundTotal = mortgageFunding.reduce((s, i) => s + fundingTotal(i), 0);
+  const open = (kind, item = null) => setSheet({ kind, initial: item ? { ...item } : { id: null, date: getTodayString() } });
+  const save = (data, id) => { onSave(COL[sheet.kind], data, id, id ? '已更新' : '已新增'); setSheet(null); };
+  const del = (id) => { const col = COL[sheet.kind]; setSheet(null); onRemove(col, id, '確定刪除這筆紀錄？'); };
+
   if (loading) return <ViewLoader label="載入房產資料..." />;
+  const thisYear = new Date().getFullYear();
+  const shownYears = showAllYears ? years : years.filter(([y]) => y >= thisYear - 1).slice(0, 5);
+
   return (
-    <div className="pb-24 space-y-6 animate-in fade-in duration-500">
-      <StandardList
-        title="頭期雜支與進程"
-        items={downPaymentExp}
-        onDelete={deleteMortgageExp}
-        onAdd={(type) => { setMortgageExpType(type); setIsAddMortgageExpModalOpen(true); }}
-        onEdit={(item) => onEditExp(item)}
-        type="down_payment"
-        icon={Building2}
-        totalLabel="總計"
-        totalValue={totalDownPaymentExp}
-        variant="amber"
-        isCollapsible={true}
-        defaultExpanded={false}
-        itemRenderer={(item) => (
-          <div className="flex justify-between items-start">
-            <div>
-              <span className="font-bold text-slate-700 text-sm block">{item.name}</span>
-              <span className="text-[10px] text-slate-400">{formatDetailedDate(item.date)}</span>
-              {item.note && <span className="text-xs text-slate-500 block mt-1">{item.note}</span>}
-              {item.brand && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded mt-1 inline-block">{item.brand}</span>}
+    <div className="space-y-6 pb-24 animate-in fade-in">
+      <Hero label={`${current.date.getMonth() + 1} 月房貸`} value={fmt(current.amount)}
+        sub={<>第 {current.id} / {MORTGAGE_LOAN.totalMonths} 期・利率 {current.rate}%{current.id <= MORTGAGE_LOAN.graceMonths ? '・寬限期只繳息' : ''}</>} />
+
+      <div className="px-1 -mt-3">
+        <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-blue-300 rounded-full" style={{ width: `${((MORTGAGE_LOAN.principal - balance) / MORTGAGE_LOAN.principal) * 100}%` }} /></div>
+        <div className="flex justify-between text-xs mt-1.5 text-slate-500">
+          <span>剩餘本金 <b className="tabular-nums text-slate-700">{fmt(balance)}</b></span>
+          <span>已繳 <b className="tabular-nums text-slate-700">{fmt(paidTotal)}</b>（{paid.length} 期）</span>
+        </div>
+      </div>
+
+      <Section title="月付會怎麼變">
+        <div className="glass-card-fx border rounded-2xl px-3 pt-3 pb-2">
+          <PaymentSteps schedule={schedule} current={current} />
+          {nextChange && (
+            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between text-xs text-slate-500">
+              <span>下次調整 {ymLabel(nextChange.date)}・利率 {nextChange.rate}%</span>
+              <span className="tabular-nums font-bold text-slate-700">{fmt(nextChange.amount)}（{fmtSigned(nextChange.amount - current.amount)}）</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="tabular-nums font-bold text-slate-700">${Number(item.amount).toLocaleString()}</span>
-            </div>
-          </div>
-        )}
-      />
+          )}
+        </div>
+      </Section>
 
-      <StandardList
-        title="購買房產划算試算"
-        items={mortgageAnalysis}
-        onDelete={deleteMortgageAnalysis}
-        onAdd={() => setIsAddMortgageAnalysisModalOpen(true)}
-        onEdit={(item) => onEditAnalysis(item)}
-        icon={Calculator}
-        totalLabel="試算總成本"
-        totalValue={totalAnalysis}
-        variant="emerald"
-        isCollapsible={true}
-        defaultExpanded={false}
-        itemRenderer={(item) => (
-          <div className="flex justify-between items-center py-1">
-            <span className="text-sm text-slate-600 font-medium">{item.name}</span>
-            <span className="tabular-nums font-bold text-slate-800">${Number(item.amount).toLocaleString()}</span>
-          </div>
-        )}
-      />
+      <Section title="每年還款" extra={<LinkButton onClick={() => setShowAllYears(!showAllYears)}>{showAllYears ? '收起' : `全部 ${years.length} 年`}</LinkButton>}>
+        <Divided>
+          {shownYears.map(([y, rows]) => {
+            const rates = [...new Set(rows.map((r) => r.rate))];
+            const done = rows.every((r) => r.isPaid);
+            return (
+              <Row key={y} title={<span className="flex items-center gap-1.5">{y} 年{done && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">繳完</span>}</span>}
+                sub={`${rows.length} 期・利率 ${rates.join(' → ')}%`} right={fmt(rows.reduce((s, r) => s + r.amount, 0))}
+                rightSub={<span className="text-slate-400">年底剩 {short(rows[rows.length - 1].balance)}</span>}
+                onClick={() => setSheet({ kind: 'year', y, rows })} />
+            );
+          })}
+        </Divided>
+      </Section>
 
-      <StandardList
-        title="頭期款來源"
-        items={mortgageFunding}
-        onDelete={deleteMortgageFunding}
-        onAdd={() => setIsAddMortgageFundingModalOpen(true)}
-        onEdit={(item) => onEditFunding(item)}
-        icon={Coins}
-        totalLabel="提領資金"
-        totalValue={totalFunding}
-        variant="indigo"
-        isCollapsible={true}
-        defaultExpanded={false}
-        itemRenderer={(item) => {
-          const hasShares = Number(item.shares) > 0;
-          const rate = Number(item.rate) || 1;
-          const soldPrice = Number(item.amount);
-          const shares = hasShares ? Number(item.shares) : 1;
-          const itemTotal = soldPrice * shares * rate;
+      <Section title="買房的錢">
+        <div className="grid grid-cols-3 text-center">
+          <div><div className="text-[11px] text-slate-400">頭期款來源</div><div className="font-num text-lg text-slate-800">{short(fundTotal)}</div></div>
+          <div><div className="text-[11px] text-slate-400">頭期雜支</div><div className="font-num text-lg text-slate-800">{short(sum(down))}</div></div>
+          <div><div className="text-[11px] text-slate-400">家電雜支</div><div className="font-num text-lg text-slate-800">{short(sum(misc))}</div></div>
+        </div>
+      </Section>
 
-          const currentPrice = prices[item.symbol?.trim().toUpperCase()];
-          let diff = null;
-          if (currentPrice && hasShares) {
-            // Estimate current value (TWD) based on user rate.
-            // If rate=1 (TWD), price is TWD. If rate=30 (USD->TWD), price is USD*rate.
-            // Finnhub returns price in the currency of the exchange (usually USD for US stocks).
-            const currentTotal = currentPrice * shares * rate;
-            diff = currentTotal - itemTotal;
-          }
+      <ListBlock title="頭期款來源" items={mortgageFunding} total={fundTotal} icon={Coins} tone="bg-indigo-50 text-indigo-700" onAdd={() => open('funding')} onOpen={(it) => open('funding', it)}
+        render={(it) => {
+          const sym = (it.symbol || '').trim().toUpperCase();
+          const p = prices[sym];
+          const hold = p && n(it.shares) > 0 ? p * n(it.shares) * (n(it.rate) || 1) - fundingTotal(it) : null;
+          return {
+            title: <span className="flex items-center gap-1.5">{it.source || '資金來源'}{sym && <span className="text-[10px] px-1 rounded bg-indigo-50 text-indigo-700">{sym}</span>}</span>,
+            sub: `${n(it.shares) > 0 ? `${n(it.shares).toLocaleString()} 股 × ${fmt(it.amount, 2)}` : fmt(it.amount)}${n(it.rate) > 1 ? `・匯率 ${it.rate}` : ''}`,
+            right: fmt(fundingTotal(it)),
+            rightSub: hold !== null ? <span className="text-slate-400">{hold > 0 ? `沒賣現值多 ${short(hold)}` : `沒賣現值少 ${short(-hold)}`}</span> : null,
+          };
+        }} />
+      <ListBlock title="頭期雜支" items={down} total={sum(down)} icon={Home} tone="bg-amber-50 text-amber-800" onAdd={() => open('down_payment')} onOpen={(it) => open('down_payment', it)}
+        render={(it) => ({ title: it.name, sub: `${String(it.date || '').replace(/-/g, '/')}${it.note ? `・${it.note}` : ''}`, right: fmt(it.amount) })} />
+      <ListBlock title="家電雜支" items={misc} total={sum(misc)} icon={Sofa} tone="bg-blue-50 text-blue-700" onAdd={() => open('misc_appliances')} onOpen={(it) => open('misc_appliances', it)}
+        render={(it) => ({ title: it.name, sub: `${String(it.date || '').replace(/-/g, '/')}${it.brand ? `・${it.brand}` : ''}${it.note ? `・${it.note}` : ''}`, right: fmt(it.amount) })} />
+      <ListBlock title="划算試算" items={mortgageAnalysis} total={sum(mortgageAnalysis)} icon={Calculator} tone="bg-emerald-50 text-emerald-700" onAdd={() => open('analysis')} onOpen={(it) => open('analysis', it)}
+        render={(it) => ({ title: it.name, right: fmt(it.amount) })} />
 
-          return (
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="font-bold text-slate-700 text-sm">
-                  {item.source || '資金來源'}
-                  {item.symbol && <span className="ml-1 text-[10px] bg-indigo-100 text-indigo-600 px-1 rounded">{item.symbol}</span>}
-                </span>
-                <span className="tabular-nums font-bold text-emerald-600">${itemTotal.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-400">
-                <span>{hasShares ? `${Number(item.shares).toLocaleString()}股 x $${Number(item.amount).toLocaleString()}` : `$${Number(item.amount).toLocaleString()}`}{rate !== 1 && ` (匯率 ${rate})`}</span>
-                <span>{formatDetailedDate(item.date)}</span>
-              </div>
-              {diff !== null && (
-                <div className={`mt-1 text-[10px] font-bold ${diff > 0 ? 'text-emerald-500' : 'text-rose-500'} flex items-center gap-1`}>
-                  {diff > 0 ? '若沒賣獲利: +' : '若沒賣虧損: '}${Math.abs(Math.round(diff)).toLocaleString()}
-                  {diff > 0 ? '(持股獲利)' : '(持股虧損)'}
-                </div>
-              )}
-            </div>
-          );
-        }}
-      />
-
-      <MortgagePlanView />
-
-      <StandardList
-        title="雜支紀錄"
-        items={applianceExp}
-        onDelete={deleteMortgageExp}
-        onAdd={(type) => { setMortgageExpType(type); setIsAddMortgageExpModalOpen(true); }}
-        onEdit={(item) => onEditExp(item)}
-        type="misc_appliances"
-        icon={Receipt}
-        totalLabel="支出總計"
-        totalValue={totalApplianceExp}
-        variant="blue"
-        isCollapsible={true}
-        defaultExpanded={false}
-        itemRenderer={(item) => (
-          <div className="flex justify-between items-center">
-            <div>
-              <span className="font-bold text-slate-700 text-sm block">{item.name}</span>
-              <span className="text-[10px] text-slate-400">{formatDetailedDate(item.date)} {item.brand && `• ${item.brand}`}</span>
-              {item.note && <span className="text-xs text-slate-500 block mt-1">{item.note}</span>}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="tabular-nums font-bold text-slate-700">${Number(item.amount).toLocaleString()}</span>
-            </div>
-          </div>
-        )}
-      />
+      {sheet?.kind === 'year' && (
+        <Sheet title={`${sheet.y} 年還款`} onClose={() => setSheet(null)}>
+          <Divided>
+            {sheet.rows.map((r) => (
+              <Row key={r.id} title={`${r.date.getMonth() + 1} 月・第 ${r.id} 期`} sub={`利率 ${r.rate}%・剩 ${fmt(r.balance)}`} muted={!r.isPaid && r.id !== current.id}
+                right={fmt(r.amount)} rightSub={r.isPaid ? <span className="text-emerald-700">已繳</span> : r.id === current.id ? <span className="text-blue-700">這期</span> : null} />
+            ))}
+          </Divided>
+        </Sheet>
+      )}
+      {sheet && sheet.kind !== 'year' && (
+        <RecordSheet key={`${sheet.kind}-${sheet.initial.id || 'new'}`} kind={sheet.kind} initial={sheet.initial} onSave={save} onDelete={del} onClose={() => setSheet(null)} />
+      )}
     </div>
   );
 };
 
-export { MortgagePlanView, MortgageView };
+export { MortgageView };

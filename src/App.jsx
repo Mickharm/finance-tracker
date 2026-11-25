@@ -1,7 +1,7 @@
 import * as React from 'react';
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, setDoc, serverTimestamp, updateDoc, getDoc, runTransaction, where } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, setDoc, serverTimestamp, getDoc, runTransaction, where } from 'firebase/firestore';
 import { ChevronLeft, ChevronRight, Plus, Calendar, PieChart, Home, Target, Users, Settings as SettingsIcon, BarChart2, Building2, Clock, ClipboardList, PenTool, Layers, Wallet } from 'lucide-react';
 import { ToastProvider, useToast } from './components/Toast';
 import { GroupSettingsEditor, RecurringManagerModal } from './components/settings';
@@ -193,17 +193,6 @@ function AppContent() {
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
   // 新版快速記帳抽屜（新增用；編輯既有紀錄仍走舊表單）。null = 關閉，否則 { date }
   const [quickAdd, setQuickAdd] = useState(null);
-  const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
-  const [isAddSalaryModalOpen, setIsAddSalaryModalOpen] = useState(false);
-  const [isAddPartnerTxModalOpen, setIsAddPartnerTxModalOpen] = useState(false);
-
-
-  const [isAddMortgageExpModalOpen, setIsAddMortgageExpModalOpen] = useState(false);
-  const [mortgageExpType, setMortgageExpType] = useState('down_payment');
-  const [isAddMortgageAnalysisModalOpen, setIsAddMortgageAnalysisModalOpen] = useState(false);
-  const [isAddMortgageFundingModalOpen, setIsAddMortgageFundingModalOpen] = useState(false);
-  const [isAddExchangeModalOpen, setIsAddExchangeModalOpen] = useState(false);
-
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', title: '確認', confirmText: '確定', confirmColor: 'bg-slate-800', onConfirm: () => { } });
 
   const [currentView, setCurrentView] = useState('home');
@@ -347,14 +336,7 @@ function AppContent() {
   // Form States
   // Default amount 0 to prevent layout shift
   const [newTrans, setNewTrans] = useState({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' });
-  const [newIncome, setNewIncome] = useState({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' });
-  const [newSalaryRecord, setNewSalaryRecord] = useState({ amount: '', owner: 'myself', date: getTodayString(), note: '' });
-  const [newPartnerTx, setNewPartnerTx] = useState({ amount: '', type: 'saving', date: getTodayString(), note: '' });
 
-  const [newMortgageExp, setNewMortgageExp] = useState({ name: '', amount: '', date: getTodayString(), note: '', brand: '', type: 'down_payment' });
-  const [newMortgageAnalysis, setNewMortgageAnalysis] = useState({ name: '', amount: '' });
-  const [newMortgageFunding, setNewMortgageFunding] = useState({ source: '', amount: '', symbol: '', shares: '', rate: '', date: getTodayString(), note: '' }); // Added symbol
-  const [newExchange, setNewExchange] = useState({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' });
 
   // --- Auth ---
   // Rely on the persisted session: onAuthStateChanged fires immediately with the
@@ -495,7 +477,8 @@ function AppContent() {
     if (!user) return;
     const year = selectedDate.getFullYear();
     const currentYear = new Date().getFullYear();
-    const years = Array.from(new Set([year, currentYear]));
+    // 2.0 收入頁要和去年同期比，也可以切換年份：多載去年＋使用者翻到的年份
+    const years = Array.from(new Set([year, currentYear, currentYear - 1, ...extraYears]));
 
     years.forEach(y => {
       if (incomeSubsRef.current[y]) return;
@@ -516,7 +499,7 @@ function AppContent() {
         setLoadingStates(prev => ({ ...prev, incomes: true }));
       });
     });
-  }, [user, selectedDate.getFullYear()]);
+  }, [user, selectedDate.getFullYear(), extraYears]);
 
   const requestHistory = useCallback((year) => {
     setExtraYears(prev => {
@@ -736,109 +719,15 @@ function AppContent() {
       else { showToast(msg); setQuickAdd(null); }
     });
   };
+  // 2.0 收入、資產各頁共用：有 id 就合併更新，沒有就新增
+  const saveRecord = (col, data, id, msg) => {
+    const ref = collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col);
+    commit(id ? setDoc(doc(ref, id), { ...data, updatedAt: serverTimestamp() }, { merge: true }) : addDoc(ref, { ...data, createdAt: serverTimestamp() }));
+    haptic(15);
+    showToast(msg || (id ? '已更新' : '已儲存'));
+  };
+  const removeRecord = (col, id, message) => requestDelete(message || '確定刪除？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, col, id))));
   const deleteTransaction = (id) => requestDelete("確定刪除此筆支出紀錄？", () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', id))));
-
-  const handleAddIncome = (e) => {
-    e.preventDefault();
-    withSubmission(async () => {
-      if (editingId) {
-        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', editingId), { ...newIncome, amount: Number(newIncome.amount) }, { merge: true }));
-      } else {
-        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes'), { ...newIncome, amount: Number(newIncome.amount), createdAt: serverTimestamp() }));
-      }
-      haptic(15);
-      showToast(editingId ? '已更新收入' : '已入帳');
-      setNewIncome(prev => ({ ...prev, amount: '', note: '' }));
-      setIsAddIncomeModalOpen(false);
-      setEditingId(null);
-    });
-  };
-  const handleDeleteIncome = (id) => requestDelete("確定刪除此筆收入紀錄？", () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'incomes', id))));
-
-  const handleAddSalaryRecord = (e) => {
-    e.preventDefault();
-    withSubmission(async () => {
-      if (editingId) {
-        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', editingId), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount) }, { merge: true }));
-      } else {
-        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history'), { ...newSalaryRecord, amount: Number(newSalaryRecord.amount), createdAt: serverTimestamp() }));
-      }
-      haptic(15);
-      showToast(editingId ? '已更新調薪' : '已儲存調薪');
-      setNewSalaryRecord(prev => ({ ...prev, amount: '', note: '' }));
-      setIsAddSalaryModalOpen(false);
-      setEditingId(null);
-    });
-  };
-  const handleDeleteSalaryRecord = (id) => requestDelete("確定刪除此調薪紀錄？", () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'salary_history', id))));
-
-  const handleAddPartnerTx = (e) => {
-    e.preventDefault();
-    withSubmission(async () => {
-      if (editingId) {
-        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', editingId), { ...newPartnerTx, amount: Number(newPartnerTx.amount) }, { merge: true }));
-      } else {
-        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings'), { ...newPartnerTx, amount: Number(newPartnerTx.amount), createdAt: serverTimestamp() }));
-      }
-      haptic(15);
-      showToast(editingId ? '已更新紀錄' : '已儲存紀錄');
-      setNewPartnerTx(prev => ({ ...prev, amount: '', note: '' }));
-      setIsAddPartnerTxModalOpen(false);
-      setEditingId(null);
-    });
-  };
-  const deletePartnerTx = (id) => requestDelete("確定刪除此筆儲蓄/支出紀錄？", () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'partner_savings', id))));
-
-  const handleAddMortgageExp = (e) => {
-    e.preventDefault();
-    withSubmission(async () => {
-      if (editingId) {
-        commit(updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses', editingId), { ...newMortgageExp, amount: Number(newMortgageExp.amount), type: mortgageExpType }));
-      } else {
-        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses'), { ...newMortgageExp, amount: Number(newMortgageExp.amount), type: mortgageExpType, createdAt: serverTimestamp() }));
-      }
-      haptic(15);
-      showToast(editingId ? '已更新項目' : '已儲存項目');
-      setNewMortgageExp({ name: '', amount: '', date: getTodayString(), note: '', brand: '', type: mortgageExpType });
-      setIsAddMortgageExpModalOpen(false);
-      setEditingId(null);
-    });
-  };
-  const deleteMortgageExp = (id) => requestDelete('刪除此項目？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_expenses', id))));
-
-  const handleAddMortgageAnalysis = (e) => {
-    e.preventDefault();
-    withSubmission(async () => {
-      if (editingId) {
-        commit(updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis', editingId), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount) }));
-      } else {
-        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis'), { ...newMortgageAnalysis, amount: Number(newMortgageAnalysis.amount), createdAt: serverTimestamp() }));
-      }
-      haptic(15);
-      showToast(editingId ? '已更新項目' : '已儲存項目');
-      setNewMortgageAnalysis({ name: '', amount: '' });
-      setIsAddMortgageAnalysisModalOpen(false);
-      setEditingId(null);
-    });
-  };
-  const deleteMortgageAnalysis = (id) => requestDelete('刪除此項目？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_analysis', id))));
-
-  const handleAddMortgageFunding = (e) => {
-    e.preventDefault();
-    withSubmission(async () => {
-      if (editingId) {
-        commit(updateDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', editingId), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount) }));
-      } else {
-        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding'), { ...newMortgageFunding, amount: Number(newMortgageFunding.amount), createdAt: serverTimestamp() }));
-      }
-      haptic(15);
-      showToast(editingId ? '已更新來源' : '已儲存來源');
-      setNewMortgageFunding({ source: '', amount: '', shares: '', rate: '', date: getTodayString(), note: '' });
-      setIsAddMortgageFundingModalOpen(false);
-      setEditingId(null);
-    });
-  };
-  const deleteMortgageFunding = (id) => requestDelete('刪除此項目？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'mortgage_funding', id))));
 
   const handleAddStockGoalYear = () => {
     const maxYear = stockGoals.length > 0 ? stockGoals[0].year : 2021;
@@ -846,24 +735,6 @@ function AppContent() {
     commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals'), { year: nextYear, roi: 0, firstrade: 0, ib: 0, withdrawal: 0, createdAt: serverTimestamp() }));
   };
   const handleDeleteStockGoalYear = (id) => requestDelete('確定刪除此年份的存股計畫？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id))));
-  const handleUpdateStockGoal = (id, field, value) => { commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'stock_goals', id), { [field]: Number(value) }, { merge: true })); };
-
-  const handleAddExchange = (e) => {
-    e.preventDefault(); withSubmission(async () => {
-      if (editingId) {
-        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges', editingId), { ...newExchange, updatedAt: serverTimestamp() }, { merge: true }));
-      } else {
-        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges'), { ...newExchange, createdAt: serverTimestamp() }));
-      }
-      haptic(15);
-      showToast(editingId ? '已更新換匯' : '已儲存換匯');
-      setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' });
-      setEditingId(null);
-      setIsAddExchangeModalOpen(false);
-    });
-  };
-  const handleDeleteExchange = (id) => requestDelete('刪除此換匯紀錄？', () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'usd_exchanges', id))));
-
   const updateSettings = (newGroups, type) => {
     const newSettings = { ...settings };
     if (type === 'monthly') newSettings.monthlyGroups = newGroups;
@@ -889,9 +760,7 @@ function AppContent() {
         <>
           {/* ── Header (fixed positioning avoids sticky-in-flex glitch) */}
           <header className="app-header px-6 flex items-center justify-between fixed top-0 left-0 right-0 z-20 animate-in fade-in duration-300 header-safe max-w-md mx-auto" style={{ paddingBottom: '0.75rem' }}>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="seal" aria-label="記帳助手">帳</span>
-            </div>
+            <div className="w-auto min-w-[36px] shrink-0" aria-hidden="true" />
             <div className="flex-1 flex justify-center min-w-0 px-3">
               <h1 className="text-base font-bold text-slate-700 tracking-wide flex items-center gap-1.5 truncate">
                 {VIEW_TITLES[currentView] && React.createElement(VIEW_TITLES[currentView][1], { className: "w-4 h-4 text-slate-400" })}
@@ -945,37 +814,9 @@ function AppContent() {
             )}
             {/* 新增: Investment Tab View (持股檢視 + 占比計算) */}
             {activeView === 'watchlist' && <InvestmentTabView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
-            {activeView === 'stock_goals' && <StockGoalView loading={!loadingStates.stockGoals} goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteYear={handleDeleteStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
+            {activeView === 'stock_goals' && <StockGoalView loading={!loadingStates.stockGoals} goals={stockGoals} exchanges={usdExchanges} onAddYear={handleAddStockGoalYear} onDeleteYear={handleDeleteStockGoalYear} onSave={saveRecord} onRemove={removeRecord} />}
             {activeView === 'mortgage' && (
-              <MortgageView
-                loading={!loadingStates.mortgageExpenses}
-                mortgageExpenses={mortgageExpenses}
-                mortgageAnalysis={mortgageAnalysis}
-                mortgageFunding={mortgageFunding}
-                deleteMortgageExp={deleteMortgageExp}
-                deleteMortgageAnalysis={deleteMortgageAnalysis}
-                deleteMortgageFunding={deleteMortgageFunding}
-                setMortgageExpType={setMortgageExpType}
-                setIsAddMortgageExpModalOpen={setIsAddMortgageExpModalOpen}
-                setIsAddMortgageAnalysisModalOpen={setIsAddMortgageAnalysisModalOpen}
-                setIsAddMortgageFundingModalOpen={setIsAddMortgageFundingModalOpen}
-                onEditExp={(item) => {
-                  setNewMortgageExp({ ...item, amount: item.amount });
-                  setMortgageExpType(item.type);
-                  setEditingId(item.id);
-                  setIsAddMortgageExpModalOpen(true);
-                }}
-                onEditAnalysis={(item) => {
-                  setNewMortgageAnalysis({ ...item, amount: item.amount });
-                  setEditingId(item.id);
-                  setIsAddMortgageAnalysisModalOpen(true);
-                }}
-                onEditFunding={(item) => {
-                  setNewMortgageFunding({ ...item, amount: item.amount });
-                  setEditingId(item.id);
-                  setIsAddMortgageFundingModalOpen(true);
-                }}
-              />
+              <MortgageView loading={!loadingStates.mortgageExpenses} mortgageExpenses={mortgageExpenses} mortgageAnalysis={mortgageAnalysis} mortgageFunding={mortgageFunding} onSave={saveRecord} onRemove={removeRecord} />
             )}
             {activeView === 'principal' && (
               <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
@@ -988,50 +829,10 @@ function AppContent() {
             )}
             {activeView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} onEdit={(t) => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} />}
             {activeView === 'income' && (
-              <IncomeView
-                loading={!loadingStates.incomes}
-                incomes={incomes}
-                salaryHistory={salaryHistory}
-                onAddSalary={(own) => { setNewSalaryRecord(prev => ({ ...prev, owner: own })); setIsAddSalaryModalOpen(true); }}
-                onDeleteSalary={handleDeleteSalaryRecord}
-                onDeleteIncome={handleDeleteIncome}
-                onAddIncome={(own, item = null) => {
-                  if (item) {
-                    setNewIncome({ ...item, amount: item.amount });
-                    setEditingId(item.id);
-                  } else {
-                    setNewIncome(prev => ({ ...prev, owner: own, amount: '', category: '薪水', note: '', date: selectedDate ? toLocalISOString(selectedDate) : getTodayString() }));
-                  }
-                  setIsAddIncomeModalOpen(true);
-                }}
-                onEditSalary={(item) => {
-                  setNewSalaryRecord({ ...item, amount: item.amount });
-                  setEditingId(item.id);
-                  setIsAddSalaryModalOpen(true);
-                }}
-                selectedDate={selectedDate}
-              />
+              <IncomeView loading={!loadingStates.incomes} incomes={incomes} salaryHistory={salaryHistory} selectedDate={selectedDate} onRequestHistory={requestHistory} onSave={saveRecord} onRemove={removeRecord} />
             )}
             {activeView === 'partner' && (
-              <PartnerView
-                loading={!loadingStates.partnerTransactions}
-                partnerTransactions={partnerTransactions}
-                onDelete={deletePartnerTx}
-                onAdd={(item = null) => {
-                  if (item && item.id) {
-                    setNewPartnerTx({ ...item, amount: item.amount });
-                    setEditingId(item.id);
-                  } else {
-                    setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
-                  }
-                  setIsAddPartnerTxModalOpen(true);
-                }}
-                onEdit={(item) => {
-                  setNewPartnerTx({ ...item, amount: item.amount });
-                  setEditingId(item.id);
-                  setIsAddPartnerTxModalOpen(true);
-                }}
-              />
+              <PartnerView loading={!loadingStates.partnerTransactions} partnerTransactions={partnerTransactions} onSave={saveRecord} onRemove={removeRecord} />
             )}
             {currentView === 'calendar' && (
               <LedgerView
@@ -1078,28 +879,6 @@ function AppContent() {
             )}
             </div>{/* /page-transition-wrapper */}
           </main>
-
-          {/* ── Context-aware FAB */}
-          {(activeView === 'income' || activeView === 'partner') && (
-            <button
-              onClick={() => {
-                haptic(10);
-                if (activeView === 'income') {
-                  setNewIncome(prev => ({ ...prev, amount: '', category: '薪水', note: '', date: getTodayString() }));
-                  setIsAddIncomeModalOpen(true);
-                } else if (activeView === 'partner') {
-                  setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
-                  setIsAddPartnerTxModalOpen(true);
-                } else {
-                  setQuickAdd({ date: getTodayString() });
-                }
-              }}
-              className="fixed right-5 bg-slate-800 text-white rounded-full shadow-2xl shadow-slate-400/40 flex items-center justify-center hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-30"
-              style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.75rem)', width: '3.25rem', height: '3.25rem' }}
-            >
-              <Plus className="w-6 h-6" />
-            </button>
-          )}
 
           {/* ── Bottom Tab Bar */}
           <nav className="tab-bar tab-bar-safe safe-x">
@@ -1346,158 +1125,6 @@ function AppContent() {
             )
           }
 
-
-          {/* Other Modals... (Same structure) */}
-          {
-            isAddMortgageExpModalOpen && (
-              <ModalWrapper title={mortgageExpType === 'down_payment' ? '新增頭期雜支' : '新增雜支紀錄'} onClose={() => { setIsAddMortgageExpModalOpen(false); setEditingId(null); }}>
-                <form onSubmit={handleAddMortgageExp} className="space-y-4">
-                  <InputField label="項目名稱" value={newMortgageExp.name} onChange={e => setNewMortgageExp({ ...newMortgageExp, name: e.target.value })} autoFocus required />
-                  <InputField label="金額" type="number" value={newMortgageExp.amount} onChange={e => setNewMortgageExp({ ...newMortgageExp, amount: e.target.value })} required />
-                  <InputField label="日期" type="date" value={newMortgageExp.date} onChange={e => setNewMortgageExp({ ...newMortgageExp, date: e.target.value })} required />
-                  {mortgageExpType === 'misc_appliances' && (<InputField label="品牌" value={newMortgageExp.brand} onChange={e => setNewMortgageExp({ ...newMortgageExp, brand: e.target.value })} placeholder="品牌" />)}
-                  <div>
-                    <InputField label="備註" value={newMortgageExp.note} onChange={e => setNewMortgageExp({ ...newMortgageExp, note: e.target.value })} />
-                    <NoteQuickPicks
-                      records={mortgageExpenses.filter(e => e.type === mortgageExpType)}
-                      onPick={(note) => setNewMortgageExp(prev => ({ ...prev, note }))}
-                    />
-                  </div>
-                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-                </form>
-              </ModalWrapper>
-            )
-          }
-
-          {
-            isAddMortgageFundingModalOpen && (
-              <ModalWrapper title="新增頭期款來源" onClose={() => { setIsAddMortgageFundingModalOpen(false); setEditingId(null); }}>
-                <form onSubmit={handleAddMortgageFunding} className="space-y-4">
-                  <InputField label="資金來源" value={newMortgageFunding.source} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, source: e.target.value })} placeholder=" " autoFocus required />
-                  <InputField label="股票代碼 (選填)" value={newMortgageFunding.symbol} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, symbol: e.target.value })} placeholder=" " />
-                  <div className="flex gap-2">
-                    <div className="flex-1"><InputField label="金額/單價" type="number" value={newMortgageFunding.amount} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, amount: e.target.value })} required /></div>
-                    <div className="w-24"><InputField label="匯率" type="number" value={newMortgageFunding.rate} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, rate: e.target.value })} placeholder="1.0" /></div>
-                  </div>
-                  <InputField label="股數 (選填)" type="number" value={newMortgageFunding.shares} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, shares: e.target.value })} placeholder="0" />
-                  <InputField label="日期" type="date" value={newMortgageFunding.date} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, date: e.target.value })} required />
-                  <div>
-                    <InputField label="備註" value={newMortgageFunding.note} onChange={e => setNewMortgageFunding({ ...newMortgageFunding, note: e.target.value })} />
-                    <NoteQuickPicks
-                      records={mortgageFunding}
-                      onPick={(note) => setNewMortgageFunding(prev => ({ ...prev, note }))}
-                    />
-                  </div>
-                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-                </form>
-              </ModalWrapper>
-            )
-          }
-
-          {
-            isAddMortgageAnalysisModalOpen && (
-              <ModalWrapper title="新增划算試算項目" onClose={() => { setIsAddMortgageAnalysisModalOpen(false); setEditingId(null); }}>
-                <form onSubmit={handleAddMortgageAnalysis} className="space-y-4">
-                  <InputField label="項目名稱" value={newMortgageAnalysis.name} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, name: e.target.value })} autoFocus required />
-                  <InputField label="金額" type="number" value={newMortgageAnalysis.amount} onChange={e => setNewMortgageAnalysis({ ...newMortgageAnalysis, amount: e.target.value })} required />
-                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存'}</GlassButton>
-                </form>
-              </ModalWrapper>
-            )
-          }
-
-          {
-            isAddIncomeModalOpen && (
-              <ModalWrapper title={editingId ? "編輯收入" : "新增收入"} onClose={() => { setIsAddIncomeModalOpen(false); setEditingId(null); setNewIncome({ amount: '', category: '薪水', owner: 'myself', date: getTodayString(), note: '' }); }}>
-                <form onSubmit={handleAddIncome} className="space-y-4">
-                  <InputField label="金額" type="number" value={newIncome.amount} onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })} autoFocus required />
-                  <div className="space-y-1.5"><label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">分類</label><div className="relative"><select value={newIncome.category} onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-slate-800 font-medium outline-none appearance-none text-sm`}>{INCOME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
-                  <InputField label="日期" type="date" value={newIncome.date} onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })} required />
-                  <div>
-                    <InputField label="備註" value={newIncome.note} onChange={(e) => setNewIncome({ ...newIncome, note: e.target.value })} placeholder="備註..." />
-                    <NoteQuickPicks
-                      records={incomes.filter(i => i.owner === newIncome.owner)}
-                      label="常用備註 (點擊自動帶入分類)"
-                      onPick={(note) => {
-                        // 帶入備註，並套用該備註歷史上最常對應的收入分類
-                        const counts = {};
-                        incomes.forEach(i => {
-                          if (i.owner === newIncome.owner && (i.note || '').trim() === note) {
-                            counts[i.category] = (counts[i.category] || 0) + 1;
-                          }
-                        });
-                        const bestCat = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-                        setNewIncome(prev => ({ ...prev, note, category: bestCat && INCOME_CATEGORIES.includes(bestCat) ? bestCat : prev.category }));
-                      }}
-                    />
-                  </div>
-                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認入帳'}</GlassButton>
-                </form>
-              </ModalWrapper>
-            )
-          }
-
-          {
-            isAddPartnerTxModalOpen && (
-              <ModalWrapper title={editingId ? "編輯資金紀錄" : "新增資金紀錄"} onClose={() => { setIsAddPartnerTxModalOpen(false); setEditingId(null); setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' }); }}>
-                <form onSubmit={handleAddPartnerTx} className="space-y-6">
-                  <div className="flex gap-2">
-                    <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'saving' })} variant={newPartnerTx.type === 'saving' ? 'success' : 'ghost'} className="flex-1">存入資金</GlassButton>
-                    <GlassButton onClick={() => setNewPartnerTx({ ...newPartnerTx, type: 'expense' })} variant={newPartnerTx.type === 'expense' ? 'danger' : 'ghost'} className="flex-1">支出/提領</GlassButton>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1 mb-1">金額</label>
-                    <div className="relative"><input type="number" value={newPartnerTx.amount} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, amount: e.target.value })} className={`w-full p-4 ${GLASS_INPUT} text-slate-800 font-medium outline-none text-sm`} placeholder="0" autoFocus required /></div>
-                    <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">{[10000, 25000, 30000, 50000].map(amt => (<button key={amt} type="button" onClick={() => setNewPartnerTx({ ...newPartnerTx, amount: amt })} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-slate-600 whitespace-nowrap transition-colors">${amt.toLocaleString()}</button>))}</div>
-                  </div>
-                  <InputField label="日期" type="date" value={newPartnerTx.date} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, date: e.target.value })} required />
-                  <div>
-                    <InputField label="備註" value={newPartnerTx.note} onChange={(e) => setNewPartnerTx({ ...newPartnerTx, note: e.target.value })} placeholder="資金用途..." />
-                    <NoteQuickPicks
-                      records={partnerTransactions.filter(t => t.type === newPartnerTx.type)}
-                      onPick={(note) => setNewPartnerTx(prev => ({ ...prev, note }))}
-                    />
-                  </div>
-                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
-                </form>
-              </ModalWrapper>
-            )
-          }
-
-          {
-            isAddSalaryModalOpen && (
-              <ModalWrapper title="調薪紀錄" onClose={() => setIsAddSalaryModalOpen(false)}>
-                <form onSubmit={handleAddSalaryRecord} className="space-y-6">
-                  <InputField label="新薪資金額" type="number" value={newSalaryRecord.amount} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, amount: e.target.value })} autoFocus required />
-                  <InputField label="生效日期" type="date" value={newSalaryRecord.date} onChange={(e) => setNewSalaryRecord({ ...newSalaryRecord, date: e.target.value })} required />
-                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '儲存調薪'}</GlassButton>
-                </form>
-              </ModalWrapper>
-            )
-          }
-
-          {
-            isAddExchangeModalOpen && (
-              <ModalWrapper title={editingId ? "編輯換匯紀錄" : "新增換匯紀錄"} onClose={() => { setIsAddExchangeModalOpen(false); setEditingId(null); setNewExchange({ date: getTodayString(), usdAmount: '', rate: '', account: 'FT', type: 'buy' }); }}>
-                <form onSubmit={handleAddExchange} className="space-y-4">
-                  {/* Buy/Sell Toggle */}
-                  <div className="flex gap-2">
-                    <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'buy' })} variant={newExchange.type === 'buy' ? 'success' : 'ghost'} className="flex-1">買入美金</GlassButton>
-                    <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, type: 'sell' })} variant={newExchange.type === 'sell' ? 'danger' : 'ghost'} className="flex-1">賣出美金</GlassButton>
-                  </div>
-                  {/* Account Toggle */}
-                  <div className="flex gap-2">
-                    <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'FT' })} variant={newExchange.account === 'FT' ? 'primary' : 'ghost'} className="flex-1">Firstrade</GlassButton>
-                    <GlassButton type="button" onClick={() => setNewExchange({ ...newExchange, account: 'IB' })} variant={newExchange.account === 'IB' ? 'primary' : 'ghost'} className="flex-1">IB</GlassButton>
-                  </div>
-                  <InputField label={newExchange.type === 'sell' ? "賣出美金 (USD)" : "買入美金 (USD)"} type="number" value={newExchange.usdAmount} onChange={e => setNewExchange({ ...newExchange, usdAmount: e.target.value })} autoFocus required />
-                  <InputField label="匯率 (TWD/USD)" type="number" value={newExchange.rate} onChange={e => setNewExchange({ ...newExchange, rate: e.target.value })} required />
-                  <InputField label="日期" type="date" value={newExchange.date} onChange={e => setNewExchange({ ...newExchange, date: e.target.value })} required />
-                  <GlassButton type="submit" disabled={isSubmitting} className="w-full py-4 text-base rounded-2xl mt-4">{isSubmitting ? '處理中...' : '確認紀錄'}</GlassButton>
-                </form>
-              </ModalWrapper>
-            )
-          }
 
           <ConfirmationModal
             isOpen={confirmModal.isOpen}
