@@ -2,16 +2,19 @@ import * as React from 'react';
 const { useState, useEffect, useMemo, useCallback, useRef } = React;
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, setDoc, serverTimestamp, updateDoc, getDoc, runTransaction, where } from 'firebase/firestore';
-import { Menu, ChevronLeft, ChevronRight, Plus, Calendar, DollarSign, PieChart, Home, Target, Users, Settings as SettingsIcon, BarChart2, Building2, Clock, ClipboardList, PenTool, Layers } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, PieChart, Home, Target, Users, Settings as SettingsIcon, BarChart2, Building2, Clock, ClipboardList, PenTool, Layers, Wallet } from 'lucide-react';
 import { ToastProvider, useToast } from './components/Toast';
 import { GroupSettingsEditor, RecurringManagerModal } from './components/settings';
 import QuickAddSheet from './components/QuickAddSheet';
 import { CalculatorInput, ConfirmationModal, GlassButton, InputField, LoadingScreen, ModalWrapper, NoteQuickPicks } from './components/ui';
-import { DEFAULT_SETTINGS, GLASS_CARD, GLASS_INPUT, INCOME_CATEGORIES, MENU_ITEMS_FLAT } from './lib/constants';
+import { DEFAULT_SETTINGS, GLASS_CARD, GLASS_INPUT, INCOME_CATEGORIES } from './lib/constants';
 import { LEDGER_ID, appId, auth, db } from './lib/firebase';
 import { getTodayString, haptic, toLocalISOString } from './lib/utils';
-import { CalendarView } from './views/CalendarView';
-import { HomeView } from './views/HomeView';
+import HomeV2 from './views/HomeV2';
+import LedgerView from './views/LedgerView';
+import BudgetView from './views/BudgetView';
+import BucketAnalysis from './views/BucketAnalysis';
+import { FLEX_DEFAULT } from './lib/budget';
 import { IncomeView } from './views/IncomeView';
 import { InvestmentTabView } from './views/InvestmentTabView';
 import { MortgageView } from './views/MortgageView';
@@ -205,28 +208,38 @@ function AppContent() {
 
   const [currentView, setCurrentView] = useState('home');
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
   const [transitionClass, setTransitionClass] = useState('page-enter-fade');
 
+  // 2.0 導覽：5 個入口（總覽／明細／＋／分析／資產）。收入併入分析；
+  // 持股、存股、佳欣儲蓄、淨值、房產併入資產；預算設定從總覽右上角進入。
   const TAB_ITEMS = [
     { id: 'home',          label: '總覽', icon: Home },
-    { id: 'calendar',      label: '日曆', icon: Calendar },
+    { id: 'calendar',      label: '明細', icon: Calendar },
+    { id: 'add',           label: '記一筆', icon: Plus },
     { id: 'visualization', label: '分析', icon: BarChart2 },
-    { id: 'more',          label: '更多', icon: Menu },
+    { id: 'assets',        label: '資產', icon: Wallet },
   ];
-  const MORE_ITEMS = [
-    { id: 'income',      label: '收入管理', icon: DollarSign },
-    { id: 'watchlist',   label: '持股組合', icon: Layers },
-    { id: 'stock_goals', label: '存股計畫', icon: Target },
-    { id: 'partner',     label: '佳欣儲蓄', icon: Users },
-    { id: 'principal',   label: '資產淨值', icon: PieChart },
-    { id: 'mortgage',    label: '房產投資', icon: Building2 },
-    { id: 'settings',    label: '預算設定', icon: SettingsIcon },
-  ];
-  const TAB_ORDER = ['home', 'calendar', 'visualization'];
+  const VIEW_TITLES = {
+    home: ['總覽', Home], calendar: ['明細', Calendar], visualization: ['分析', BarChart2],
+    assets: ['資產', Wallet], settings: ['預算設定', SettingsIcon],
+  };
+  const ANALYSIS_TABS = [['spend', '支出'], ['income', '收入']];
+  const ASSET_TABS = [['principal', '淨值', PieChart], ['watchlist', '持股', Layers], ['stock_goals', '存股', Target], ['partner', '佳欣儲蓄', Users], ['mortgage', '房產', Building2]];
+  const [analysisTab, setAnalysisTab] = useState('spend');
+  const [assetsTab, setAssetsTab] = useState('principal');
+  const [ledgerFocus, setLedgerFocus] = useState(null);
+  const clearLedgerFocus = useCallback(() => setLedgerFocus(null), []);
+  // 各頁實際顯示的內容（分析、資產頁有子分頁）
+  const activeView = currentView === 'visualization' ? (analysisTab === 'income' ? 'income' : 'visualization')
+    : currentView === 'assets' ? assetsTab : currentView;
+  const TAB_ORDER = ['home', 'calendar', 'visualization', 'assets'];
 
-  const handleViewChange = (viewId) => {
-    if (viewId === 'more') { haptic(10); setIsMoreSheetOpen(true); return; }
+  const handleViewChange = (viewIdRaw) => {
+    if (viewIdRaw === 'add') { haptic(10); setQuickAdd({ date: getTodayString() }); return; }
+    // 舊頁面代號（深連結等）轉成新導覽
+    let viewId = viewIdRaw;
+    if (viewId === 'income') { setAnalysisTab('income'); viewId = 'visualization'; }
+    else if (ASSET_TABS.some(([k]) => k === viewId)) { setAssetsTab(viewId); viewId = 'assets'; }
     const prevIdx = TAB_ORDER.indexOf(currentView);
     const nextIdx = TAB_ORDER.indexOf(viewId);
     setTransitionClass(
@@ -237,7 +250,6 @@ function AppContent() {
     haptic(10);
     setCurrentView(viewId);
     setIsMenuOpen(false);
-    setIsMoreSheetOpen(false);
   };
 
   useEffect(() => {
@@ -551,6 +563,18 @@ function AppContent() {
     return () => unsubSettings();
   }, [user, selectedDate.getFullYear()]);
 
+  // 2.0 彈性額度：settings/budget_v2_{year}（新文件，不動正式版使用的 config_{year}）
+  const [flexMonthly, setFlexMonthly] = useState(FLEX_DEFAULT);
+  useEffect(() => {
+    if (!user) return;
+    const ref = doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `budget_v2_${selectedDate.getFullYear()}`);
+    return onSnapshot(ref, (snap) => setFlexMonthly(Number(snap.data()?.flexMonthly) || FLEX_DEFAULT), () => {});
+  }, [user, selectedDate.getFullYear()]);
+  const handleSaveFlex = (n) => {
+    commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', `budget_v2_${selectedDate.getFullYear()}`), { flexMonthly: n, updatedAt: serverTimestamp() }, { merge: true }));
+    showToast('已更新彈性額度');
+  };
+
   // Recurring — 每月固定支出「全自動」入帳（不跳確認視窗）：
   // 觸發條件：檢視年份 = 今年、設定已與伺服器核對（避免快取舊狀態誤判）、
   // 本月尚未入帳。實際寫入用 Firestore transaction 原子鎖定當月 —
@@ -645,53 +669,6 @@ function AppContent() {
     }
   }, [settings, newTrans.type, newTrans.group]);
 
-
-  // --- Stats Calculations ---
-  const calculateStats = (type) => {
-    const groupsConfig = type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || []);
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const relevantTrans = transactions.filter(t => {
-      const tDate = new Date(t.date);
-      return t.type === type && tDate.getFullYear() === year && (type === 'monthly' ? tDate.getMonth() === month : true);
-    });
-    let grandTotalBudget = 0, grandTotalUsed = 0;
-    const groupsData = groupsConfig.map(group => {
-      let groupBudget = 0, groupUsed = 0;
-      const itemsData = group.items.map(item => {
-        const itemBudget = Number(item.budget);
-        const itemUsed = relevantTrans.filter(t => t.category === item.name && (!t.group || t.group === group.name)).reduce((sum, t) => sum + Number(t.amount), 0);
-        groupBudget += itemBudget; groupUsed += itemUsed;
-        return { name: item.name, budget: itemBudget, used: itemUsed };
-      });
-      return { name: group.name, budget: groupBudget, used: groupUsed, items: itemsData };
-    });
-
-    // Calculate totals strictly from the processed groups to ensure consistency
-    grandTotalBudget = groupsData.reduce((sum, g) => sum + g.budget, 0);
-    grandTotalUsed = groupsData.reduce((sum, g) => sum + g.used, 0);
-
-    return { totalBudget: grandTotalBudget, totalUsed: grandTotalUsed, groups: groupsData };
-  };
-  const monthlyStats = useMemo(() => calculateStats('monthly'), [transactions, settings, selectedDate]);
-  const annualStats = useMemo(() => calculateStats('annual'), [transactions, settings, selectedDate]);
-
-  // Calculate annual total used including ALL monthly spending for the year + Annual spending
-  const yearlyTotalStats = useMemo(() => {
-    const year = selectedDate.getFullYear();
-    // Filter all transactions for current year, regardless of type, but exclude salary/partner checks if any
-    const yearlyTrans = transactions.filter(t => new Date(t.date).getFullYear() === year);
-
-    // Sum all spending
-    const totalUsed = yearlyTrans.reduce((sum, t) => sum + Number(t.amount), 0);
-
-    // Calculate total budget = (Sum of all monthly group budgets * 12) + Sum of all annual group budgets
-    const monthlyTotalBudget = (settings.monthlyGroups || []).reduce((acc, g) => acc + g.items.reduce((s, i) => s + Number(i.budget), 0), 0);
-    const annualTotalBudget = (settings.annualGroups || []).reduce((acc, g) => acc + g.items.reduce((s, i) => s + Number(i.budget), 0), 0);
-    const totalBudget = (monthlyTotalBudget * 12) + annualTotalBudget;
-
-    return { totalBudget, totalUsed };
-  }, [transactions, settings, selectedDate]);
 
   // --- Action Wrapper ---
   // Firestore 的寫入 Promise 要等「伺服器回覆」才 resolve，但本地快取在呼叫當下
@@ -910,27 +887,6 @@ function AppContent() {
       {/* Main App Content - only renders after LoadingScreen unmounts */}
       {appPhase === 'ready' && (
         <>
-          {/* ── 「更多」底部抽屜 */}
-          {isMoreSheetOpen && (
-            <div className="fixed inset-0 z-[60] flex items-end justify-center">
-              <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onClick={() => setIsMoreSheetOpen(false)} />
-              <div className="relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-t-[2.5rem] shadow-2xl animate-in slide-in-from-bottom duration-300 border-t border-slate-200">
-                <div className="flex justify-center pt-4 pb-2"><div className="w-12 h-1.5 rounded-full bg-slate-300" /></div>
-                <div className="px-6 pt-2 pb-3"><h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">更多功能</h2></div>
-                <div className="grid grid-cols-3 gap-3 p-5 pt-2">
-                  {MORE_ITEMS.map(item => (
-                    <button key={item.id} onClick={() => handleViewChange(item.id)}
-                      className={`flex flex-col items-center gap-3 p-4 rounded-3xl transition-all active:scale-95 ${currentView === item.id ? 'bg-slate-800 text-white shadow-lg shadow-slate-400/30' : 'bg-slate-100/70 text-slate-600 hover:bg-slate-200 border border-slate-200/50'}`}>
-                      <item.icon className={`w-6 h-6 ${currentView === item.id ? 'text-slate-100' : 'text-slate-500'}`} />
-                      <span className="text-xs font-bold">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="tab-bar-safe pb-8" />
-              </div>
-            </div>
-          )}
-
           {/* ── Header (fixed positioning avoids sticky-in-flex glitch) */}
           <header className="app-header px-6 flex items-center justify-between fixed top-0 left-0 right-0 z-20 animate-in fade-in duration-300 header-safe max-w-md mx-auto" style={{ paddingBottom: '0.75rem' }}>
             <div className="flex items-center gap-2 shrink-0">
@@ -938,14 +894,18 @@ function AppContent() {
             </div>
             <div className="flex-1 flex justify-center min-w-0 px-3">
               <h1 className="text-base font-bold text-slate-700 tracking-wide flex items-center gap-1.5 truncate">
-                {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.icon &&
-                  React.createElement(MENU_ITEMS_FLAT.find(i => i.id === currentView).icon, { className: "w-4 h-4 text-slate-400" })}
-                {MENU_ITEMS_FLAT.find(i => i.id === currentView)?.label ||
-                  MORE_ITEMS.find(i => i.id === currentView)?.label}
+                {VIEW_TITLES[currentView] && React.createElement(VIEW_TITLES[currentView][1], { className: "w-4 h-4 text-slate-400" })}
+                {VIEW_TITLES[currentView]?.[0]}
               </h1>
             </div>
             <div className="w-auto min-w-[36px] flex justify-end shrink-0">
-              {(currentView === 'home' || currentView === 'income' || currentView === 'settings') && (
+              {currentView === 'settings' && (
+                <button onClick={() => handleViewChange('home')} className="text-xs font-bold text-slate-500 px-2 py-1 rounded-full hover:bg-slate-100">完成</button>
+              )}
+              {currentView === 'home' && (
+                <button onClick={() => handleViewChange('settings')} className="p-1.5 mr-1.5 rounded-full text-slate-400 hover:bg-slate-100 active:scale-95" aria-label="預算設定"><SettingsIcon className="w-4 h-4" /></button>
+              )}
+              {(currentView === 'home' || activeView === 'income') && (
                 <div className="flex items-center bg-white rounded-full px-1 py-0.5 border border-slate-200 shadow-sm">
                   <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95"><ChevronLeft className="w-3 h-3 text-slate-600" /></button>
                   <span className="text-xs font-bold text-slate-700 mx-1 tabular-nums whitespace-nowrap">{currentView === 'home' ? `${selectedDate.getMonth() + 1} 月` : `${selectedDate.getFullYear()} 年`}</span>
@@ -960,11 +920,33 @@ function AppContent() {
 
           <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}>
             <div key={currentView} className={transitionClass}>
-            {currentView === 'home' && <HomeView monthlyStats={monthlyStats} annualStats={annualStats} yearlyTotalStats={yearlyTotalStats} />}
+            {/* 分析、資產頁的子分頁 */}
+            {(currentView === 'visualization' || currentView === 'assets') && (
+              <div className="flex gap-1 overflow-x-auto scrollbar-hide bg-slate-100 rounded-full p-0.5 mb-5">
+                {(currentView === 'visualization' ? ANALYSIS_TABS : ASSET_TABS).map(([k, label]) => {
+                  const on = currentView === 'visualization' ? analysisTab === k : assetsTab === k;
+                  return (
+                    <button key={k} onClick={() => { haptic(8); if (currentView === 'visualization') setAnalysisTab(k); else setAssetsTab(k); }}
+                      className={`flex-1 shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>{label}</button>
+                  );
+                })}
+              </div>
+            )}
+            {currentView === 'home' && (
+              <HomeV2
+                transactions={transactions}
+                settings={settings}
+                flexMonthly={flexMonthly}
+                selectedDate={selectedDate}
+                onOpenDay={(ds) => { setLedgerFocus(ds); handleViewChange('calendar'); }}
+                onOpenBudget={() => handleViewChange('settings')}
+                onEdit={(t) => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }}
+              />
+            )}
             {/* 新增: Investment Tab View (持股檢視 + 占比計算) */}
-            {currentView === 'watchlist' && <InvestmentTabView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
-            {currentView === 'stock_goals' && <StockGoalView loading={!loadingStates.stockGoals} goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteYear={handleDeleteStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
-            {currentView === 'mortgage' && (
+            {activeView === 'watchlist' && <InvestmentTabView user={user} db={db} appId={appId} requestConfirmation={requestConfirmation} />}
+            {activeView === 'stock_goals' && <StockGoalView loading={!loadingStates.stockGoals} goals={stockGoals} exchanges={usdExchanges} onUpdate={handleUpdateStockGoal} onAddYear={handleAddStockGoalYear} onDeleteYear={handleDeleteStockGoalYear} onDeleteExchange={handleDeleteExchange} onAddExchangeClick={() => setIsAddExchangeModalOpen(true)} onEditExchange={(item) => { setNewExchange({ ...item }); setEditingId(item.id); setIsAddExchangeModalOpen(true); }} />}
+            {activeView === 'mortgage' && (
               <MortgageView
                 loading={!loadingStates.mortgageExpenses}
                 mortgageExpenses={mortgageExpenses}
@@ -995,11 +977,17 @@ function AppContent() {
                 }}
               />
             )}
-            {currentView === 'principal' && (
+            {activeView === 'principal' && (
               <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
             )}
-            {currentView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} onEdit={(t) => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} />}
-            {currentView === 'income' && (
+            {activeView === 'visualization' && (
+              <div className="mb-6">
+                <BucketAnalysis transactions={transactions} settings={settings} flexMonthly={flexMonthly} onRequestHistory={requestHistory} />
+                <div className="flex items-center gap-2 mt-8 mb-3 px-1"><span className="h-px flex-1 bg-slate-200" /><span className="text-xs font-bold text-slate-400">依預算群組看細項</span><span className="h-px flex-1 bg-slate-200" /></div>
+              </div>
+            )}
+            {activeView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} onEdit={(t) => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} />}
+            {activeView === 'income' && (
               <IncomeView
                 loading={!loadingStates.incomes}
                 incomes={incomes}
@@ -1024,7 +1012,7 @@ function AppContent() {
                 selectedDate={selectedDate}
               />
             )}
-            {currentView === 'partner' && (
+            {activeView === 'partner' && (
               <PartnerView
                 loading={!loadingStates.partnerTransactions}
                 partnerTransactions={partnerTransactions}
@@ -1046,10 +1034,12 @@ function AppContent() {
               />
             )}
             {currentView === 'calendar' && (
-              <CalendarView
+              <LedgerView
                 transactions={transactions}
+                settings={settings}
                 selectedDate={selectedDate}
-                setSelectedDate={setSelectedDate}
+                focusDate={ledgerFocus}
+                onFocusConsumed={clearLedgerFocus}
                 deleteTransaction={deleteTransaction}
                 onEdit={(item) => {
 
@@ -1067,39 +1057,37 @@ function AppContent() {
               />
             )}
             {currentView === 'settings' && (
-              <div className="pb-24">
-                <div className="bg-[#FAF6EE] border border-[#F3EBDA] rounded-xl p-4 mb-6 flex items-start gap-3">
-                  <div className="p-2 bg-[#F3EBDA] rounded-lg text-[#8F7439]"><SettingsIcon className="w-5 h-5" /></div>
-                  <div>
-                    <h3 className="font-bold text-[#6F5A2D] text-sm">正在編輯 {selectedDate.getFullYear()} 年度預算</h3>
-                    <p className="text-xs text-[#8F7439] mt-1">此處的變更僅會套用到 {selectedDate.getFullYear()} 年，不會影響其他年份的設定。</p>
-                  </div>
-                </div>
-                <div className="mb-6">
-                  <button onClick={() => setIsRecurringManagerOpen(true)} className={`w-full ${GLASS_CARD} p-4 flex items-center justify-between hover:border-slate-300 transition-all cursor-pointer`}>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-slate-100 text-slate-500"><ClipboardList className="w-5 h-5" /></div>
-                      <div className="text-left"><h3 className="font-bold text-slate-700 text-sm">固定支出管理</h3><p className="text-xs text-slate-400">設定每月自動入帳的固定項目 ({(settings.recurringItems || []).filter(i => i.active).length} 項啟用中)</p></div>
+              <BudgetView
+                year={selectedDate.getFullYear()}
+                settings={settings}
+                flexMonthly={flexMonthly}
+                transactions={transactions}
+                onSaveFlex={handleSaveFlex}
+                onOpenRecurring={() => setIsRecurringManagerOpen(true)}
+                onSaveAnnualBudgets={(g) => { updateSettings(g, 'annual'); showToast('已更新年度預算'); }}
+                advanced={(
+                  <>
+                    <div className="bg-[#FAF6EE] border border-[#F3EBDA] rounded-xl p-4 mb-6 text-xs text-[#8F7439]">
+                      正在編輯 {selectedDate.getFullYear()} 年的分類設定，和正式版共用。月預算金額只在正式版（舊制）使用。
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-400" />
-                  </button>
-                </div>
-                <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度預算配置`} groups={settings.monthlyGroups || []} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
-                <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度預算配置`} groups={settings.annualGroups || []} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
-              </div>
+                    <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度分類`} groups={settings.monthlyGroups || []} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
+                    <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度分類`} groups={settings.annualGroups || []} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
+                  </>
+                )}
+              />
             )}
             </div>{/* /page-transition-wrapper */}
           </main>
 
           {/* ── Context-aware FAB */}
-          {(currentView === 'home' || currentView === 'calendar' || currentView === 'income' || currentView === 'partner') && (
+          {(activeView === 'income' || activeView === 'partner') && (
             <button
               onClick={() => {
                 haptic(10);
-                if (currentView === 'income') {
+                if (activeView === 'income') {
                   setNewIncome(prev => ({ ...prev, amount: '', category: '薪水', note: '', date: getTodayString() }));
                   setIsAddIncomeModalOpen(true);
-                } else if (currentView === 'partner') {
+                } else if (activeView === 'partner') {
                   setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
                   setIsAddPartnerTxModalOpen(true);
                 } else {
@@ -1117,7 +1105,15 @@ function AppContent() {
           <nav className="tab-bar tab-bar-safe safe-x">
             <div className="flex items-center justify-around px-2 pt-2">
               {TAB_ITEMS.map(tab => {
-                const isActive = tab.id === 'more' ? MORE_ITEMS.some(m => m.id === currentView) : currentView === tab.id;
+                if (tab.id === 'add') {
+                  return (
+                    <button key={tab.id} onClick={() => handleViewChange('add')} aria-label="記一筆"
+                      className="-mt-5 w-14 h-14 rounded-full bg-slate-800 text-white shadow-lg shadow-slate-400/40 flex items-center justify-center active:scale-90 transition-transform">
+                      <Plus className="w-6 h-6" />
+                    </button>
+                  );
+                }
+                const isActive = currentView === tab.id || (tab.id === 'home' && currentView === 'settings');
                 return (
                   <button key={tab.id} onClick={() => handleViewChange(tab.id)}
                     className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all active:scale-90 min-w-[3.5rem] ${isActive ? 'text-slate-800' : 'text-slate-400'}`}>

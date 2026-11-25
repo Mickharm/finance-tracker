@@ -49,8 +49,10 @@ finance-tracker/
     │   │                   # BudgetProgressBar、GroupCard、StandardList、AmountInput…
     │   └── settings.jsx    # GroupSettingsEditor（預算群組編輯）、RecurringManagerModal（固定支出設定）
     └── views/              # 每個頁面一個檔案（皆為純呈現＋自身互動，資料多由 App.jsx 傳入）
-        ├── HomeView.jsx            # 總覽（年度/月度/年度預算卡）
-        ├── CalendarView.jsx        # 日曆（每日明細）
+        ├── HomeV2.jsx              # 2.0 總覽（本月還能花、今天兩人與每餐、這週、今年三桶）
+        ├── LedgerView.jsx          # 2.0 明細（日曆 濃淡/金額/用餐、週小計、當日明細、清單＋搜尋）
+        ├── BucketAnalysis.jsx      # 2.0 分析上半（每月三色長條、兩人比例、分類排行）
+        ├── BudgetView.jsx          # 2.0 預算設定（三桶、分類回測、這支手機的記帳人）
         ├── VisualizationView.jsx   # 支出分析
         ├── IncomeView.jsx          # 收入管理（雙人卡片、調薪紀錄）
         ├── PartnerView.jsx         # 佳欣儲蓄
@@ -164,6 +166,15 @@ setIsModalOpen(false);
   - 這支手機的記帳人存在 `localStorage['ft-device-payer']`，第一次開抽屜時詢問。
 - 新欄位（只在日常飲食）：`meal: 'lunch' | 'dinner'`、`together: true`（晚餐兩人一起）。
   「沒花錢」＝ $0 紀錄，備註為 請客／自煮／沒吃。舊紀錄沒有這些欄位。
+
+### 5.5c 2.0 導覽與預算三桶
+- 底部 5 個入口：總覽／明細／＋（記一筆）／分析（子分頁：支出、收入）／資產（子分頁：淨值、持股、存股、佳欣儲蓄、房產）。
+  預算設定從總覽右上角齒輪進入。App.jsx 用 `activeView` 表示子分頁實際顯示的頁面；舊代號（income、watchlist…）會自動轉到新位置。
+- 預算三桶（`lib/budget.js`）：固定＝啟用中的固定支出加總；彈性＝每月一個總額度，存在 `settings/budget_v2_{year}`（新文件，
+  不動正式版的 `config_{year}`）；年度＝annualGroups 的金額。年度總預算＝固定×12＋彈性×12＋年度。
+  交易歸桶：type annual → 年度；備註＋分類對上固定支出項目 → 固定；其餘 → 彈性。
+- 兩人每餐（`lib/meals.js`）：午餐各自算；晚餐有人標「兩人一起」兩個人都算；$0 的 請客／自煮／沒吃 算有交代。
+- 分類回測在預算設定頁（leave-one-out）。第 3 層 Gemini 尚未實作（需金鑰，且回測 ≥97% 才啟用）。
 
 ### 5.6 帳號與多裝置
 - 使用者用 `signInAnonymously` 匿名登入（每台裝置一個匿名 UID），但資料都讀寫
