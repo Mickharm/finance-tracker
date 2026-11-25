@@ -1,0 +1,13 @@
+# 只存在於 preview 分支：push 後跑完這個空工作，
+# 由 main 上的 deploy.yml（workflow_run）接手建置並部署正式版 + 預覽版。
+name: Preview trigger
+
+on:
+  push:
+    branches: [preview]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "preview 分支更新，交給 Deploy to GitHub Pages 部署 /finance-tracker/preview/"
