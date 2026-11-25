@@ -1,6 +1,5 @@
 // ─── 兩人每餐狀態 ────────────────────────────────────────────────────────
-// 午餐各自算：誰的手機記了就是誰的。
-// 晚餐：任一人記了「兩人一起」→ 兩個人都算有交代；否則各自算。
+// 午餐、晚餐都一樣：任一人在那一餐記了「兩人一起」→ 兩個人都算有交代；否則各自算（誰的手機記了就是誰的）。
 // 「沒花錢」＝ $0 紀錄（請客／自煮／沒吃）也算有交代。
 // 只有 2.0 起新增、帶 meal 欄位的紀錄才看得出是哪一餐；舊紀錄不會被誤判。
 
@@ -19,9 +18,9 @@ const slotStatus = (list) => {
 
 const mealStatusFor = (dayTx, person) => {
   const mine = dayTx.filter((t) => personOf(t) === person);
-  const lunch = slotStatus(mine.filter((t) => t.meal === 'lunch'));
-  const together = dayTx.some((t) => t.meal === 'dinner' && t.together);
-  const dinner = together ? 'together' : slotStatus(mine.filter((t) => t.meal === 'dinner'));
+  const slot = (m) => (dayTx.some((t) => t.meal === m && t.together) ? 'together' : slotStatus(mine.filter((t) => t.meal === m)));
+  const lunch = slot('lunch');
+  const dinner = slot('dinner');
   return { lunch, dinner };
 };
 

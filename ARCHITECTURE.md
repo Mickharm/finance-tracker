@@ -163,7 +163,7 @@ setIsModalOpen(false);
     只當猜測（畫面標「？」）；都對不上就要使用者自己選。第 3 層 Gemini 見 `lib/gemini.js`（下方）。
   - 常用建議只看該記帳人自己的紀錄（近 90 天為主）；金額幾乎固定的備註會一併帶出金額。
   - 這支手機的記帳人存在 `localStorage['ft-device-payer']`，第一次開抽屜時詢問。
-- 新欄位（只在日常飲食）：`meal: 'lunch' | 'dinner'`、`together: true`（晚餐兩人一起）。
+- 新欄位（只在日常飲食）：`meal: 'lunch' | 'dinner'`、`together: true`（這一餐兩人一起，午晚餐都可）。
   「沒花錢」＝ $0 紀錄，備註為 請客／自煮／沒吃。舊紀錄沒有這些欄位。
 
 ### 5.5c 2.0 導覽與預算三桶
@@ -172,7 +172,7 @@ setIsModalOpen(false);
 - 預算三桶（`lib/budget.js`）：固定＝啟用中的固定支出加總；彈性＝每月一個總額度，存在 `settings/budget_v2_{year}`（新文件，
   不動正式版的 `config_{year}`）；年度＝annualGroups 的金額。年度總預算＝固定×12＋彈性×12＋年度。
   交易歸桶：type annual → 年度；備註＋分類對上固定支出項目 → 固定；其餘 → 彈性。
-- 兩人每餐（`lib/meals.js`）：午餐各自算；晚餐有人標「兩人一起」兩個人都算；$0 的 請客／自煮／沒吃 算有交代。
+- 兩人每餐（`lib/meals.js`）：午、晚餐都是：有人在那一餐標「兩人一起」兩個人都算，否則各自算；$0 的 請客／自煮／沒吃 算有交代。
 - 分類回測在預算設定頁（leave-one-out）。
 - `lib/gemini.js`（第 3 層）：前兩層都分不出來、且這支手機設了金鑰時，停止打字 0.8 秒後問 Gemini（REST，`x-goog-api-key` 標頭，模型 `gemini-flash-latest`，404 時退回 `gemini-2.5-flash`；結構化 JSON、只能選現有分類或「不確定」）。
   結果只顯示成「AI 建議」，點一下才採用，不會自動寫入。金鑰存 localStorage `ft-gemini-key`，**不進程式碼、不進 Firestore**。

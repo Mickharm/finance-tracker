@@ -24,7 +24,7 @@ const valueOf = (s) => {
 const dayOffset = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return toLocalISOString(d); };
 
 // 新版記帳抽屜（新增與編輯共用）：一張不用捲動的抽屜。金額＋備註（必填）→ 自動分類；
-// 常用建議只看這個人自己的紀錄；日常飲食可標午餐／晚餐、兩人一起、沒花錢。
+// 常用建議只看這個人自己的紀錄；日常飲食可標午餐／晚餐、兩人一起（午晚餐都可以）、沒花錢。
 const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, isSubmitting, onSave, onDelete, onClose }) => {
   const devicePayer = getDevicePayer();
   const [askPayer, setAskPayer] = useState(!devicePayer && !editing);
@@ -100,7 +100,7 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
     const m = over.meal ?? effMeal;
     if (c.category === FOOD_CATEGORY && m) {
       tx.meal = m;
-      if (m === 'dinner' && (over.together ?? together)) tx.together = true;
+      if (over.together ?? together) tx.together = true;
     }
     return tx;
   };
@@ -249,12 +249,12 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
         {!picking && (isFood || (!cat && foodCat)) && (
           <div className="px-5 mt-2.5 flex items-center gap-1.5 flex-wrap">
             {[['lunch', '午餐', Sun], ['dinner', '晚餐', Moon]].map(([k, label, Icon]) => (
-              <button key={k} type="button" onClick={() => { setMeal(meal === k ? null : k); if (k !== 'dinner') setTogether(false); if (!cat && foodCat) setManualCat(foodCat); }}
+              <button key={k} type="button" onClick={() => { if (meal === k) { setMeal(null); setTogether(false); } else setMeal(k); if (!cat && foodCat) setManualCat(foodCat); }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border transition-all active:scale-95 ${meal === k ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-white text-slate-500 border-slate-200'}`}>
                 {createElement(Icon, { className: 'w-3.5 h-3.5' })}{label}
               </button>
             ))}
-            {meal === 'dinner' && (
+            {meal && (
               <button type="button" onClick={() => setTogether(!together)}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border transition-all active:scale-95 ${together ? 'bg-indigo-100 text-indigo-800 border-indigo-300' : 'bg-white text-slate-500 border-slate-200'}`}>
                 <Users className="w-3.5 h-3.5" />兩人一起

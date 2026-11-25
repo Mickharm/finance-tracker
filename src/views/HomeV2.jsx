@@ -127,7 +127,7 @@ const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, 
                   <span className="text-sm font-bold text-slate-700 tabular-nums">{fmt(total)}</span>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">
-                  <MealPill label="午" icon={Sun} status={st.lunch} />
+                  <MealPill label="午" icon={st.lunch === 'together' ? Users : Sun} status={st.lunch} />
                   <MealPill label="晚" icon={st.dinner === 'together' ? Users : Moon} status={st.dinner} />
                 </div>
                 <div className="space-y-1">
