@@ -9,6 +9,7 @@
 - **形態**：單頁 React App，手機以「加入主畫面」方式安裝（iOS standalone PWA 為主要環境）。
 - **後端**：Firebase（匿名登入 + Cloud Firestore），無自建伺服器。
 - **部署**：GitHub Pages，網址前綴 `/finance-tracker/`。push 到 `main` 即由 GitHub Actions 自動建置部署（`.github/workflows/deploy.yml`）。
+  另有**預覽版** `/finance-tracker/preview/`，由 `preview` 分支建置（見 §5.8）。
 
 ## 2. 技術棧
 
@@ -164,6 +165,18 @@ setIsModalOpen(false);
 - `manifest.webmanifest` 的 `shortcuts`（Android 長按圖示；iOS 尚不支援）。
 - App 在 `ready` 後解析 `?action=`：`add-expense` 開記帳視窗、`analysis` 跳分析頁，處理完
   `history.replaceState` 清參數。新增動作照這個模式擴充。
+
+### 5.8 預覽版（preview 分支 → /finance-tracker/preview/）
+- 用途：大改版先在預覽網址試用，正式版不動。加到主畫面是第二個圖示（名稱「記帳2.0」）。
+  **同網域、同一本帳**：預覽版記的帳是真的。
+- 部署：Pages 一個 repo 只有一個站，所以 `deploy.yml` 每次都**同時**建置 main（→ `dist/`）
+  與 `preview` 分支（`FT_PREVIEW=1` → `dist/preview/`），分支不存在就只建正式版。
+  push 到 `preview` 會先跑該分支上的「Preview trigger」workflow，再以 `workflow_run`
+  觸發 main 的部署（github-pages 環境只允許 main 部署）。
+- `FT_PREVIEW=1` 時 `vite.config.js`：`base` 改 `/finance-tracker/preview/`、**不產生 SW**
+  （每次開都是最新版）、改寫 manifest（id/start_url/scope/名稱）與 iOS 主畫面名稱；
+  程式內可用 `__FT_PREVIEW__` 判斷。正式版 SW 對 `/finance-tracker/preview/` 一律放行。
+- 預覽滿意後把 `preview` 合併回 `main` 即上線。
 
 ## 6. UI 慣例
 

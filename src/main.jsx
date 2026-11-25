@@ -10,7 +10,7 @@ createRoot(document.getElementById('root')).render(
 )
 
 // Service Worker：App Shell 預快取，讓開啟速度不受網路影響（僅正式版啟用）
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+if (import.meta.env.PROD && !__FT_PREVIEW__ && 'serviceWorker' in navigator) {
   // controllerchange 監聽必須在模組載入當下就掛上：快取供應的頁面 load 極快，
   // 新版 SW 可能在 load 事件前就完成接管，等到 load 才掛監聽會錯過事件。
   // 首次安裝（原本沒有 SW 接管）不需要 reload，只有「舊版換新版」才需要。
