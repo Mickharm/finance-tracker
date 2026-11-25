@@ -5,26 +5,57 @@ import { COLOR_VARIANTS, GLASS_CARD } from '../lib/constants';
 import { FINNHUB_API_KEY, formatDetailedDate, getCachedPrices, setCachedPrices } from '../lib/utils';
 
 
-const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
-  const schedule = useMemo(() => {
-    let rows = [];
-    let currentDate = new Date(startDate);
-    currentDate.setDate(1);
-    const periods = [{ count: 18, pay: 10177, rate: 1.77 }, { count: 42, pay: 12757, rate: 2.225 }, { count: 420, pay: 23593, rate: 2.225 }];
-    let totalPay = 0;
-    let periodCounter = 1;
-    const today = new Date();
-    for (let p of periods) {
-      for (let i = 0; i < p.count; i++) {
-        totalPay += p.pay;
-        const isPaid = (currentDate.getFullYear() < today.getFullYear()) || (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() < today.getMonth());
-        rows.push({ id: periodCounter, date: new Date(currentDate), amount: p.pay, cumulative: totalPay, rate: p.rate, isPaid: isPaid });
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        periodCounter++;
+// 新青安房貸（2025-02 撥款）。依青安 3.0「3+3」：2023/8/1 後撥款的案件自撥款日起
+// 享滿 3 年 1.775%，之後每年少半碼補貼，第 7 年回到原利率 2.275%（以郵局二年期定儲
+// 機動利率 1.72% 計）。前 5 年寬限期只繳息，之後 420 期本息平均攤還，每次利率變動重算月付。
+// 本金由實際月付反推：6,880,000 × 1.775% ÷ 12 = 10,177。利率若調整，只要改 rateSteps。
+const MORTGAGE_LOAN = {
+  principal: 6880000,
+  startDate: '2025-02-01',
+  totalMonths: 480,
+  graceMonths: 60,
+  rateSteps: [ // fromPeriod：第幾期起適用（第 1 期 = 撥款當月）
+    { fromPeriod: 1, rate: 1.775 },
+    { fromPeriod: 37, rate: 1.9 },
+    { fromPeriod: 49, rate: 2.025 },
+    { fromPeriod: 61, rate: 2.15 },
+    { fromPeriod: 73, rate: 2.275 },
+  ],
+};
+
+const buildMortgageSchedule = ({ principal, startDate, totalMonths, graceMonths, rateSteps }) => {
+  const rows = [];
+  const [startY, startM] = startDate.split('-').map(Number);
+  const today = new Date();
+  let balance = principal;
+  let payment = 0;
+  let prevRate = null;
+  let cumulative = 0;
+  for (let period = 1; period <= totalMonths; period++) {
+    const rate = rateSteps.filter(s => s.fromPeriod <= period).pop().rate;
+    const r = rate / 100 / 12;
+    let amount;
+    if (period <= graceMonths) {
+      amount = Math.round(balance * r); // 寬限期：只繳利息
+    } else {
+      if (rate !== prevRate || period === graceMonths + 1) {
+        const remaining = totalMonths - period + 1;
+        payment = balance * r / (1 - Math.pow(1 + r, -remaining));
       }
+      balance -= payment - balance * r;
+      amount = Math.round(payment);
     }
-    return rows;
-  }, [startDate]);
+    prevRate = rate;
+    cumulative += amount;
+    const date = new Date(startY, startM - 1 + period - 1, 1);
+    const isPaid = date.getFullYear() < today.getFullYear() || (date.getFullYear() === today.getFullYear() && date.getMonth() < today.getMonth());
+    rows.push({ id: period, date, amount, cumulative, rate, isPaid });
+  }
+  return rows;
+};
+
+const MortgagePlanView = () => {
+  const schedule = useMemo(() => buildMortgageSchedule(MORTGAGE_LOAN), []);
 
   const yearlyGroups = useMemo(() => {
     const groups = {};
@@ -36,6 +67,7 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
 
   const [expandedYear, setExpandedYear] = useState(null);
   const currentStatus = schedule.find(r => !r.isPaid) || schedule[schedule.length - 1];
+  const nextChange = schedule.find(r => r.id > currentStatus.id && r.amount !== currentStatus.amount);
   const theme = COLOR_VARIANTS.cyan;
 
   return (
@@ -74,6 +106,13 @@ const MortgagePlanView = ({ startDate = "2025-02-01" }) => {
             <span className="text-[10px] text-slate-400 uppercase font-bold">累計已還</span>
             <span className="tabular-nums font-bold text-slate-600 text-sm">${schedule.filter(r => r.isPaid).reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</span>
           </div>
+        </div>
+      )}
+
+      {nextChange && (
+        <div className="mx-2 mb-2 mt-1 pt-2 border-t border-slate-200/50 flex justify-between items-center text-[11px] text-slate-500">
+          <span>下次調整 {nextChange.date.getFullYear()}年{nextChange.date.getMonth() + 1}月（利率 {nextChange.rate}%）</span>
+          <span className="tabular-nums font-bold text-slate-600">${nextChange.amount.toLocaleString()}</span>
         </div>
       )}
 
