@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, X, CheckCircle2 } from 'lucide-react';
 import { GLASS_CARD } from '../lib/constants';
+import CategoryIcon from '../components/CategoryIcon';
 import { getTodayString, toLocalISOString } from '../lib/utils';
 
 
 const MealToggleButton = ({ status, onToggle, icon: Icon, label }) => {
   const getStyle = () => {
-    if (status === true) return 'bg-[#F1FAEE] border-[#D8F3DC] text-[#2D6A4F]';
-    if (status === false) return 'bg-[#FDECEA] border-[#FADBD8] text-[#C0392B]';
+    if (status === true) return 'bg-[#F1F6F4] border-[#C9DDD6] text-[#4D7D70]';
+    if (status === false) return 'bg-[#FBF3F2] border-[#EDCDCA] text-[#95564F]';
     return 'bg-slate-50 border-slate-200 text-slate-400';
   };
   const getIcon = () => {
@@ -89,16 +90,16 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
           {dayMeal && (
             <div className="flex gap-0.5">
               {dayMeal.lunch !== null && (
-                <span className={`text-[10px] leading-none ${dayMeal.lunch ? 'text-[#E0A23E]' : 'text-[#E57373] line-through'}`}>☀</span>
+                <span className={`text-[10px] leading-none ${dayMeal.lunch ? 'text-[#C2A66E]' : 'text-[#C08480] line-through'}`}>☀</span>
               )}
               {dayMeal.dinner !== null && (
-                <span className={`text-[10px] leading-none ${dayMeal.dinner ? 'text-[#5A7099]' : 'text-[#E57373] line-through'}`}>☽</span>
+                <span className={`text-[10px] leading-none ${dayMeal.dinner ? 'text-[#557AA3]' : 'text-[#C08480] line-through'}`}>☽</span>
               )}
             </div>
           )}
         </div>
         {dayTotal > 0 && (<div className="w-full text-right"><span className={`text-[11px] font-bold tabular-nums ${dayTrans.some(t => t.type === 'annual') ? 'text-amber-600' : 'text-slate-700'}`}>${dayTotal.toLocaleString()}</span></div>)}
-        {isSelected && <div className="absolute inset-1 border-2 border-[#7FB3D5]/60 rounded-lg pointer-events-none"></div>}
+        {isSelected && <div className="absolute inset-1 border-2 border-[#9DB7D3]/60 rounded-lg pointer-events-none"></div>}
       </div>
     );
   }
@@ -112,7 +113,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
           <h2 className="text-xl font-bold text-slate-800">{viewDate.toLocaleString('zh-TW', { month: 'long', year: 'numeric' })}</h2>
           <div className="text-xs text-slate-400 mt-0.5">本月支出 <span className="font-bold text-slate-600 tabular-nums">${monthTotal.toLocaleString()}</span></div>
         </div>
-        <div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white/60 rounded-xl shadow-sm border border-white/60 text-slate-600 active:scale-95 transition-transform"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white/60 rounded-xl shadow-sm border border-white/60 text-slate-600 active:scale-95 transition-transform"><ChevronRight className="w-5 h-5" /></button></div>
+        <div className="flex gap-2"><button onClick={() => handleMonthChange(-1)} className="p-2 bg-white/60 rounded-xl shadow-sm border border-slate-200 text-slate-600 active:scale-95 transition-transform"><ChevronLeft className="w-5 h-5" /></button><button onClick={() => handleMonthChange(1)} className="p-2 bg-white/60 rounded-xl shadow-sm border border-slate-200 text-slate-600 active:scale-95 transition-transform"><ChevronRight className="w-5 h-5" /></button></div>
       </div>
       <div className={`${GLASS_CARD} p-0 border border-slate-100`}>
         <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100 rounded-t-3xl overflow-hidden">{['日', '一', '二', '三', '四', '五', '六'].map(d => (<div key={d} className="py-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">{d}</div>))}</div>
@@ -148,7 +149,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                   >
                     <div className="flex flex-col min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${t.type === 'annual' ? 'bg-amber-400' : 'bg-slate-400'}`}></span>
+                        <CategoryIcon category={t.category} group={t.group} type={t.type} size="sm" />
                         <div className="flex flex-col">
                           <div className="flex items-center gap-1.5 align-baseline">
                             <span className="text-sm font-bold text-slate-700 leading-tight">{t.note || t.category}</span>
@@ -173,7 +174,7 @@ const CalendarView = ({ transactions, selectedDate, setSelectedDate, deleteTrans
                 ))}
               </div>
             )}
-            <button onClick={() => onAddExpense && onAddExpense(selectedDateStr)} className="w-full mt-3 py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 font-bold text-xs hover:border-[#7FB3D5] hover:text-[#5A7099] transition-all flex items-center justify-center gap-1.5 active:scale-95">
+            <button onClick={() => onAddExpense && onAddExpense(selectedDateStr)} className="w-full mt-3 py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 font-bold text-xs hover:border-[#9DB7D3] hover:text-[#557AA3] transition-all flex items-center justify-center gap-1.5 active:scale-95">
               <Plus className="w-3.5 h-3.5" /> 在這天新增支出
             </button>
           </div>

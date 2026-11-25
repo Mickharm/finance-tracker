@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, Search, PieChart, ChevronDown, ChevronUp, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Card } from '../components/ui';
 import { GLASS_CARD, GLASS_INPUT } from '../lib/constants';
+import CategoryIcon from '../components/CategoryIcon';
 import { formatDetailedDate } from '../lib/utils';
 
 const SEARCH_RESULT_LIMIT = 30; // 手機上一次最多渲染幾筆搜尋結果
@@ -360,9 +361,12 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
               <div className="space-y-3">
                 {detailedTransactions.map(t => (
                   <div key={t.id} onClick={() => onEdit && onEdit(t)} className={`${GLASS_CARD} p-4 flex justify-between items-center cursor-pointer hover:bg-white/60 transition-colors`}>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-slate-700">{t.category}</span>
-                      <span className="text-xs text-slate-400">{formatDetailedDate(t.date)} {t.note && `• ${t.note}`}</span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <CategoryIcon category={t.category} group={t.group} type={t.type} />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-bold text-slate-700">{t.category}</span>
+                        <span className="text-xs text-slate-400">{formatDetailedDate(t.date)} {t.note && `• ${t.note}`}</span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="tabular-nums font-bold text-slate-800">${Number(t.amount).toLocaleString()}</span>
@@ -415,8 +419,10 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
                     <div
                       key={t.id}
                       onClick={() => onEdit && onEdit(t)}
-                      className="bg-white/50 border border-white/60 rounded-2xl p-3 flex justify-between items-center gap-3 cursor-pointer hover:bg-white/80 transition-colors"
+                      className="bg-white/50 border border-slate-200 rounded-2xl p-3 flex justify-between items-center gap-3 cursor-pointer hover:bg-white/80 transition-colors"
                     >
+                      <div className="flex items-center gap-3 min-w-0">
+                      <CategoryIcon category={t.category} group={t.group} type={t.type} size="sm" />
                       <div className="min-w-0">
                         <div className="text-sm font-bold text-slate-700 flex items-center gap-2 min-w-0">
                           <span className="truncate">{highlightMatch(t.category, trimmedQuery)}</span>
@@ -425,6 +431,7 @@ const VisualizationView = ({ transactions, settings, onRequestHistory, onEdit })
                         <div className="text-[11px] text-slate-400 truncate mt-0.5">
                           {formatDetailedDate(t.date)}{t.note && <> • {highlightMatch(t.note, trimmedQuery)}</>}
                         </div>
+                      </div>
                       </div>
                       <span className="tabular-nums font-bold text-slate-800 shrink-0">${Number(t.amount).toLocaleString()}</span>
                     </div>
