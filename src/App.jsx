@@ -5,6 +5,7 @@ import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, setDoc,
 import { Menu, ChevronLeft, ChevronRight, Plus, Calendar, DollarSign, PieChart, Home, Target, Users, Settings as SettingsIcon, BarChart2, Building2, Clock, ClipboardList, PenTool, Layers } from 'lucide-react';
 import { ToastProvider, useToast } from './components/Toast';
 import { GroupSettingsEditor, RecurringManagerModal } from './components/settings';
+import QuickAddSheet from './components/QuickAddSheet';
 import { CalculatorInput, ConfirmationModal, GlassButton, InputField, LoadingScreen, ModalWrapper, NoteQuickPicks } from './components/ui';
 import { DEFAULT_SETTINGS, GLASS_CARD, GLASS_INPUT, INCOME_CATEGORIES, MENU_ITEMS_FLAT } from './lib/constants';
 import { LEDGER_ID, appId, auth, db } from './lib/firebase';
@@ -187,6 +188,8 @@ function AppContent() {
 
 
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
+  // 新版快速記帳抽屜（新增用；編輯既有紀錄仍走舊表單）。null = 關閉，否則 { date }
+  const [quickAdd, setQuickAdd] = useState(null);
   const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
   const [isAddSalaryModalOpen, setIsAddSalaryModalOpen] = useState(false);
   const [isAddPartnerTxModalOpen, setIsAddPartnerTxModalOpen] = useState(false);
@@ -312,8 +315,7 @@ function AppContent() {
     if (!action) return;
     window.history.replaceState(null, '', window.location.pathname);
     if (action === 'add-expense') {
-      setNewTrans(prev => ({ ...prev, date: getTodayString() }));
-      setIsAddTxModalOpen(true);
+      setQuickAdd({ date: getTodayString() });
     } else if (action === 'analysis') {
       setCurrentView('visualization');
     }
@@ -747,6 +749,16 @@ function AppContent() {
       }
     });
   };
+  // 快速記帳抽屜送出（新增）
+  const handleQuickSave = (tx, { keepOpen = false, noSpend = false } = {}) => {
+    withSubmission(async () => {
+      commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...tx, amount: Number(tx.amount), createdAt: serverTimestamp() }));
+      haptic(15);
+      const msg = noSpend ? `已標記：${tx.note}` : '已記一筆';
+      if (keepOpen) showToast(`${msg}，可繼續輸入`);
+      else { showToast(msg); setQuickAdd(null); }
+    });
+  };
   const deleteTransaction = (id) => requestDelete("確定刪除此筆支出紀錄？", () => commit(deleteDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', id))));
 
   const handleAddIncome = (e) => {
@@ -1050,10 +1062,7 @@ function AppContent() {
 
                   setIsAddTxModalOpen(true);
                 }}
-                onAddExpense={(dateStr) => {
-                  if (dateStr) setNewTrans(prev => ({ ...prev, date: dateStr }));
-                  setIsAddTxModalOpen(true);
-                }}
+                onAddExpense={(dateStr) => setQuickAdd({ date: dateStr || getTodayString() })}
                 onRequestHistory={requestHistory}
               />
             )}
@@ -1094,7 +1103,7 @@ function AppContent() {
                   setNewPartnerTx({ amount: '', type: 'saving', date: getTodayString(), note: '' });
                   setIsAddPartnerTxModalOpen(true);
                 } else {
-                  setIsAddTxModalOpen(true);
+                  setQuickAdd({ date: getTodayString() });
                 }
               }}
               className="fixed right-5 bg-slate-800 text-white rounded-full shadow-2xl shadow-slate-400/40 flex items-center justify-center hover:bg-slate-900 hover:scale-105 transition-all active:scale-95 z-30"
@@ -1125,6 +1134,16 @@ function AppContent() {
 
 
           {/* --- Modals --- */}
+          {quickAdd && (
+            <QuickAddSheet
+              transactions={transactions}
+              settings={settings}
+              initialDate={quickAdd.date}
+              isSubmitting={isSubmitting}
+              onSave={handleQuickSave}
+              onClose={() => setQuickAdd(null)}
+            />
+          )}
           {
             isAddTxModalOpen && (
               <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>

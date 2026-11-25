@@ -154,6 +154,17 @@ setIsModalOpen(false);
   與 `.font-num` 用 Shippori Mincho（明朝體數字）。離線時退回系統字。
 - 分類圖示：`lib/categoryIcons.js`（分類→Lucide 圖示、三桶色調），元件 `components/CategoryIcon.jsx`。
 
+### 5.5b 快速記帳（2.0 P1）
+- 新增支出走 `components/QuickAddSheet.jsx`（FAB、日曆「在這天新增」、`?action=add-expense`）；
+  **編輯既有紀錄仍走 App.jsx 的舊表單**。
+- `lib/quickAdd.js`：
+  - 自動分類第 1 層＝同備註的歷史多數分類（自己的紀錄優先、一致率 ≥60%）；第 2 層＝包含已知備註或關鍵字表，
+    只當猜測（畫面標「？」）；都對不上就要使用者自己選。第 3 層 Gemini 在 P7。
+  - 常用建議只看該記帳人自己的紀錄（近 90 天為主）；金額幾乎固定的備註會一併帶出金額。
+  - 這支手機的記帳人存在 `localStorage['ft-device-payer']`，第一次開抽屜時詢問。
+- 新欄位（只在日常飲食）：`meal: 'lunch' | 'dinner'`、`together: true`（晚餐兩人一起）。
+  「沒花錢」＝ $0 紀錄，備註為 請客／自煮／沒吃。舊紀錄沒有這些欄位。
+
 ### 5.6 帳號與多裝置
 - 使用者用 `signInAnonymously` 匿名登入（每台裝置一個匿名 UID），但資料都讀寫
   `ledgers/Mick` 這一份共用帳本（`LEDGER_ID`），兩人資料即時互通。
