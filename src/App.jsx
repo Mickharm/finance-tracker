@@ -4,12 +4,11 @@ import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, setDoc, serverTimestamp, getDoc, runTransaction, where } from 'firebase/firestore';
 import { ChevronLeft, ChevronRight, Plus, Calendar, PieChart, Home, Target, Users, Settings as SettingsIcon, BarChart2, Building2, Clock, ClipboardList, PenTool, Layers, Wallet } from 'lucide-react';
 import { ToastProvider, useToast } from './components/Toast';
-import { GroupSettingsEditor, RecurringManagerModal } from './components/settings';
 import QuickAddSheet from './components/QuickAddSheet';
-import { CalculatorInput, ConfirmationModal, GlassButton, InputField, LoadingScreen, ModalWrapper, NoteQuickPicks } from './components/ui';
+import { ConfirmationModal, LoadingScreen } from './components/ui';
 import { DEFAULT_SETTINGS, GLASS_CARD, GLASS_INPUT, INCOME_CATEGORIES } from './lib/constants';
 import { LEDGER_ID, appId, auth, db } from './lib/firebase';
-import { getTodayString, haptic, toLocalISOString } from './lib/utils';
+import { getTodayString, haptic } from './lib/utils';
 import HomeV2 from './views/HomeV2';
 import LedgerView from './views/LedgerView';
 import BudgetView from './views/BudgetView';
@@ -21,7 +20,6 @@ import { MortgageView } from './views/MortgageView';
 import { PartnerView } from './views/PartnerView';
 import { PrincipalView } from './views/PrincipalView';
 import { StockGoalView } from './views/StockGoalView';
-import { VisualizationView } from './views/VisualizationView';
 
 
 
@@ -33,7 +31,6 @@ function AppContent() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [editingId, setEditingId] = useState(null);
   const mainRef = useRef(null);
   const transactionSubsRef = useRef({});
   const transactionDataPartsRef = useRef({});
@@ -190,7 +187,6 @@ function AppContent() {
 
 
 
-  const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
   // 新版快速記帳抽屜（新增用；編輯既有紀錄仍走舊表單）。null = 關閉，否則 { date }
   const [quickAdd, setQuickAdd] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', title: '確認', confirmText: '確定', confirmColor: 'bg-slate-800', onConfirm: () => { } });
@@ -331,11 +327,9 @@ function AppContent() {
   }, [showToast]);
 
   // Recurring Manager State
-  const [isRecurringManagerOpen, setIsRecurringManagerOpen] = useState(false);
 
   // Form States
   // Default amount 0 to prevent layout shift
-  const [newTrans, setNewTrans] = useState({ amount: '0', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' });
 
 
   // --- Auth ---
@@ -628,30 +622,6 @@ function AppContent() {
     commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'settings', 'config_v2'), updates, { merge: true }));
   };
 
-  // Form Defaults Logic
-  useEffect(() => {
-    const groups = newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || []);
-    if (groups && groups.length > 0) {
-      const currentGroupValid = groups.find(g => g.name === newTrans.group);
-      if (!newTrans.group || !currentGroupValid) {
-        const firstGroup = groups[0];
-        setNewTrans(prev => ({
-          ...prev,
-          group: firstGroup.name,
-          category: firstGroup.items.length > 0 ? firstGroup.items[0].name : ''
-        }));
-      } else {
-        const currentCategoryValid = currentGroupValid.items.find(i => i.name === newTrans.category);
-        if (!newTrans.category || !currentCategoryValid) {
-          setNewTrans(prev => ({
-            ...prev,
-            category: currentGroupValid.items.length > 0 ? currentGroupValid.items[0].name : ''
-          }));
-        }
-      }
-    }
-  }, [settings, newTrans.type, newTrans.group]);
-
 
   // --- Action Wrapper ---
   // Firestore 的寫入 Promise 要等「伺服器回覆」才 resolve，但本地快取在呼叫當下
@@ -681,36 +651,21 @@ function AppContent() {
   const requestDelete = (message, action) => requestConfirmation({ message, title: '確認刪除', confirmText: '刪除', confirmColor: 'bg-rose-500', onConfirm: action });
 
   // --- Handlers ---
-  const handleAddTransaction = (e, options = {}) => {
-    if (e) e.preventDefault();
-    const { overrideTrans = null, keepOpen = false } = options;
-    const saveTrans = overrideTrans || newTrans;
-
-    withSubmission(async () => {
-      if (editingId) {
-
-        // Clean data: remove ID from body and ensure numeric amount
-        const { id, ...updateData } = saveTrans;
-        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', editingId), { ...updateData, amount: Number(saveTrans.amount) }, { merge: true }));
-      } else {
-
-        const { id, ...createData } = saveTrans;
-        commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...createData, amount: Number(saveTrans.amount), createdAt: serverTimestamp() }));
-      }
-      haptic(15);
-      // Clear amount + note for the next entry; keep group/category/payer/date as-is
-      setNewTrans(prev => ({ ...prev, amount: '0', note: '' }));
-      if (keepOpen && !editingId) {
-        showToast('已記一筆，可繼續輸入');
-      } else {
-        showToast(editingId ? '已更新支出' : '已記一筆');
-        setIsAddTxModalOpen(false);
-        setEditingId(null);
-      }
-    });
-  };
-  // 快速記帳抽屜送出（新增）
-  const handleQuickSave = (tx, { keepOpen = false, noSpend = false } = {}) => {
+  // 記帳抽屜送出：新增，或編輯既有紀錄（整筆覆寫，取消的餐別／一起吃會一併移除）
+  const handleQuickSave = (tx, { keepOpen = false, noSpend = false, edit = null } = {}) => {
+    if (edit) {
+      withSubmission(async () => {
+        const { id, ...rest } = edit;
+        const next = { ...rest, ...tx, amount: Number(tx.amount), updatedAt: serverTimestamp() };
+        if (!tx.meal) delete next.meal;
+        if (!tx.together) delete next.together;
+        commit(setDoc(doc(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions', id), next));
+        haptic(15);
+        showToast('已更新');
+        setQuickAdd(null);
+      });
+      return;
+    }
     withSubmission(async () => {
       commit(addDoc(collection(db, 'artifacts', appId, 'ledgers', LEDGER_ID, 'transactions'), { ...tx, amount: Number(tx.amount), createdAt: serverTimestamp() }));
       haptic(15);
@@ -809,7 +764,7 @@ function AppContent() {
                 selectedDate={selectedDate}
                 onOpenDay={(ds) => { setLedgerFocus(ds); handleViewChange('calendar'); }}
                 onOpenBudget={() => handleViewChange('settings')}
-                onEdit={(t) => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }}
+                onEdit={(t) => setQuickAdd({ edit: t })}
               />
             )}
             {/* 新增: Investment Tab View (持股檢視 + 占比計算) */}
@@ -822,12 +777,8 @@ function AppContent() {
               <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
             )}
             {activeView === 'visualization' && (
-              <div className="mb-6">
-                <BucketAnalysis transactions={transactions} settings={settings} flexMonthly={flexMonthly} onRequestHistory={requestHistory} />
-                <div className="flex items-center gap-2 mt-8 mb-3 px-1"><span className="h-px flex-1 bg-slate-200" /><span className="text-xs font-bold text-slate-400">依預算群組看細項</span><span className="h-px flex-1 bg-slate-200" /></div>
-              </div>
+              <BucketAnalysis transactions={transactions} settings={settings} flexMonthly={flexMonthly} onRequestHistory={requestHistory} />
             )}
-            {activeView === 'visualization' && <VisualizationView transactions={transactions} settings={settings} onRequestHistory={requestHistory} onEdit={(t) => { setNewTrans({ ...t, amount: t.amount }); setEditingId(t.id); setIsAddTxModalOpen(true); }} />}
             {activeView === 'income' && (
               <IncomeView loading={!loadingStates.incomes} incomes={incomes} salaryHistory={salaryHistory} selectedDate={selectedDate} onRequestHistory={requestHistory} onSave={saveRecord} onRemove={removeRecord} />
             )}
@@ -842,17 +793,7 @@ function AppContent() {
                 focusDate={ledgerFocus}
                 onFocusConsumed={clearLedgerFocus}
                 deleteTransaction={deleteTransaction}
-                onEdit={(item) => {
-
-                  if (!item.id) {
-                    showToast('錯誤：此交易沒有有效ID，無法編輯', 'error');
-                    return;
-                  }
-                  setNewTrans({ ...item, amount: item.amount });
-                  setEditingId(item.id);
-
-                  setIsAddTxModalOpen(true);
-                }}
+                onEdit={(t) => setQuickAdd({ edit: t })}
                 onAddExpense={(dateStr) => setQuickAdd({ date: dateStr || getTodayString() })}
                 onRequestHistory={requestHistory}
               />
@@ -864,17 +805,9 @@ function AppContent() {
                 flexMonthly={flexMonthly}
                 transactions={transactions}
                 onSaveFlex={handleSaveFlex}
-                onOpenRecurring={() => setIsRecurringManagerOpen(true)}
-                onSaveAnnualBudgets={(g) => { updateSettings(g, 'annual'); showToast('已更新年度預算'); }}
-                advanced={(
-                  <>
-                    <div className="bg-[#FAF6EE] border border-[#F3EBDA] rounded-xl p-4 mb-6 text-xs text-[#8F7439]">
-                      正在編輯 {selectedDate.getFullYear()} 年的分類設定，和正式版共用。月預算金額只在正式版（舊制）使用。
-                    </div>
-                    <GroupSettingsEditor title={`${selectedDate.getFullYear()}年月度分類`} groups={settings.monthlyGroups || []} onSave={(g) => updateSettings(g, 'monthly')} idPrefix="monthly" />
-                    <GroupSettingsEditor title={`${selectedDate.getFullYear()}年年度分類`} groups={settings.annualGroups || []} onSave={(g) => updateSettings(g, 'annual')} idPrefix="annual" />
-                  </>
-                )}
+                onSaveGroups={(g, type) => { updateSettings(g, type); showToast('已更新分類'); }}
+                onSaveRecurring={(items) => { handleSaveRecurring(items); showToast('已更新固定支出'); }}
+                requestDelete={requestDelete}
               />
             )}
             </div>{/* /page-transition-wrapper */}
@@ -911,220 +844,17 @@ function AppContent() {
           {/* --- Modals --- */}
           {quickAdd && (
             <QuickAddSheet
+              key={quickAdd.edit?.id || 'new'}
               transactions={transactions}
               settings={settings}
               initialDate={quickAdd.date}
+              editing={quickAdd.edit || null}
               isSubmitting={isSubmitting}
               onSave={handleQuickSave}
+              onDelete={(t) => { setQuickAdd(null); deleteTransaction(t.id); }}
               onClose={() => setQuickAdd(null)}
             />
           )}
-          {
-            isAddTxModalOpen && (
-              <ModalWrapper title={editingId ? "編輯支出" : "新增支出"} onClose={() => { setIsAddTxModalOpen(false); setEditingId(null); setNewTrans({ amount: '', type: 'monthly', group: '', category: '', note: '', date: getTodayString(), payer: 'myself' }); }}>
-                {/* 檢查是否有設定預算群組，若無則提示 */}
-                {((settings.monthlyGroups || []).length === 0 && (settings.annualGroups || []).length === 0) ? (
-                  <div className="text-center py-10">
-                    <p className="text-slate-500 mb-4">請先設定預算分類</p>
-                    <GlassButton onClick={() => { setIsAddTxModalOpen(false); setCurrentView('settings'); }}>前往設定</GlassButton>
-                  </div>
-                ) : (
-                  <form onSubmit={handleAddTransaction} className="space-y-0 relative">
-                    {/* Ultimate Quick-Add Section */}
-                    
-                    {/* Amount Input (Main focus) */}
-                    <div className="mb-6">
-                      <CalculatorInput
-                        value={newTrans.amount}
-                        onChange={(val) => setNewTrans({ ...newTrans, amount: val })}
-                      />
-                    </div>
-
-                    {/* Note Input (Always visible) */}
-                    <div className="mb-6">
-                      <div className="w-full relative mb-2.5">
-                        <InputField value={newTrans.note} onChange={(e) => setNewTrans({ ...newTrans, note: e.target.value })} placeholder="輸入備註 (選填)..." />
-                        <PenTool className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-300 pointer-events-none z-10" />
-                      </div>
-
-                      {/* Top 5 Smart Notes (filtered by payer + group) */}
-                      {(() => {
-                        const noteStats = {};
-                        transactions.forEach(t => {
-                          if (t.payer !== newTrans.payer) return;
-                          if (newTrans.group && t.group !== newTrans.group) return;
-                          if (newTrans.category && t.category !== newTrans.category) return;
-                          const n = (t.note || '').trim();
-                          if (!n || n === '請客/自煮' || n === '減肥/斷食' || n === '減肥/沒吃') return;
-                          if (!noteStats[n]) noteStats[n] = { count: 0, mappings: {} };
-                          noteStats[n].count++;
-                          const mappingKey = `${t.type}|${t.group}|${t.category}`;
-                          noteStats[n].mappings[mappingKey] = (noteStats[n].mappings[mappingKey] || 0) + 1;
-                        });
-
-                        const top5Notes = Object.entries(noteStats)
-                          .sort((a, b) => b[1].count - a[1].count)
-                          .slice(0, 5)
-                          .map(([note, data]) => {
-                            let bestMapping = '';
-                            let maxCount = 0;
-                            Object.entries(data.mappings).forEach(([mk, count]) => {
-                              if (count > maxCount) {
-                                maxCount = count;
-                                bestMapping = mk;
-                              }
-                            });
-                            const [type, group, category] = bestMapping.split('|');
-                            return { note, type, group, category, count: data.count };
-                          });
-
-                        if (top5Notes.length === 0) return null;
-
-                        return (
-                          <div>
-                            <div className="flex items-center gap-1.5 mb-2 ml-1">
-                              <Clock className="w-3 h-3 text-slate-300" />
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">常用備註 (點擊自動帶入分類)</span>
-                            </div>
-                            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-                              {top5Notes.map(({ note, type, group, category }) => (
-                                <button
-                                  key={note}
-                                  type="button"
-                                  onClick={() => setNewTrans(prev => ({
-                                    ...prev,
-                                    note,
-                                    type: type && type !== 'undefined' ? type : prev.type,
-                                    group: group && group !== 'undefined' ? group : prev.group,
-                                    category: category && category !== 'undefined' ? category : prev.category
-                                  }))}
-                                  className="flex-shrink-0 px-4 py-2 bg-slate-50/80 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold transition-all active:scale-95 border border-slate-200/60"
-                                >
-                                  {note}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    <div className="border-t border-slate-100 my-5"></div>
-
-                    {/* Group & Category Grids */}
-                    <div className="space-y-5 mb-2">
-                      {/* Group Flow (Horizontal Scroll) */}
-                      {(() => {
-                        const monthlyGroups = (settings.monthlyGroups || []).map(g => ({ ...g, budgetType: 'monthly' }));
-                        const annualGroups = (settings.annualGroups || []).map(g => ({ ...g, budgetType: 'annual' }));
-                        
-                        return (
-                          <div>
-                            <div className="flex justify-between items-end mb-2 ml-1">
-                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">分類群組</label>
-                            </div>
-                            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                              <div className="flex bg-slate-100/80 p-1 rounded-2xl">
-                                {monthlyGroups.map(g => (
-                                  <button key={`m-${g.name}`} type="button" onClick={() => {
-                                    const firstItem = g.items?.[0]?.name || '';
-                                    setNewTrans({ ...newTrans, type: 'monthly', group: g.name, category: firstItem });
-                                  }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
-                                    newTrans.group === g.name && newTrans.type === 'monthly'
-                                      ? 'bg-white text-slate-800 shadow-sm'
-                                      : 'text-slate-500 hover:text-slate-700'
-                                  }`}>{g.name}</button>
-                                ))}
-                                {annualGroups.map(g => (
-                                  <button key={`a-${g.name}`} type="button" onClick={() => {
-                                    const firstItem = g.items?.[0]?.name || '';
-                                    setNewTrans({ ...newTrans, type: 'annual', group: g.name, category: firstItem });
-                                  }} className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
-                                    newTrans.group === g.name && newTrans.type === 'annual'
-                                      ? 'bg-white text-slate-800 shadow-sm'
-                                      : 'text-slate-400 hover:text-slate-600'
-                                  }`}>
-                                    <span className="text-[9px] text-slate-400 mr-1">年</span>{g.name}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                      
-                      {/* Category Grid */}
-                      {(() => {
-                        const currentGroups = newTrans.type === 'monthly' ? (settings.monthlyGroups || []) : (settings.annualGroups || []);
-                        const currentGroup = currentGroups.find(g => g.name === newTrans.group);
-                        const items = currentGroup?.items || [];
-                        if (items.length === 0) return null;
-                        return (
-                          <div className="grid grid-cols-3 gap-2.5 mt-4">
-                            {items.map(item => (
-                              <button
-                                key={item.name}
-                                type="button"
-                                onClick={() => setNewTrans({ ...newTrans, category: item.name })}
-                                className={`py-3.5 px-2 rounded-xl text-xs font-bold transition-all active:scale-95 text-center truncate ${
-                                  newTrans.category === item.name
-                                    ? 'bg-slate-800 text-white shadow-md shadow-slate-800/20'
-                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                                }`}
-                              >
-                                {item.name}
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Payer & Date (secondary — defaults to 士程 / today) */}
-                    <div className="border-t border-slate-100 my-5"></div>
-                    <div className="flex gap-3 mb-1">
-                      <div className="flex-1">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">付款人</label>
-                        <div className="bg-slate-100/50 p-1 rounded-2xl flex h-[52px] items-center">
-                          <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'myself' })} className={`flex-1 h-full rounded-xl text-sm font-bold transition-all ${newTrans.payer === 'myself' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400'}`}>士程</button>
-                          <button type="button" onClick={() => setNewTrans({ ...newTrans, payer: 'partner' })} className={`flex-1 h-full rounded-xl text-sm font-bold transition-all ${newTrans.payer === 'partner' ? 'bg-white shadow-sm text-rose-500' : 'text-slate-400'}`}>佳欣</button>
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">日期</label>
-                        <input type="date" value={newTrans.date} onChange={(e) => setNewTrans({ ...newTrans, date: e.target.value })} required className={`${GLASS_INPUT} h-[52px] py-0`} />
-                        {/* 日期快捷：補記昨天/前天的支出不用開日曆選 */}
-                        <div className="flex gap-1.5 mt-2">
-                          {[['今天', 0], ['昨天', 1], ['前天', 2]].map(([label, off]) => {
-                            const d = new Date();
-                            d.setDate(d.getDate() - off);
-                            const val = toLocalISOString(d);
-                            const active = newTrans.date === val;
-                            return (
-                              <button key={label} type="button" onClick={() => setNewTrans(prev => ({ ...prev, date: val }))}
-                                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 border ${active ? 'bg-slate-800 text-white border-slate-800' : 'bg-white/50 text-slate-500 border-slate-200'}`}>
-                                {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex gap-2.5">
-                      {!editingId && (
-                        <GlassButton type="button" variant="ghost" disabled={isSubmitting} onClick={() => handleAddTransaction(null, { keepOpen: true })} className="flex-1 py-4 text-sm rounded-2xl whitespace-nowrap">
-                          {isSubmitting ? '處理中...' : '儲存並再記一筆'}
-                        </GlassButton>
-                      )}
-                      <GlassButton type="submit" disabled={isSubmitting} className={`${editingId ? 'w-full' : 'flex-1'} py-4 text-base rounded-2xl shadow-xl shadow-slate-300/50 whitespace-nowrap`}>{isSubmitting ? '處理中...' : '確認儲存'}</GlassButton>
-                    </div>
-                  </form>
-                )}
-              </ModalWrapper>
-            )
-          }
-
 
           <ConfirmationModal
             isOpen={confirmModal.isOpen}
@@ -1145,13 +875,6 @@ function AppContent() {
             confirmColor={confirmModal.confirmColor}
           />
 
-          <RecurringManagerModal
-            isOpen={isRecurringManagerOpen}
-            onClose={() => setIsRecurringManagerOpen(false)}
-            items={settings.recurringItems || []}
-            onSave={handleSaveRecurring}
-            groups={settings.monthlyGroups || []}
-          />
         </>
       )
       }

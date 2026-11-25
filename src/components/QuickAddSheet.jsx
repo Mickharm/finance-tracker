@@ -1,5 +1,5 @@
 import { createElement, useMemo, useRef, useState } from 'react';
-import { X, Delete, CalendarDays, ChevronDown, Sun, Moon, Users } from 'lucide-react';
+import { X, Delete, CalendarDays, ChevronDown, Sun, Moon, Users, Trash2 } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 import { evalArithmetic, getTodayString, toLocalISOString, haptic } from '../lib/utils';
 import {
@@ -22,19 +22,19 @@ const valueOf = (s) => {
 
 const dayOffset = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return toLocalISOString(d); };
 
-// 新版快速記帳：一張不用捲動的抽屜。金額＋備註（必填）→ 自動分類；
+// 新版記帳抽屜（新增與編輯共用）：一張不用捲動的抽屜。金額＋備註（必填）→ 自動分類；
 // 常用建議只看這個人自己的紀錄；日常飲食可標午餐／晚餐、兩人一起、沒花錢。
-const QuickAddSheet = ({ transactions, settings, initialDate, isSubmitting, onSave, onClose }) => {
+const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, isSubmitting, onSave, onDelete, onClose }) => {
   const devicePayer = getDevicePayer();
-  const [askPayer, setAskPayer] = useState(!devicePayer);
-  const [payer, setPayer] = useState(devicePayer || 'myself');
-  const [expr, setExpr] = useState('0');
-  const [note, setNote] = useState('');
-  const [manualCat, setManualCat] = useState(null);
+  const [askPayer, setAskPayer] = useState(!devicePayer && !editing);
+  const [payer, setPayer] = useState(editing ? (editing.payer === 'partner' ? 'partner' : 'myself') : (devicePayer || 'myself'));
+  const [expr, setExpr] = useState(editing ? String(Math.max(0, Math.round(Number(editing.amount) || 0))) : '0');
+  const [note, setNote] = useState(editing ? String(editing.note || '') : '');
+  const [manualCat, setManualCat] = useState(editing && editing.category ? { type: editing.type || 'monthly', group: editing.group, category: editing.category } : null);
   const [picking, setPicking] = useState(false);
-  const [date, setDate] = useState(initialDate || getTodayString());
-  const [meal, setMeal] = useState(null);
-  const [together, setTogether] = useState(false);
+  const [date, setDate] = useState(editing?.date || initialDate || getTodayString());
+  const [meal, setMeal] = useState(editing?.meal || null);
+  const [together, setTogether] = useState(!!editing?.together);
   const [keepOpen, setKeepOpen] = useState(false);
   const noteRef = useRef(null);
 
@@ -94,8 +94,8 @@ const QuickAddSheet = ({ transactions, settings, initialDate, isSubmitting, onSa
       if (!cat && note.trim() && amount > 0) setPicking(true);
       return;
     }
-    onSave(buildTx(), { keepOpen });
-    if (keepOpen) reset();
+    onSave(buildTx(), { keepOpen: editing ? false : keepOpen, edit: editing });
+    if (keepOpen && !editing) reset();
   };
 
   const saveNoSpend = (label) => {
@@ -121,15 +121,10 @@ const QuickAddSheet = ({ transactions, settings, initialDate, isSubmitting, onSa
   const isChipDate = dateChips.some(([, o]) => dayOffset(o) === date);
   const dateLabel = isChipDate ? null : `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
 
-  const groupsForPicker = useMemo(() => {
-    const m = new Map();
-    categories.forEach((c) => {
-      const k = `${c.type}|${c.group}`;
-      if (!m.has(k)) m.set(k, { type: c.type, group: c.group, items: [] });
-      m.get(k).items.push(c);
-    });
-    return [...m.values()];
-  }, [categories]);
+  const groupsForPicker = useMemo(() => [
+    { key: 'monthly', label: '每月', items: categories.filter((c) => c.type !== 'annual') },
+    { key: 'annual', label: '年度（一年一次或不定期）', items: categories.filter((c) => c.type === 'annual') },
+  ].filter((g) => g.items.length), [categories]);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center">
@@ -156,7 +151,7 @@ const QuickAddSheet = ({ transactions, settings, initialDate, isSubmitting, onSa
 
         {/* ── 頂列：標題、日期、記帳人、關閉 */}
         <div className="flex items-center gap-2 px-5 pt-4 pb-2">
-          <h2 className="text-lg font-bold text-slate-800 mr-1">記一筆</h2>
+          <h2 className="text-lg font-bold text-slate-800 mr-1">{editing ? '編輯' : '記一筆'}</h2>
           <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto scrollbar-hide">
             {dateChips.map(([label, off]) => {
               const v = dayOffset(off);
@@ -190,7 +185,7 @@ const QuickAddSheet = ({ transactions, settings, initialDate, isSubmitting, onSa
         {/* ── 備註＋分類 */}
         <div className="px-5 mt-2">
           <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl pl-4 pr-1.5 py-1.5 focus-within:border-blue-400 transition-colors">
-            <input ref={noteRef} value={note} onChange={(e) => { setNote(e.target.value); setManualCat(null); }}
+            <input ref={noteRef} value={note} onChange={(e) => { setNote(e.target.value); if (!editing) setManualCat(null); }}
               placeholder="買了什麼？" className="flex-1 min-w-0 bg-transparent outline-none text-base py-1.5" enterKeyHint="done"
               onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} />
             <button type="button" onClick={() => setPicking((v) => !v)}
@@ -231,7 +226,7 @@ const QuickAddSheet = ({ transactions, settings, initialDate, isSubmitting, onSa
                 <Users className="w-3.5 h-3.5" />兩人一起
               </button>
             )}
-            {meal && (
+            {meal && !editing && (
               <div className="flex items-center gap-1 ml-auto">
                 <span className="text-[11px] text-slate-400">沒花錢</span>
                 {NO_SPEND_OPTIONS.map((o) => (
@@ -247,13 +242,13 @@ const QuickAddSheet = ({ transactions, settings, initialDate, isSubmitting, onSa
         {picking ? (
           <div className="mt-3 px-5 overflow-y-auto" style={{ maxHeight: '46dvh' }}>
             {groupsForPicker.map((g) => (
-              <div key={`${g.type}|${g.group}`} className="mb-3">
-                <div className="text-[11px] font-bold text-slate-400 mb-1.5 ml-1">{g.type === 'annual' ? '年度 · ' : ''}{g.group}</div>
+              <div key={g.key} className="mb-3">
+                <div className="text-[11px] font-bold text-slate-400 mb-1.5 ml-1">{g.label}</div>
                 <div className="grid grid-cols-3 gap-1.5">
                   {g.items.map((c) => {
                     const on = cat && cat.type === c.type && cat.group === c.group && cat.category === c.category;
                     return (
-                      <button key={c.category} type="button" onClick={() => { setManualCat(c); setPicking(false); haptic(8); }}
+                      <button key={`${c.type}|${c.group}|${c.category}`} type="button" onClick={() => { setManualCat(c); setPicking(false); haptic(8); }}
                         className={`flex items-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold text-left transition-all active:scale-95 ${on ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600'}`}>
                         <CategoryIcon category={c.category} group={c.group} type={c.type} size="sm" />
                         <span className="truncate">{c.category}</span>
@@ -281,14 +276,21 @@ const QuickAddSheet = ({ transactions, settings, initialDate, isSubmitting, onSa
 
         {/* ── 記下 */}
         <div className="flex items-center gap-2 px-5 mt-3">
-          <button type="button" onClick={() => setKeepOpen(!keepOpen)}
-            className={`shrink-0 h-12 px-3 rounded-xl text-xs font-bold border transition-all ${keepOpen ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white text-slate-400 border-slate-200'}`}
-            aria-pressed={keepOpen}>
-            連續記
-          </button>
+          {editing ? (
+            <button type="button" onClick={() => onDelete && onDelete(editing)}
+              className="shrink-0 h-12 px-3 rounded-xl text-xs font-bold border border-rose-200 text-rose-600 flex items-center gap-1" aria-label="刪除這筆">
+              <Trash2 className="w-4 h-4" />刪除
+            </button>
+          ) : (
+            <button type="button" onClick={() => setKeepOpen(!keepOpen)}
+              className={`shrink-0 h-12 px-3 rounded-xl text-xs font-bold border transition-all ${keepOpen ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white text-slate-400 border-slate-200'}`}
+              aria-pressed={keepOpen}>
+              連續記
+            </button>
+          )}
           <button type="button" onClick={save} disabled={isSubmitting}
             className={`flex-1 h-12 rounded-xl text-base font-bold transition-all active:scale-[0.98] ${blocker ? 'bg-slate-200 text-slate-500' : 'bg-slate-800 text-white shadow-lg shadow-slate-400/30'}`}>
-            {blocker || '記下'}
+            {blocker || (editing ? '儲存' : '記下')}
           </button>
         </div>
       </div>

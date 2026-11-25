@@ -45,17 +45,14 @@ finance-tracker/
     │   └── format.js       # 2.0 數字格式（fmt、fmtSigned、pct、short 萬/億）與兩人設定 PEOPLE
     ├── components/
     │   ├── Toast.jsx       # ToastProvider / useToast（全域訊息提示）
-    │   ├── ui.jsx          # 共用元件：ModalWrapper、ConfirmationModal、LoadingScreen、
-    │   │                   # InputField、NoteQuickPicks、CalculatorInput、GlassButton、
-    │   │                   # BudgetProgressBar、GroupCard、StandardList、AmountInput…
-    │   ├── settings.jsx    # GroupSettingsEditor（預算群組編輯）、RecurringManagerModal（固定支出設定）
+    │   ├── ui.jsx          # ConfirmationModal、LoadingScreen、ViewLoader（舊版表單元件已全部移除）
+    │   ├── QuickAddSheet.jsx # 記帳抽屜（新增與編輯支出共用）
     │   └── v2.jsx          # 2.0 收入／資產頁共用：Hero、Section、Row、Divided、Seg、Chips、MoneyInput、Sheet、LineChart…
     └── views/              # 每個頁面一個檔案（皆為純呈現＋自身互動，資料多由 App.jsx 傳入）
         ├── HomeV2.jsx              # 2.0 總覽（本月還能花、今天兩人與每餐、這週、今年三桶）
         ├── LedgerView.jsx          # 2.0 明細（月曆顯示每日金額／卡片＋搜尋、當日明細）
         ├── BucketAnalysis.jsx      # 2.0 分析上半（每月三色長條、兩人比例、分類排行）
         ├── BudgetView.jsx          # 2.0 預算設定（三桶、分類回測、這支手機的記帳人）
-        ├── VisualizationView.jsx   # 支出分析
         ├── IncomeView.jsx          # 2.0 收入（今年收入、本月薪水進帳、每月長條、組成、月薪、明細）
         ├── PartnerView.jsx         # 2.0 佳欣儲蓄（餘額、存入／提領、餘額走勢、依年紀錄）
         ├── InvestmentTabView.jsx   # 2.0 持股（自行訂閱 holdings_config、抓 Finnhub 報價；買入抽屜）
@@ -160,7 +157,7 @@ setIsModalOpen(false);
 
 ### 5.5b 快速記帳（2.0 P1）
 - 新增支出走 `components/QuickAddSheet.jsx`（FAB、日曆「在這天新增」、`?action=add-expense`）；
-  **編輯既有紀錄仍走 App.jsx 的舊表單**。
+  編輯既有紀錄也用同一個抽屜（`setQuickAdd({ edit: t })`），可刪除；儲存時整筆覆寫，取消的餐別／一起吃會移除。
 - `lib/quickAdd.js`：
   - 自動分類第 1 層＝同備註的歷史多數分類（自己的紀錄優先、一致率 ≥60%）；第 2 層＝包含已知備註或關鍵字表，
     只當猜測（畫面標「？」）；都對不上就要使用者自己選。第 3 層 Gemini 在 P7。
@@ -186,6 +183,15 @@ setIsModalOpen(false);
   收入、佳欣儲蓄、存股、換匯、房產都走這兩個；持股與淨值仍各自寫自己的設定文件。
 - 收入預設載入今年與去年（比去年同期）；翻到其他年份時呼叫 `requestHistory(year)` 補載。
 - 記收入選「薪水」時可一鍵帶入「同上次」或「目前月薪」（salary_history 最新一筆）。
+
+### 5.5e 不再顯示「群組」（2.0 全面淘汰舊版）
+- 畫面上只有「分類」＋「三桶」（固定／彈性／年度），任何地方都不顯示舊版的群組名稱（例如「生活固定支出」）。
+  明細每筆寫「日常飲食・彈性」；分類選單只分「每月」「年度」兩區。
+- 資料結構不變：`config_{year}` 的 monthlyGroups／annualGroups 仍是「群組 → 分類」兩層，交易也照樣存 group，
+  因為正式版（main）還在讀。2.0 新增的分類一律放進底層群組「其他」，使用者看不到。
+- 分類管理在預算設定頁：每月分類可新增／刪除；年度項目可新增／改金額／刪除；名稱只有在今年還沒有紀錄時才能改。
+  舊制「每個分類的月預算」、舊的分析頁（依預算群組看細項）、GroupSettingsEditor、RecurringManagerModal 已刪除。
+- 固定支出改在預算設定頁直接管理（名稱、金額、每月幾號、記在誰名下、分類、啟用／暫停）。
 
 ### 5.6 帳號與多裝置
 - 使用者用 `signInAnonymously` 匿名登入（每台裝置一個匿名 UID），但資料都讀寫
@@ -216,10 +222,9 @@ setIsModalOpen(false);
 - **卡片**：一律用 `GLASS_CARD` / `GLASS_INPUT`（`lib/constants.js`，2.0 起是紙卡樣式），不要自己拼卡片樣式。
 - **主題色**：從 `COLOR_VARIANTS` 取（slate/sky/rose/emerald/amber/indigo/cyan…），
   每個主題含 bg/border/text/iconBg/iconText/bar。
-- **Modal**：內容包在 `ModalWrapper`（處理鍵盤頂起、focus 捲動）；刪除確認用
+- **抽屜**：新增／編輯一律用 `components/v2.jsx` 的 `Sheet`（支出用 `QuickAddSheet`）；刪除確認用
   `requestDelete` / `requestConfirmation`（App.jsx）觸發共用 `ConfirmationModal`。
 - **提示**：`useToast()` → `showToast(msg, 'success'|'warning'|'error')`；操作成功搭配 `haptic()`。
-- **備註快捷**：表單備註欄位下放 `NoteQuickPicks`（統計歷史紀錄 top-5 常用備註）。
 - **金額**：顯示用 `toLocaleString()`；千分位輸入框用 `AmountInput`。
 - **日期**：一律 `'YYYY-MM-DD'` 字串（`toLocalISOString`/`getTodayString`），比較用字串比較。
 - **進度條警示**：剩餘 <10% 加 `budget-alert-glow` class（呼吸光）。

@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Plus, X, Search, Sun, Moon, Package, LayoutL
 import { GLASS_CARD } from '../lib/constants';
 import { getTodayString, toLocalISOString } from '../lib/utils';
 import { isNoSpend } from '../lib/meals';
+import { makeFixedMatcher, bucketOf } from '../lib/budget';
 import CategoryIcon from '../components/CategoryIcon';
 
 const fmt = (n) => `$${Math.round(n).toLocaleString()}`;
@@ -13,7 +14,10 @@ const PayerTag = ({ payer }) => (
   </span>
 );
 
-const TxRow = ({ t, onEdit, onDelete }) => (
+const BUCKET = { fixed: ['固定', 'text-indigo-700'], flex: ['彈性', 'text-emerald-700'], annual: ['年度', 'text-amber-700'] };
+
+// 一筆紀錄：分類＋屬於哪一桶（固定／彈性／年度），不再顯示舊版的群組
+const TxRow = ({ t, bucket, onEdit, onDelete }) => (
   <div onClick={() => onEdit && onEdit(t)} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
     <CategoryIcon category={t.category} group={t.group} type={t.type} size="sm" />
     <div className="min-w-0 flex-1">
@@ -22,7 +26,7 @@ const TxRow = ({ t, onEdit, onDelete }) => (
         <PayerTag payer={t.payer} />
         {t.together && <span className="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-100 text-indigo-700">一起</span>}
       </div>
-      <div className="text-[11px] text-slate-400 truncate">{t.group} / {t.category}</div>
+      <div className="text-[11px] text-slate-400 truncate">{t.category}{bucket && <span className={BUCKET[bucket][1]}>・{BUCKET[bucket][0]}</span>}</div>
     </div>
     <span className={`text-sm tabular-nums font-medium shrink-0 ${isNoSpend(t) ? 'text-slate-400' : 'text-slate-600'}`}>{isNoSpend(t) ? '沒花錢' : fmt(Number(t.amount) || 0)}</span>
     {onDelete && (
@@ -32,7 +36,7 @@ const TxRow = ({ t, onEdit, onDelete }) => (
 );
 
 // 2.0 明細：月曆每格顯示當天金額；也可切成卡片（依日期分組）＋搜尋
-const LedgerView = ({ transactions, selectedDate, focusDate, onFocusConsumed, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
+const LedgerView = ({ transactions, settings, selectedDate, focusDate, onFocusConsumed, deleteTransaction, onEdit, onAddExpense, onRequestHistory }) => {
   const [viewDate, setViewDate] = useState(selectedDate);
   const [selectedDay, setSelectedDay] = useState(null);
   const [asList, setAsList] = useState(false);
@@ -54,6 +58,7 @@ const LedgerView = ({ transactions, selectedDate, focusDate, onFocusConsumed, de
   }
   useEffect(() => { if (focusDate && onFocusConsumed) onFocusConsumed(); }, [focusDate, onFocusConsumed]);
 
+  const isFixed = useMemo(() => makeFixedMatcher(settings), [settings]);
   const y = viewDate.getFullYear();
   const m = viewDate.getMonth();
   const prefix = `${y}-${String(m + 1).padStart(2, '0')}`;
@@ -99,7 +104,7 @@ const LedgerView = ({ transactions, selectedDate, focusDate, onFocusConsumed, de
     const num = Number(trimmed.replace(/[$,]/g, ''));
     return transactions.filter((t) => {
       if (Number.isFinite(num) && trimmed.replace(/[$,]/g, '') !== '' && Number(t.amount) === num) return true;
-      return `${t.note || ''} ${t.category || ''} ${t.group || ''}`.toLowerCase().includes(trimmed);
+      return `${t.note || ''} ${t.category || ''}`.toLowerCase().includes(trimmed);
     }).slice(0, 200);
   }, [trimmed, monthTx, transactions]);
   const listByDate = useMemo(() => {
@@ -146,7 +151,7 @@ const LedgerView = ({ transactions, selectedDate, focusDate, onFocusConsumed, de
                 <span>{Number(date.slice(5, 7))}/{Number(date.slice(8, 10))}（{WEEK[new Date(`${date}T00:00:00`).getDay()]}）{date.slice(0, 4) !== String(y) ? ` ${date.slice(0, 4)}` : ''}</span>
                 <span className="tabular-nums">{fmt(list.reduce((s, t) => s + (Number(t.amount) || 0), 0))}</span>
               </div>
-              {list.map((t) => <TxRow key={t.id} t={t} onEdit={onEdit} onDelete={deleteTransaction} />)}
+              {list.map((t) => <TxRow key={t.id} t={t} bucket={bucketOf(t, isFixed)} onEdit={onEdit} onDelete={deleteTransaction} />)}
             </div>
           ))}
         </div>
@@ -197,7 +202,7 @@ const LedgerView = ({ transactions, selectedDate, focusDate, onFocusConsumed, de
               {groupsOfDay.map(([k, label, Icon, list]) => (
                 <div key={k} className="mb-1">
                   <div className="flex items-center gap-1 px-2 pt-1.5 text-[11px] font-bold text-slate-400">{createElement(Icon, { className: 'w-3 h-3' })}{label}</div>
-                  {list.map((t) => <TxRow key={t.id} t={t} onEdit={onEdit} onDelete={deleteTransaction} />)}
+                  {list.map((t) => <TxRow key={t.id} t={t} bucket={bucketOf(t, isFixed)} onEdit={onEdit} onDelete={deleteTransaction} />)}
                 </div>
               ))}
               <button type="button" onClick={() => onAddExpense && onAddExpense(selectedStr)}

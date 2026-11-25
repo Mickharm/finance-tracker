@@ -32,7 +32,7 @@ const BucketAnalysis = ({ transactions, settings, flexMonthly, onRequestHistory 
   const cats = useMemo(() => {
     const m = new Map();
     for (const t of yearTx) {
-      const key = `${t.type}|${t.group}|${t.category}`;
+      const key = `${t.type}|${t.category}`;
       const e = m.get(key) || { type: t.type, group: t.group, category: t.category, sum: 0, n: 0, bucket: bucketOf(t, isFixed) };
       e.sum += Number(t.amount) || 0; e.n++;
       m.set(key, e);
@@ -101,7 +101,7 @@ const BucketAnalysis = ({ transactions, settings, flexMonthly, onRequestHistory 
         <h3 className="text-base font-bold text-slate-800 mb-3">花最多的分類<span className="ml-2 text-xs font-normal text-slate-400" style={{ fontFamily: 'var(--font-sans)' }}>{scopeLabel}</span></h3>
         <div className="space-y-2.5">
           {cats.map((c) => (
-            <div key={`${c.type}|${c.group}|${c.category}`} className="flex items-center gap-2.5">
+            <div key={`${c.type}|${c.category}`} className="flex items-center gap-2.5">
               <CategoryIcon category={c.category} group={c.group} type={c.type} size="sm" />
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between text-sm"><span className="text-slate-700 truncate">{c.category}</span><span className="tabular-nums text-slate-700">{fmt(c.sum)}</span></div>
