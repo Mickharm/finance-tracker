@@ -88,16 +88,25 @@ const KEYWORDS = [
 const findByName = (settings, name) => listCategories(settings).find((c) => c.category === name) || null;
 
 // 回傳 { kind: 'rule' | 'kw', type, group, category } 或 null
-const classifyNote = (rawNote, payer, index, settings) => {
+// exclude（回測用）：把某一筆自己的紀錄從統計中扣掉，模擬「還沒記這筆時」會怎麼分
+const classifyNote = (rawNote, payer, index, settings, exclude = null) => {
   const note = normNote(rawNote);
   if (!note || !index) return null;
   const who = payer === 'partner' ? 'partner' : 'myself';
+  const exKey = exclude ? catKey(exclude) : null;
 
   // 第 1 層：完全相同的備註（自己的紀錄優先）
   for (const map of [index[who], index.all]) {
     const e = map.get(note);
     if (e) {
-      const b = bestCat(e);
+      let entry = e;
+      if (exKey && e.cats.has(exKey)) {
+        const cats = new Map(e.cats);
+        const n = cats.get(exKey) - 1;
+        if (n > 0) cats.set(exKey, n); else cats.delete(exKey);
+        entry = { ...e, cats };
+      }
+      const b = bestCat(entry);
       if (b && b.share >= 0.6) return { kind: 'rule', type: b.type, group: b.group, category: b.category };
     }
   }
@@ -106,7 +115,7 @@ const classifyNote = (rawNote, payer, index, settings) => {
   if (note.length >= 2) {
     let hit = null;
     index.all.forEach((e) => {
-      if (e.note.length < 2 || e.count < 2) return;
+      if (e.note.length < 2 || e.count < 2 || e.note === note) return;
       if (note.includes(e.note) && (!hit || e.note.length > hit.note.length)) hit = e;
     });
     if (hit) {
@@ -123,6 +132,28 @@ const classifyNote = (rawNote, payer, index, settings) => {
     }
   }
   return null;
+};
+
+// 回測：拿過去每一筆有備註的紀錄，假裝還沒記過它，看自動分類會給什麼，和實際分類比對
+const backtestClassifier = (transactions, settings, since = '') => {
+  const index = buildNoteIndex(transactions, settings);
+  const r = { total: 0, rule: 0, ruleOk: 0, kw: 0, kwOk: 0, none: 0, misses: new Map() };
+  for (const t of transactions) {
+    const note = normNote(t.note);
+    if (!note || (since && String(t.date) < since)) continue;
+    if (!index.valid.has(catKey(t))) continue; // 分類已不在設定中的舊紀錄不計
+    r.total++;
+    const c = classifyNote(note, t.payer, index, settings, t);
+    if (!c) { r.none++; continue; }
+    const ok = c.type === t.type && c.group === t.group && c.category === t.category;
+    r[c.kind]++;
+    if (ok) r[c.kind + 'Ok']++;
+    else {
+      const k = `${note} → ${c.category}（實際 ${t.category}）`;
+      r.misses.set(k, (r.misses.get(k) || 0) + 1);
+    }
+  }
+  return { ...r, misses: [...r.misses.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8) };
 };
 
 // 常用建議：只看「這個人」自己的紀錄。近 90 天的次數為主、全部次數為輔；
@@ -157,6 +188,6 @@ const getDevicePayer = () => {
 const setDevicePayer = (v) => { try { localStorage.setItem(DEVICE_PAYER_KEY, v); } catch { /* 無痕模式等情況忽略 */ } };
 
 export {
-  normNote, listCategories, buildNoteIndex, classifyNote, getSuggestions,
+  normNote, listCategories, buildNoteIndex, classifyNote, getSuggestions, backtestClassifier,
   getDevicePayer, setDevicePayer, NO_SPEND_OPTIONS, FOOD_CATEGORY,
 };
