@@ -45,8 +45,9 @@ const buildNoteIndex = (transactions, settings) => {
     if (t.date >= recentCut) e.recent++;
     if (t.date > e.last) e.last = t.date;
     if (valid.has(k)) e.cats.set(k, (e.cats.get(k) || 0) + 1);
+    // $0 也算進去：公司便當這類不花錢的備註，常見金額就是 0，不會被少數幾次的 $50 帶偏
     const amt = Number(t.amount) || 0;
-    if (amt > 0) e.amounts.set(amt, (e.amounts.get(amt) || 0) + 1);
+    if (amt >= 0) e.amounts.set(amt, (e.amounts.get(amt) || 0) + 1);
     if (t.meal === 'lunch' || t.meal === 'dinner') e.meals[t.meal]++;
   };
   for (const t of transactions || []) {

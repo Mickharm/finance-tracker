@@ -14,7 +14,6 @@ const PEOPLE = {
 };
 
 const OPS = ['+', '−'];
-const NO_SPEND_NOTE = new Set([...NO_SPEND_OPTIONS, '請客/自煮', '減肥/斷食', '減肥/沒吃']);
 const toExpr = (s) => s.replace(/−/g, '-');
 const hasOp = (s) => /[+−]/.test(s.slice(1));
 const valueOf = (s) => {
@@ -106,14 +105,13 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
     return tx;
   };
 
-  // $0 只允許「沒花錢」的紀錄（請客／自煮／沒吃），例如編輯一筆兩人一起的自煮晚餐
-  const zeroOk = amount === 0 && NO_SPEND_NOTE.has(note.trim());
-  const blocker = amount <= 0 && !zeroOk ? '先輸入金額' : !note.trim() ? '寫一下買了什麼' : !cat ? '選一個分類' : null;
+  // $0 也可以記（例如公司便當、別人請客），只要寫了備註、有分類
+  const blocker = !note.trim() ? '寫一下買了什麼' : !cat ? '選一個分類' : null;
 
   const save = () => {
     if (blocker || isSubmitting) {
-      if (!note.trim() && amount > 0) noteRef.current?.focus();
-      if (!cat && note.trim() && (amount > 0 || zeroOk)) setPicking(true);
+      if (!note.trim()) noteRef.current?.focus();
+      else if (!cat) setPicking(true);
       return;
     }
     onSave(buildTx(), { keepOpen: editing ? false : keepOpen, edit: editing });
@@ -130,7 +128,7 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
     haptic(8);
     setNote(s.note);
     setManualCat(null);
-    if (s.amount && amount === 0) setExpr(String(s.amount));
+    if (s.amount !== null && amount === 0) setExpr(String(s.amount));
   };
 
   const choosePayerForDevice = (p) => {
@@ -242,7 +240,7 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
             {suggestions.map((s) => (
               <button key={s.note} type="button" onClick={() => pickSuggestion(s)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all active:scale-95 ${note === s.note ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200'}`}>
-                {s.note}{s.amount ? <span className="ml-1 opacity-60 tabular-nums">${s.amount.toLocaleString()}</span> : null}
+                {s.note}{s.amount !== null ? <span className="ml-1 opacity-60 tabular-nums">${s.amount.toLocaleString()}</span> : null}
               </button>
             ))}
           </div>
