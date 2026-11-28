@@ -114,9 +114,9 @@ const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, 
 
         <div className="flex items-center justify-between mt-3">
           <div className="min-w-0 flex-1">
-            <Money value={flexLeft} animate id={`home-left-${year}-${monthIdx}`} className={`${heroSize} leading-none tracking-[-0.035em] ${flexLeft < 0 ? 'text-red-600' : 'money-ink'}`} />
+            <Money value={flexLeft} animate id={`home-left-${year}-${monthIdx}`} className={`${heroSize} leading-none tracking-[-0.035em] ${flexLeft < 0 ? 'text-red-700' : 'money-ink'}`} />
             <div className={`mt-3.5 flex items-start gap-1.5 text-[13px] leading-snug font-semibold ${status === 'over' ? 'text-red-700' : status === 'warn' ? 'text-amber-800' : 'text-slate-600'}`}>
-              {createElement(status === 'ok' ? Sparkles : status === 'warn' ? TrendingUp : TriangleAlert, { className: `w-4 h-4 shrink-0 mt-px ${status === 'ok' ? 'text-emerald-500' : ''}`, strokeWidth: 2.3 })}
+              {createElement(status === 'ok' ? Sparkles : status === 'warn' ? TrendingUp : TriangleAlert, { className: `w-4 h-4 shrink-0 mt-px ${status === 'ok' ? 'text-emerald-600' : ''}`, strokeWidth: 2.3 })}
               <span>
                 {!isCurrentMonth ? (status === 'over' ? `這個月超出 ${fmt(-flexLeft)}` : `這個月用了額度的 ${Math.round((mb.flex / plan.flex) * 100)}%`)
                   : status === 'over' ? `已超出額度，還有 ${daysLeft} 天`
@@ -125,16 +125,23 @@ const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, 
               </span>
             </div>
           </div>
-          <Vessel pct={leftPct} tone={tone} className="w-[104px] h-[104px] ml-4 mr-0.5" mark={isCurrentMonth ? 1 - timePct / 100 : null} markLabel="應剩">
-            <span className="font-num text-[25px] leading-none font-bold tracking-tight text-slate-900">{Math.round(leftPct * 100)}<span className="text-[13px] font-bold ml-px">%</span></span>
-            <span className="text-[10px] font-bold text-slate-600 mt-1">剩餘</span>
-          </Vessel>
+          <div className="shrink-0 ml-3 flex flex-col items-center">
+            <Vessel pct={leftPct} tone={tone} className="w-[104px] h-[104px]" mark={isCurrentMonth ? 1 - timePct / 100 : null}>
+              <span className="font-num text-[25px] leading-none font-bold tracking-tight text-slate-800">{Math.round(leftPct * 100)}<span className="text-[13px] font-bold ml-px">%</span></span>
+              <span className="text-[10px] font-bold text-slate-600 mt-1">剩餘</span>
+            </Vessel>
+            {isCurrentMonth && (
+              <div className="mt-2 flex items-center gap-1.5 text-[10.5px] font-semibold text-slate-500 whitespace-nowrap">
+                <span className="w-3.5 border-t-[1.5px] border-dashed border-slate-500" />今天應剩 <span className="font-num font-bold text-slate-700">{Math.round(100 - timePct)}%</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-5 pt-4" style={{ boxShadow: 'inset 0 0.5px 0 0 var(--hair)' }}>
           <Stat label="彈性已花">{fmt(mb.flex)}</Stat>
           {isCurrentMonth
-            ? <Stat label="月底預估" tone={pace > plan.flex ? 'text-red-600' : 'text-slate-800'}>{fmt(pace)}</Stat>
+            ? <Stat label="月底預估" tone={pace > plan.flex ? 'text-red-700' : 'text-slate-800'}>{fmt(pace)}</Stat>
             : <Stat label="每天平均">{fmt(mb.flex / daysInMonth)}</Stat>}
           <Stat label={mb.annual > 0 ? '固定＋年度' : '固定支出'}>{fmt(mb.fixed + mb.annual)}</Stat>
         </div>
@@ -234,7 +241,7 @@ const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, 
                     <span className="font-num text-[20px] leading-none font-bold tracking-tight text-slate-900">{Math.round(p * 100)}<span className="text-[11px] ml-px">%</span></span>
                   </Vessel>
                   <div className="mt-2.5 text-[13px] font-bold text-slate-800 flex items-center gap-1.5"><Dot tone={b.tone} className="!w-2 !h-2" />{b.label}</div>
-                  <div className={`font-num text-[11px] font-semibold tabular-nums mt-0.5 ${over ? 'text-red-600' : 'text-slate-500'}`}>{short(b.used)} / {short(b.budget)}</div>
+                  <div className={`font-num text-[11px] font-semibold tabular-nums mt-0.5 ${over ? 'text-red-700' : 'text-slate-500'}`}>{short(b.used)} / {short(b.budget)}</div>
                 </div>
               );
             })}

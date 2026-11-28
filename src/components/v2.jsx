@@ -251,7 +251,7 @@ const smoothPath = (pts) => {
 };
 
 // 折線（面積）圖：points = [{ x: label, y }]；線會「畫」出來，最後一點有光暈
-export const LineChart = ({ points, height = 132, color = '#2F7BF6', color2, formatY = short, highlightLast = true, baseline = null }) => {
+export const LineChart = ({ points, height = 132, color = '#7C9DC0', color2, formatY = short, highlightLast = true, baseline = null }) => {
   const uid = useId().replace(/:/g, '');
   if (!points || points.length < 2) return <div className="text-[13px] text-slate-400 text-center py-9">累積兩筆以上紀錄後顯示趨勢</div>;
   const W = 320; const H = height; const padT = 18; const padB = 20;
@@ -273,7 +273,7 @@ export const LineChart = ({ points, height = 132, color = '#2F7BF6', color2, for
         <linearGradient id={`l${uid}`} x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor={c2} stopOpacity="0.55" /><stop offset="100%" stopColor={color} /></linearGradient>
       </defs>
       {[0.25, 0.5, 0.75].map((f) => <line key={f} x1="0" x2={W} y1={padT + f * (H - padT - padB)} y2={padT + f * (H - padT - padB)} className="chart-grid" strokeWidth="1" strokeDasharray="2 5" />)}
-      {baseline !== null && <line x1="0" x2={W} y1={Y(baseline)} y2={Y(baseline)} stroke="#8D92A3" strokeDasharray="3 3" strokeWidth="1" />}
+      {baseline !== null && <line x1="0" x2={W} y1={Y(baseline)} y2={Y(baseline)} stroke="#9C9E9B" strokeDasharray="3 3" strokeWidth="1" />}
       <path d={area} fill={`url(#a${uid})`} className="fade-up" style={{ animationDelay: '0.35s', animationDuration: '0.9s' }} />
       <path d={line} fill="none" stroke={color} strokeOpacity="0.28" strokeWidth="7" strokeLinejoin="round" strokeLinecap="round" pathLength="1" style={{ strokeDasharray: 1, '--len': 1, animation: 'draw 1.3s var(--ease-out) backwards', filter: 'blur(4px)' }} />
       <path d={line} fill="none" stroke={`url(#l${uid})`} strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" pathLength="1" style={{ strokeDasharray: 1, '--len': 1, animation: 'draw 1.3s var(--ease-out) backwards' }} />
@@ -283,9 +283,9 @@ export const LineChart = ({ points, height = 132, color = '#2F7BF6', color2, for
           <circle cx={lx} cy={ly} r="4.5" fill="#fff" stroke={color} strokeWidth="2.6" />
         </g>
       )}
-      <text x="6" y={H - 5} fontSize="10.5" fontWeight="600" fill="#8D92A3">{points[0].x}</text>
-      <text x={W - 6} y={H - 5} fontSize="10.5" fontWeight="600" fill="#8D92A3" textAnchor="end">{last.x}</text>
-      <text x="6" y="11" fontSize="10.5" fontWeight="600" fill="#8D92A3">最高 {formatY(hi)}</text>
+      <text x="6" y={H - 5} fontSize="10.5" fontWeight="600" fill="#9C9E9B">{points[0].x}</text>
+      <text x={W - 6} y={H - 5} fontSize="10.5" fontWeight="600" fill="#9C9E9B" textAnchor="end">{last.x}</text>
+      <text x="6" y="11" fontSize="10.5" fontWeight="600" fill="#9C9E9B">最高 {formatY(hi)}</text>
     </svg>
   );
 };

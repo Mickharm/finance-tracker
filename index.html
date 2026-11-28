@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="記帳助手" />
   <!-- PWA: Theme color（只用淺色主題） -->
-  <meta name="theme-color" content="#EAF1FB" />
+  <meta name="theme-color" content="#EAE8E2" />
   <meta name="color-scheme" content="light only" />
   <!-- PWA: Web App Manifest -->
   <link rel="manifest" href="manifest.webmanifest" />
@@ -22,7 +22,7 @@
   <!-- 字體：3.0 起全部使用系統字（SF Pro／SF Pro Rounded／蘋方），不再下載網路字體 -->
   <title>記帳助手</title>
   <script>
-    // 極光背景依時段換色：清晨、白天、傍晚、夜晚（在畫面出現前就決定，避免閃一下）
+    // 背景的圓依時段換色：清晨、白天、傍晚、夜晚（在畫面出現前就決定，避免閃一下）
     // 網址加 ?mood=dawn|day|dusk|night 可以強制指定（設計檢查用）
     (function () {
       var h = new Date().getHours();
@@ -32,40 +32,40 @@
     })();
   </script>
   <style>
-    /* 開啟瞬間（React 還沒載入）的畫面：和 App 內同一片極光＋一顆玻璃圖示 */
-    html { --pl-base: #EAF1FB; --pl-1: #9CCBFF; --pl-2: #A6F0D8; --pl-3: #CFC4FF; --pl-4: #FFD0E2; }
-    html[data-mood="dawn"]  { --pl-base: #FBF1EC; --pl-1: #FFC7A6; --pl-2: #FFBDD2; --pl-3: #B7DBFF; --pl-4: #FFE4A6; }
-    html[data-mood="dusk"]  { --pl-base: #F5EEF7; --pl-1: #FFB39C; --pl-2: #D2B8FF; --pl-3: #FFB6D9; --pl-4: #FFD79E; }
-    html[data-mood="night"] { --pl-base: #E8EBFA; --pl-1: #A8B8FF; --pl-2: #CCB4FF; --pl-3: #9DE2DC; --pl-4: #F6BEDF; }
+    /* 開啟瞬間（React 還沒載入）的畫面：和 App 內同一張和紙底、同一個圓＋一顆玻璃圖示 */
+    html { --pl-base: #EAE8E2; --pl-1: #B9D0C6; }
+    html[data-mood="dawn"]  { --pl-base: #ECE8E2; --pl-1: #E2C5BF; }
+    html[data-mood="dusk"]  { --pl-base: #EAE7E3; --pl-1: #C9C7DD; }
+    html[data-mood="night"] { --pl-base: #E5E5E4; --pl-1: #B7C8DA; }
     body { margin: 0; background: var(--pl-base); }
     #pre-loader {
       position: fixed; inset: 0; z-index: 200; overflow: hidden;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background:
-        radial-gradient(90% 55% at 0% 0%, var(--pl-1) 0%, transparent 70%),
-        radial-gradient(80% 50% at 100% 30%, var(--pl-2) 0%, transparent 70%),
-        radial-gradient(90% 55% at 10% 100%, var(--pl-3) 0%, transparent 70%),
-        radial-gradient(70% 45% at 100% 0%, var(--pl-4) 0%, transparent 70%),
-        var(--pl-base);
+      background: var(--pl-base);
     }
+    #pre-loader::before {
+      content: ''; position: absolute; width: 88%; max-width: 24rem; aspect-ratio: 1; border-radius: 50%;
+      right: -30%; top: 7%; background: var(--pl-1);
+    }
+    #pre-loader > * { position: relative; }
     #pre-loader .pl-icon-box {
       width: 6rem; height: 6rem; border-radius: 30px;
-      background: linear-gradient(168deg, rgba(255,255,255,.8), rgba(255,255,255,.45));
-      box-shadow: inset 0 1.5px 0 rgba(255,255,255,.96), inset 0 -1px 0 rgba(255,255,255,.55), 0 0 0 .5px rgba(22,28,70,.13), 0 14px 34px -20px rgba(38,50,110,.4);
+      background: linear-gradient(162deg, rgba(255,255,255,.78), rgba(255,255,255,.42));
+      box-shadow: inset 0 1.5px 0 rgba(255,255,255,.98), inset 0 -1.5px 0 rgba(255,255,255,.7), inset 0 0 18px rgba(255,255,255,.4), 0 0 0 .5px rgba(46,49,51,.2), 0 22px 40px -24px rgba(46,49,51,.42);
       display: flex; align-items: center; justify-content: center; margin-bottom: 1.75rem;
     }
-    #pre-loader .pl-icon-box svg { width: 2.75rem; height: 2.75rem; color: #1F2230; }
+    #pre-loader .pl-icon-box svg { width: 2.75rem; height: 2.75rem; color: #2E3133; }
     #pre-loader .pl-title {
       font: 800 1.375rem/1.2 -apple-system, BlinkMacSystemFont, "PingFang TC", system-ui, sans-serif;
-      color: #14161F; margin: 0 0 1.5rem; letter-spacing: -0.02em;
+      color: #2E3133; margin: 0 0 1.5rem; letter-spacing: -0.02em;
     }
     #pre-loader .pl-bar-track {
       width: 11rem; height: 8px; border-radius: 9999px; overflow: hidden;
-      background: rgba(26,32,80,.07); box-shadow: inset 0 1px 2.5px rgba(26,32,80,.16), 0 1px 0 rgba(255,255,255,.85);
+      background: rgba(46,49,51,.08); box-shadow: inset 0 1px 2.5px rgba(46,49,51,.18), 0 1px 0 rgba(255,255,255,.8);
     }
     #pre-loader .pl-bar-fill {
       height: 100%; width: 0%; border-radius: 9999px;
-      background: linear-gradient(90deg, #4D5263, #14161F);
+      background: linear-gradient(90deg, #6A6D70, #2E3133);
       animation: pl-bar-grow 2s ease-out forwards;
     }
     @keyframes pl-bar-grow { 0% { width: 0%; } 100% { width: 15%; } }

@@ -82,8 +82,8 @@ const PartnerView = ({ partnerTransactions, loading = false, onSave, onRemove })
   if (loading) return <ViewLoader label="載入儲蓄資料..." />;
   return (
     <div className="space-y-6 stagger">
-      <Hero label="佳欣儲蓄餘額" amount={balance} id="partner-balance" tone={balance < 0 ? 'text-red-600' : ''} tint="tint-rose"
-        sub={<>{year} 年存入 <b className="font-num text-emerald-600 tabular-nums">{fmt(yIn)}</b>・提領 <b className="font-num text-red-600 tabular-nums">{fmt(yOut)}</b></>}>
+      <Hero label="佳欣儲蓄餘額" amount={balance} id="partner-balance" tone={balance < 0 ? 'text-red-700' : ''} tint="tint-rose"
+        sub={<>{year} 年存入 <b className="font-num text-emerald-700 tabular-nums">{fmt(yIn)}</b>・提領 <b className="font-num text-red-700 tabular-nums">{fmt(yOut)}</b></>}>
         <div className="grid grid-cols-2 gap-2.5">
           <button type="button" onClick={() => openNew('saving')} className="btn btn-ink h-[50px] text-[15px]"><Plus className="w-4 h-4" strokeWidth={2.8} />存入</button>
           <button type="button" onClick={() => openNew('expense')} className="btn btn-glass h-[50px] text-[15px]"><Minus className="w-4 h-4" strokeWidth={2.8} />提領</button>
@@ -92,7 +92,7 @@ const PartnerView = ({ partnerTransactions, loading = false, onSave, onRemove })
 
       <Section title="餘額走勢">
         <div className="glass-card px-4 pt-4 pb-2.5">
-          <LineChart points={trend} color="#EE4F82" color2="#FFA9C2" />
+          <LineChart points={trend} color="#C08480" color2="#E0B2AE" />
         </div>
       </Section>
 
@@ -107,7 +107,7 @@ const PartnerView = ({ partnerTransactions, loading = false, onSave, onRemove })
                   <button type="button" onClick={() => setOpenYears((s) => { const n = new Set(s); if (n.has(y)) n.delete(y); else n.add(y); return n; })}
                     className="press w-full flex justify-between items-center px-2 mb-1.5 text-[13px] font-bold text-slate-500">
                     <span className="flex items-center gap-1">{y} 年・{list.length} 筆<ChevronDown className={`w-4 h-4 transition-transform duration-300 ${open ? '' : '-rotate-90'}`} strokeWidth={2.4} /></span>
-                    <span className={`font-num tabular-nums ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{fmtSigned(net)}</span>
+                    <span className={`font-num tabular-nums ${net >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{fmtSigned(net)}</span>
                   </button>
                   {open && (
                     <Divided className="fade-up">
@@ -115,7 +115,7 @@ const PartnerView = ({ partnerTransactions, loading = false, onSave, onRemove })
                         <Row key={t.id}
                           left={<IconDot icon={t.type === 'expense' ? ArrowUpRight : ArrowDownLeft} tone={t.type === 'expense' ? 'red' : 'emerald'} />}
                           title={t.note || (t.type === 'expense' ? '提領' : '存入')} sub={t.date.replace(/-/g, '/')}
-                          right={<span className={t.type === 'expense' ? 'text-red-600' : 'text-emerald-600'}>{t.type === 'expense' ? '−' : '+'}{fmt(t.amount)}</span>}
+                          right={<span className={t.type === 'expense' ? 'text-red-700' : 'text-emerald-700'}>{t.type === 'expense' ? '−' : '+'}{fmt(t.amount)}</span>}
                           onClick={() => setSheet({ ...t, amount: Number(t.amount) })} />
                       ))}
                     </Divided>

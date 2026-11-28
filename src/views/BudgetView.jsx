@@ -40,7 +40,7 @@ const CategorySheet = ({ initial, usedCount, existing, onSave, onDelete, onClose
       onDelete={!isNew ? onDelete : undefined}>
       <Field label="名稱">
         <TextInput value={name} onChange={setName} disabled={!canRename} autoFocus={isNew} placeholder={initial.type === 'annual' ? '例如：車險' : '例如：寵物'} />
-        {clash && <div className="text-[13px] text-red-600 mt-1.5">已經有這個名稱了</div>}
+        {clash && <div className="text-[13px] text-red-700 mt-1.5">已經有這個名稱了</div>}
         {!canRename && <div className="text-xs text-slate-500 mt-1.5">今年已有 {usedCount} 筆紀錄用這個分類，名稱不能改。</div>}
       </Field>
       {initial.type === 'annual' && <Field label="一年的預算"><MoneyInput value={budget} onChange={setBudget} /></Field>}
@@ -119,14 +119,14 @@ const GeminiPanel = ({ transactions, settings, year }) => {
             <>
               <button type="button" onClick={run} className="btn btn-glass w-full h-11 text-sm">AI 回測（同時測試金鑰）</button>
               <p className="text-xs text-slate-400 mt-2">拿今年前兩層分不出來的備註（最多 40 則），問 Gemini 一次，和你們實際選的比對。</p>
-              {test?.error && <p className="text-[13px] text-red-600 mt-2">{test.error}</p>}
+              {test?.error && <p className="text-[13px] text-red-700 mt-2">{test.error}</p>}
             </>
           ) : test.loading ? <p className="text-[13px] text-slate-400 text-center py-2">Gemini 回測中…</p> : test.total === 0 ? (
             <p className="text-[13px] text-slate-500">今年沒有前兩層分不出來的紀錄，可以之後再測。</p>
           ) : (
             <div className="space-y-2">
               <StatLine label="測試備註">{test.total} 則</StatLine>
-              <StatLine label="AI 有給答案的正確率"><b className={acc >= 0.97 ? 'text-emerald-600' : 'text-amber-600'}>{pctOf(test.ok, test.total - test.unsure)}</b></StatLine>
+              <StatLine label="AI 有給答案的正確率"><b className={acc >= 0.97 ? 'text-emerald-700' : 'text-amber-700'}>{pctOf(test.ok, test.total - test.unsure)}</b></StatLine>
               <StatLine label="AI 說沒把握">{test.unsure} 則</StatLine>
               {test.misses.length > 0 && (
                 <div className="pt-2.5 mt-1" style={{ boxShadow: 'inset 0 0.5px 0 0 var(--hair)' }}>
@@ -279,7 +279,7 @@ const BudgetView = ({ year, settings, flexMonthly, transactions, onSaveFlex, onS
           ) : (
             <div className="mt-3.5 space-y-2 fade-up">
               <StatLine label="回測筆數">{bt.total.toLocaleString()}</StatLine>
-              <StatLine label="同備註直接分類">{pctOf(bt.rule, bt.total)}・正確 <b className={bt.rule && bt.ruleOk / bt.rule >= 0.97 ? 'text-emerald-600' : 'text-red-600'}>{pctOf(bt.ruleOk, bt.rule)}</b></StatLine>
+              <StatLine label="同備註直接分類">{pctOf(bt.rule, bt.total)}・正確 <b className={bt.rule && bt.ruleOk / bt.rule >= 0.97 ? 'text-emerald-700' : 'text-red-700'}>{pctOf(bt.ruleOk, bt.rule)}</b></StatLine>
               <StatLine label="猜測（標「？」）">{pctOf(bt.kw, bt.total)}・猜對 {pctOf(bt.kwOk, bt.kw)}</StatLine>
               <StatLine label="沒有把握，請你選">{pctOf(bt.none, bt.total)}</StatLine>
               {bt.misses.length > 0 && (

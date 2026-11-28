@@ -43,7 +43,7 @@ const GoalSheet = ({ row, onSave, onDelete, onClose }) => {
         <div className="flex justify-between"><span>前一年實際</span><span className="font-num font-semibold tabular-nums">{fmt(row.prev)}</span></div>
         <div className="flex justify-between"><span>今年固定存入</span><span className="font-num font-semibold tabular-nums">{fmt(row.deposit)}</span></div>
         <div className="flex justify-between font-bold text-slate-800"><span>目標（×{(1 + n(f.roi) / 100).toFixed(2)}）</span><span className="font-num tabular-nums">{fmt(target)}</span></div>
-        <div className="flex justify-between font-bold"><span className="text-slate-800">實際</span><span className={`font-num tabular-nums ${eff >= target ? 'text-emerald-600' : 'text-slate-800'}`}>{fmt(eff)}（{fmtSigned(eff - target)}）</span></div>
+        <div className="flex justify-between font-bold"><span className="text-slate-800">實際</span><span className={`font-num tabular-nums ${eff >= target ? 'text-emerald-700' : 'text-slate-800'}`}>{fmt(eff)}（{fmtSigned(eff - target)}）</span></div>
       </div>
     </Sheet>
   );
@@ -98,7 +98,7 @@ const StockGoalView = ({ goals, exchanges, onAddYear, onDeleteYear, onSave, onRe
     <div className="space-y-6 stagger">
       {cur ? (
         <Hero label={`${cur.g.year} 年存股（美金）`} amount={cur.eff} id="stockgoal-eff"
-          sub={<>目標 <span className="font-num font-semibold">{fmt(cur.target)}</span>・{cur.diff >= 0 ? <b className="font-num text-emerald-600">已達成 {fmtSigned(cur.diff)}</b> : <b className="font-num text-slate-800">還差 {fmt(-cur.diff)}</b>}</>}
+          sub={<>目標 <span className="font-num font-semibold">{fmt(cur.target)}</span>・{cur.diff >= 0 ? <b className="font-num text-emerald-700">已達成 {fmtSigned(cur.diff)}</b> : <b className="font-num text-slate-800">還差 {fmt(-cur.diff)}</b>}</>}
           action={<HeroButton icon={Repeat} label="換匯" onClick={newEx} />}>
           <Tube value={cur.eff} max={cur.target || 1} tone={cur.diff >= 0 ? 'emerald' : 'blue'} height={12} />
           <div className="flex justify-between text-xs text-slate-500 mt-2.5">
@@ -140,7 +140,7 @@ const StockGoalView = ({ goals, exchanges, onAddYear, onDeleteYear, onSave, onRe
                 <Row key={r.g.id}
                   title={<span className="flex items-center gap-2 font-num">{r.g.year} 年<span className={`tag ${status[1]}`}>{status[0]}</span></span>}
                   sub={`目標 ${fmt(r.target)}・年化 ${n(r.g.roi)}%`}
-                  right={fmt(r.eff)} rightSub={<span className={r.diff >= 0 ? 'text-emerald-600' : 'text-red-600'}>{fmtSigned(r.diff)}{r.target ? `（${pct((r.diff / r.target) * 100)}）` : ''}</span>}
+                  right={fmt(r.eff)} rightSub={<span className={r.diff >= 0 ? 'text-emerald-700' : 'text-red-700'}>{fmtSigned(r.diff)}{r.target ? `（${pct((r.diff / r.target) * 100)}）` : ''}</span>}
                   onClick={() => setSheet({ kind: 'goal', id: r.g.id })} />
               );
             })}
@@ -151,8 +151,8 @@ const StockGoalView = ({ goals, exchanges, onAddYear, onDeleteYear, onSave, onRe
       <Section title="換匯" extra={<LinkButton onClick={newEx}><Plus className="w-3.5 h-3.5" strokeWidth={2.6} />記一筆</LinkButton>}>
         <div className="glass-card r-tile grid grid-cols-3 text-center py-4 mb-3">
           <div><div className="text-[11px] font-semibold text-slate-500">淨持有美金</div><div className="font-num text-[19px] font-bold text-slate-900 mt-0.5">{fmt(ex.net)}</div></div>
-          <div><div className="text-[11px] font-semibold text-slate-500">平均買入</div><div className="font-num text-[19px] font-bold text-emerald-600 mt-0.5">{ex.buyRate ? ex.buyRate.toFixed(2) : '—'}</div></div>
-          <div><div className="text-[11px] font-semibold text-slate-500">平均賣出</div><div className="font-num text-[19px] font-bold text-rose-600 mt-0.5">{ex.sellRate ? ex.sellRate.toFixed(2) : '—'}</div></div>
+          <div><div className="text-[11px] font-semibold text-slate-500">平均買入</div><div className="font-num text-[19px] font-bold text-emerald-700 mt-0.5">{ex.buyRate ? ex.buyRate.toFixed(2) : '—'}</div></div>
+          <div><div className="text-[11px] font-semibold text-slate-500">平均賣出</div><div className="font-num text-[19px] font-bold text-rose-700 mt-0.5">{ex.sellRate ? ex.sellRate.toFixed(2) : '—'}</div></div>
         </div>
         {ex.sorted.length === 0 ? <Empty>還沒有換匯紀錄</Empty> : (
           <>
@@ -162,7 +162,7 @@ const StockGoalView = ({ goals, exchanges, onAddYear, onDeleteYear, onSave, onRe
                 return (
                   <Row key={e.id} left={<IconDot icon={sell ? ArrowUpRight : ArrowDownLeft} tone={sell ? 'rose' : 'emerald'} />}
                     title={`${sell ? '賣出' : '買入'} ${fmt(e.usdAmount)} 美金`} sub={`${String(e.date).replace(/-/g, '/')}・${ACCOUNT[e.account] || e.account}・匯率 ${n(e.rate).toFixed(2)}`}
-                    right={<span className={sell ? 'text-emerald-600' : 'text-slate-800'}>{sell ? '+' : '−'}NT{fmt(n(e.usdAmount) * n(e.rate))}</span>}
+                    right={<span className={sell ? 'text-emerald-700' : 'text-slate-800'}>{sell ? '+' : '−'}NT{fmt(n(e.usdAmount) * n(e.rate))}</span>}
                     onClick={() => setSheet({ kind: 'ex', initial: { ...e, usdAmount: String(e.usdAmount ?? ''), rate: String(e.rate ?? ''), account: e.account || 'FT', type: e.type || 'buy' } })} />
                 );
               })}

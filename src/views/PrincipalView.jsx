@@ -103,7 +103,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
   return (
     <div className="space-y-6 stagger">
       <Hero label="目前淨值" amount={net} id="principal-net"
-        sub={last ? <>比 {dateLabel(last.date)} 結算 <b className={`font-num ${diff >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{fmtSigned(diff)}</b>{Number(last.netPrincipal) ? `（${pct((diff / Math.abs(last.netPrincipal)) * 100)}）` : ''}</> : '還沒有結算過'}
+        sub={last ? <>比 {dateLabel(last.date)} 結算 <b className={`font-num ${diff >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{fmtSigned(diff)}</b>{Number(last.netPrincipal) ? `（${pct((diff / Math.abs(last.netPrincipal)) * 100)}）` : ''}</> : '還沒有結算過'}
         action={<HeroButton icon={Stamp} label="結算" onClick={() => { setSnapDate(getTodayString()); setSheet({ kind: 'snapshot' }); }} />}>
         <StackTube height={12} parts={assets > 0 ? [{ key: 'bank', value: totals.bank, tone: 'emerald' }, { key: 'invest', value: totals.invest, tone: 'blue' }] : []} />
         {liab > 0 && assets > 0 && (
@@ -123,7 +123,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
       </Hero>
 
       <Section title="淨值走勢">
-        <div className="glass-card px-4 pt-4 pb-2.5"><LineChart points={trend} color="#2F7BF6" color2="#8E88FA" /></div>
+        <div className="glass-card px-4 pt-4 pb-2.5"><LineChart points={trend} color="#7C9DC0" color2="#A9A8C6" /></div>
       </Section>
 
       {GROUPS.map((g) => (
@@ -138,7 +138,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
                 return (
                   <Row key={`${it.name}-${idx}`} left={<IconDot icon={g.icon} tone={g.tone} />} title={it.name || '（未命名）'}
                     right={fmt(it.amount)}
-                    rightSub={d ? <span className={(g.section === 'liabilities' ? -d : d) > 0 ? 'text-emerald-600' : 'text-red-600'}>{fmtSigned(d)}</span> : <span className="text-slate-400">{prev === undefined ? '新項目' : '沒變'}</span>}
+                    rightSub={d ? <span className={(g.section === 'liabilities' ? -d : d) > 0 ? 'text-emerald-700' : 'text-red-700'}>{fmtSigned(d)}</span> : <span className="text-slate-400">{prev === undefined ? '新項目' : '沒變'}</span>}
                     onClick={() => setSheet({ kind: 'item', g, idx, label: g.label.replace('（負債）', ''), name: it.name, amount: it.amount, prev })} />
                 );
               })}
@@ -156,7 +156,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
               const g = prev ? Number(rec.netPrincipal) - Number(prev.netPrincipal) : null;
               return (
                 <Row key={rec.id} title={fmt(rec.netPrincipal)} sub={dateLabel(rec.date)}
-                  right={g !== null ? <span className={g >= 0 ? 'text-emerald-600' : 'text-red-600'}>{fmtSigned(g)}</span> : <span className="text-slate-400 text-xs">第一筆</span>}
+                  right={g !== null ? <span className={g >= 0 ? 'text-emerald-700' : 'text-red-700'}>{fmtSigned(g)}</span> : <span className="text-slate-400 text-xs">第一筆</span>}
                   onClick={() => setSheet({ kind: 'record', rec })} />
               );
             })}
@@ -175,7 +175,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
           <Divided>
             {GROUPS.map((g) => <Row key={g.key} left={<IconDot icon={g.icon} tone={g.tone} />} title={g.label} right={fmt(totals[g.key])} />)}
           </Divided>
-          {diff !== null && <div className="text-sm text-right text-slate-500">比上次 <b className={`font-num ${diff >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{fmtSigned(diff)}</b></div>}
+          {diff !== null && <div className="text-sm text-right text-slate-500">比上次 <b className={`font-num ${diff >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{fmtSigned(diff)}</b></div>}
         </Sheet>
       )}
       {sheet?.kind === 'record' && (

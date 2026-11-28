@@ -6,15 +6,15 @@ const GLASS_CARD = "glass-card";
 const GLASS_INPUT = "field";
 
 const COLOR_VARIANTS = {
-  slate:   { bar: 'bg-[#8D92A3]' },
-  stone:   { bar: 'bg-[#A3A9B8]' },
-  sky:     { bar: 'bg-[#5C9AFB]' },
-  blue:    { bar: 'bg-[#2F7BF6]' },
-  rose:    { bar: 'bg-[#F9739A]' },
-  emerald: { bar: 'bg-[#3DD1A5]' },
-  amber:   { bar: 'bg-[#FDB43F]' },
-  indigo:  { bar: 'bg-[#8E88FA]' },
-  cyan:    { bar: 'bg-[#3CC1DF]' },
+  slate:   { bar: 'bg-[#85888A]' },
+  stone:   { bar: 'bg-[#8E9488]' },
+  sky:     { bar: 'bg-[#7C9DC0]' },
+  blue:    { bar: 'bg-[#8F8EB3]' },
+  rose:    { bar: 'bg-[#C08480]' },
+  emerald: { bar: 'bg-[#6B9A8D]' },
+  amber:   { bar: 'bg-[#C2A66E]' },
+  indigo:  { bar: 'bg-[#A596BC]' },
+  cyan:    { bar: 'bg-[#6FA3A4]' },
 };
 
 const DEFAULT_SETTINGS = { monthlyGroups: [], annualGroups: [], recurringItems: [], lastRecurringCheck: '' };

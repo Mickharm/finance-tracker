@@ -13,7 +13,7 @@ const PayerTag = ({ payer }) => (
   <span className={`tag ${payer === 'partner' ? 'tag-rose' : 'tag-blue'}`}>{payer === 'partner' ? '佳欣' : '士程'}</span>
 );
 
-const BUCKET = { fixed: ['固定', 'text-indigo-600'], flex: ['彈性', 'text-emerald-600'], annual: ['年度', 'text-amber-600'] };
+const BUCKET = { fixed: ['固定', 'text-indigo-700'], flex: ['彈性', 'text-emerald-700'], annual: ['年度', 'text-amber-700'] };
 const amountOf = (t) => Number(t.amount) || 0;
 const sumOf = (list) => list.reduce((s, t) => s + amountOf(t), 0);
 

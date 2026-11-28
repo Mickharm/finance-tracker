@@ -619,7 +619,7 @@ function AppContent() {
               <PrincipalView user={user} db={db} appId={appId} requestDelete={requestDelete} requestConfirmation={requestConfirmation} />
             )}
             {activeView === 'visualization' && (
-              <BucketAnalysis transactions={transactions} settings={settings} flexMonthly={flexMonthly} onRequestHistory={requestHistory} />
+              <BucketAnalysis transactions={transactions} settings={settings} flexMonthly={flexMonthly} onRequestHistory={requestHistory} onEdit={(t) => setQuickAdd({ edit: t })} />
             )}
             {activeView === 'income' && (
               <IncomeView loading={!loadingStates.incomes} incomes={incomes} salaryHistory={salaryHistory} onRequestHistory={requestHistory} onSave={saveRecord} onRemove={removeRecord} />

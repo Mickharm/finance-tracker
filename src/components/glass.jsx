@@ -1,14 +1,14 @@
 /* eslint-disable react-refresh/only-export-components -- 元件與 hook 同檔是刻意設計 */
 import { createElement, useEffect, useLayoutEffect, useRef } from 'react';
 
-// ─── 3.0「琉璃」共用元件：極光背景、會數數的金額、液體容器、試管進度條、滑動分段切換、抽屜外殼 ───
+// ─── 3.0「琉璃」共用元件：背景、會數數的金額、液體容器、試管進度條、滑動分段切換、抽屜外殼 ───
 
 const reduceMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const clamp01 = (n) => Math.max(0, Math.min(1, Number(n) || 0));
 
-// 極光背景（放在 App 最底層）
+// 背景（放在 App 最底層）：和紙底色＋兩個淡色的圓。名稱沿用 Aurora。
 export const Aurora = () => (
-  <div className="aurora" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+  <div className="aurora" aria-hidden="true"><i /><i /></div>
 );
 
 // ─── 數字 ────────────────────────────────────────────────────────────────
@@ -63,27 +63,16 @@ const Waves = () => (
   </>
 );
 
-// 玻璃容器裡裝著會晃的液體。pct：0–1 的水位；mark：0–1，在容器邊緣畫一道刻度（例如「今天應該剩多少」）
-export const Vessel = ({ pct, tone = 'emerald', shape = 'round', className = '', style, mark = null, markLabel, children }) => {
-  const m = mark === null ? null : clamp01(mark);
-  // 圓形容器：刻度貼著圓的邊緣（越靠上下，邊緣越往內）
-  const edge = m === null || shape !== 'round' ? 0 : (0.5 - Math.sqrt(Math.max(0, 0.25 - (0.5 - m) ** 2))) * 100;
-  return (
-    <div className={`relative shrink-0 ${className}`} style={style}>
-      <div className={`vessel ${shape} tone-${tone} absolute inset-0`}>
-        <div className="liq" style={{ '--p': clamp01(pct) }}><Waves /></div>
-        <div className="vessel-shine" />
-        {children && <div className="vessel-label">{children}</div>}
-      </div>
-      {m !== null && (
-        <div className="absolute flex items-center gap-1 pointer-events-none" style={{ top: `${(1 - m) * 100}%`, right: `calc(${100 - edge}% - 5px)`, transform: 'translateY(-50%)' }} aria-hidden="true">
-          {markLabel && <span className="text-[9.5px] leading-none font-bold text-slate-500 whitespace-nowrap">{markLabel}</span>}
-          <span className="w-[11px] h-[2px] rounded-full bg-slate-700" />
-        </div>
-      )}
-    </div>
-  );
-};
+// 玻璃容器裡裝著會晃的液體。pct：0–1 的水位；
+// mark：0–1，在容器裡畫一道虛線刻度（例如「今天應該剩多少」）——畫在玻璃內側，不會壓到旁邊的字
+export const Vessel = ({ pct, tone = 'emerald', shape = 'round', className = '', style, mark = null, children }) => (
+  <div className={`vessel ${shape} tone-${tone} shrink-0 ${className}`} style={style}>
+    <div className="liq" style={{ '--p': clamp01(pct) }}><Waves /></div>
+    {mark !== null && <span className="vessel-mark" style={{ top: `${(1 - clamp01(mark)) * 100}%` }} aria-hidden="true" />}
+    <div className="vessel-shine" />
+    {children && <div className="vessel-label">{children}</div>}
+  </div>
+);
 
 // ─── 試管進度條 ──────────────────────────────────────────────────────────
 // value / max 的比例；marker：0–1，在條上畫一道刻度

@@ -61,7 +61,7 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
 // 子分頁資料還在載入時顯示（區分「載入中」與「沒有資料」）
 const ViewLoader = ({ label = '載入中...' }) => (
   <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-    <span className="w-9 h-9 rounded-full mb-3" style={{ background: 'conic-gradient(from 0deg, rgba(92,154,251,0) 0%, #5C9AFB 100%)', WebkitMask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', mask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', animation: 'spin-slow 0.9s linear infinite' }} />
+    <span className="w-9 h-9 rounded-full mb-3" style={{ background: 'conic-gradient(from 0deg, rgba(106,109,112,0) 0%, #6A6D70 100%)', WebkitMask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', mask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', animation: 'spin-slow 0.9s linear infinite' }} />
     <span className="text-[13px] font-semibold">{label}</span>
   </div>
 );

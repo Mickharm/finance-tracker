@@ -52,7 +52,7 @@ finance-tracker/
     └── views/              # 每個頁面一個檔案（皆為純呈現＋自身互動，資料多由 App.jsx 傳入）
         ├── HomeV2.jsx              # 2.0 總覽（本月還能花、今天兩人與每餐、這週、今年三桶）
         ├── LedgerView.jsx          # 2.0 明細（月曆顯示每日金額／卡片＋搜尋、當日明細）
-        ├── BucketAnalysis.jsx      # 2.0 分析上半（每月三色長條、兩人比例、分類排行）
+        ├── BucketAnalysis.jsx      # 分析（支出）：每月三色長條、兩人比例、分類排行；最上面可搜尋（打字或點分類，整頁只算符合的紀錄）
         ├── BudgetView.jsx          # 2.0 預算設定（三桶、分類回測、這支手機的記帳人）
         ├── IncomeView.jsx          # 2.0 收入（今年收入、本月薪水進帳、每月長條、組成、月薪、明細）
         ├── PartnerView.jsx         # 2.0 佳欣儲蓄（餘額、存入／提領、餘額走勢、依年紀錄）
@@ -144,21 +144,24 @@ setIsModalOpen(false);
 - `index.html` 有 12 秒**白畫面看門狗**：pre-loader 若還在就自動 reload 一次自救（sessionStorage 防循環，App 掛載成功會清旗標）。
 - ⚠️ `dist/` 與 `sw.js` 都是 build 產物，**不要手動編輯**；SW 邏輯要改就改 `vite.config.js` 的模板。
 
-### 5.5 設計系統（3.0「琉璃」：流動的極光＋液態玻璃，只用淺色）
+### 5.5 設計系統（3.0「琉璃」：和紙底＋厚玻璃，低彩度的日本傳統色，只用淺色）
 2026-11-28 全面改版。舊的和紙風格保留在 `backup/pre-liquid-glass-20261128` 分支。
+第一版用多彩的極光背景與鮮豔色票，Mick 看過後要求改成**低飽和、低調、日式**，背景不要花俏、玻璃感要更明顯——以下是調整後的版本，之後請維持這個方向。
 - **不支援深色模式**（沿用 2.0 的決定）。`index.html` 宣告 `color-scheme: light only`。
-- **背景**：`components/glass.jsx` 的 `<Aurora />`（`.aurora`）＝五團緩慢漂移的色光＋一層細顆粒。
-  顏色依時段換（`html[data-mood]`＝dawn／day／dusk／night，由 `index.html` 開頭的小段 script 在畫面出現前決定；
-  網址加 `?mood=night` 可強制指定，檢查配色用）。玻璃要有顏色可以透才好看，所以背景不能是純色。
-- **兩種玻璃**（都在 `src/index.css` 的 `@layer components`）：
-  - `.glass-card`：**內容卡片**。半透明漸層＋上下高光＋斜向折光邊＋深色細外緣（照 iOS 27：靠邊線而不是大陰影）。
-    **刻意不用 `backdrop-filter`**——卡片底下只有柔和的極光，模糊了也看不出差別，卻很耗電。
-    可加 `.tint-blue/rose/emerald/indigo/amber/red` 上色、`.r-tile` 用小一號圓角。
-  - `.glass`：**浮在內容上方的介面**（頁首按鈕、底部導覽、子分頁）才用真的 `backdrop-filter`。
-    抽屜 `.sheet-panel`、對話框 `.modal-card`、提示 `.toast` 也是真玻璃。
+- **背景**：`components/glass.jsx` 的 `<Aurora />`（`.aurora`，名稱沿用）＝和紙底色＋**兩個不會動的淡色圓**＋一層細顆粒。
+  第一個圓的顏色依時段換（`html[data-mood]`＝dawn 退紅／day 青磁／dusk 藤鼠／night 勿忘草，由 `index.html` 開頭的小段 script
+  在畫面出現前決定；網址加 `?mood=night` 可強制指定，檢查配色用）。
+  **這兩個圓不是裝飾**：玻璃後面要有東西才看得出是玻璃——圓在卡片外是清楚的，透過卡片看就變成霧霧的一片。不要拿掉，也不要加更多顏色。
+- **玻璃**（都在 `src/index.css` 的 `@layer components`，全部是真的 `backdrop-filter`）：
+  - `.glass-card`：**內容卡片**，一片厚玻璃。後方模糊＋斜向的透明度變化＋上下高光＋內側一圈亮（厚度）＋深色細外緣（照 iOS 27）。
+    可加 `.tint-blue/rose/emerald/indigo/amber/red` 淡淡上色、`.r-tile` 用小一號圓角。
+  - `.glass`：**浮在內容上方的介面**（頁首按鈕、底部導覽、子分頁），模糊更重。
+    抽屜 `.sheet-panel`、對話框 `.modal-card`、提示 `.toast` 也是玻璃（抽屜幾乎不透，表單才好讀）。
   - 另有 `.glass-well`（凹槽）、`.glass-ink`／`.btn-ink`（墨色玻璃：主要按鈕與＋號）。
-- **色票**在 `@theme`，直接覆寫 Tailwind 色系：slate＝帶冷藍的墨色、blue＝士程、rose＝佳欣、
-  emerald＝彈性／正向、indigo＝固定、amber＝年度、**red＝警示／超支／刪除**（和佳欣的粉分開）。
+- **色票**在 `@theme`，直接覆寫 Tailwind 色系，全部是低彩度的日本傳統色（和 2.0 同一組）：slate＝墨與鼠、blue＝勿忘草（士程）、
+  rose＝退紅（佳欣）、emerald＝青磁（彈性／正向）、indigo＝藤鼠（固定）、amber＝枯色（年度）、cyan＝水淺蔥、
+  **red＝茜（警示／超支／刪除，和退紅分開）**、violet＝江戸紫（AI 建議）。**不要加鮮豔的顏色**，新顏色從這幾個色系取。
+  低彩度下 600 階的文字對比不夠，彩色文字一律用 700 以上。
   漸層用 `.tone-*`（提供 `--a` 淺、`--b` 深、`--glow`），試管、長條、液體都吃這組變數。
 - **字體**：全部系統字，不再下載網路字體。內文 SF Pro＋蘋方；`.font-num`、`.money` 與 `text-2xl` 以上用
   SF Pro Rounded（`ui-rounded`）等寬數字。
@@ -166,8 +169,9 @@ setIsModalOpen(false);
   `.vbar`（直條圖）。總覽的「本月還能花」是一顆球、今年三桶是三個瓶子。
 - **動畫**：彈簧曲線 `--spring`／`--spring-soft`（`linear()`，不支援時退回貝茲）。頁面內容用 `.stagger` 一張張浮上來；
   金額用 `Num` 數上去；按下去用 `.press`／`.btn` 的回彈。`prefers-reduced-motion` 時全部關掉。
-- ⚠️ **不要在有 `backdrop-filter` 子孫的容器上做 `opacity`／`filter` 動畫**：那會讓容器變成 backdrop root，
-  玻璃在動畫期間會突然變透明。真玻璃的進場一律只動 `transform`（見 `sheet-in`）。
+- ⚠️ **不要在有玻璃子孫的容器上做 `opacity`／`filter` 動畫**：那會讓容器變成 backdrop root，
+  裡面的玻璃在動畫期間會失去背景模糊、動畫結束才突然出現。所以 `.stagger` 的進場（`rise`）只動 `transform`；
+  玻璃元素自己做淡入（`.fade-up`）沒問題，包住玻璃的父層不行。
 - ⚠️ `@layer components` 裡的樣式可以被 Tailwind 工具類別覆寫（例如 `glass-card !rounded-[24px]`）；
   寫在 layer 外的樣式會贏過所有工具類別，新增元件樣式請放進 layer。
 - 分類圖示：`lib/categoryIcons.js`（分類→Lucide 圖示、三桶色調），元件 `components/CategoryIcon.jsx`（`.orb-icon` 玻璃球）。
@@ -290,7 +294,7 @@ npx eslint src/    # 檢查（有少量既有警告為 baseline）
 2. **不要移除 recurring 的 `settingsFromServer` / `runTransaction`**（見 §5.3）——會重現「多裝置重複入帳」bug。
 3. **`config_{year}` 是一年一份**：讀寫預算/固定支出設定時注意「檢視年份」與「今年」的差異；
    `lastRecurringCheck` 一律寫「今年」的 config + config_v2。
-4. **真玻璃（`backdrop-filter`）只給浮在內容上方的介面用**，內容卡片用 `.glass-card`（見 §5.5），否則手機會掉幀、耗電。
+4. **玻璃卡片都有 `backdrop-filter`**：不要把它們包在會做 `opacity` 動畫的父層裡（見 §5.5），也不要一頁塞進幾十張同時可見的玻璃卡片——清單請用一張 `Divided` 裝很多列，不要一列一張卡。
 5. **SW 是 build 產物**：改快取策略只能動 `vite.config.js`；部署後第一次開啟仍是舊版、第二次（或自動 reload 後）才是新版，這是預期行為。
 6. Finnhub API key 是免費方案且暴露在前端（可接受的風險）；報價有 5 分鐘 localStorage 快取，抓價間隔 100ms 防 rate limit。
 7. `getFixedDepositAmount()`（lib/utils.js）內含佳欣儲蓄的年度定存金額規則（寫死的年份區間），是業務邏輯不是 bug。

@@ -70,7 +70,7 @@ const SalarySheet = ({ owner, history, onSave, onDelete, onClose }) => {
               const g = prev && Number(prev.amount) > 0 ? ((s.amount - prev.amount) / prev.amount) * 100 : null;
               return (
                 <Row key={s.id} title={fmt(s.amount)} sub={s.date.replace(/-/g, '/')} onClick={() => setF({ id: s.id, amount: Number(s.amount), date: s.date })}
-                  right={g !== null ? <span className={g >= 0 ? 'text-emerald-600' : 'text-red-600'}>{pct(g)}</span> : <span className="text-slate-400 text-xs">起薪</span>} />
+                  right={g !== null ? <span className={g >= 0 ? 'text-emerald-700' : 'text-red-700'}>{pct(g)}</span> : <span className="text-slate-400 text-xs">起薪</span>} />
               );
             })}
           </Divided>
@@ -136,7 +136,7 @@ const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove,
       <Hero
         label={<YearSwitch year={year} onChange={changeYear} suffix=" 年收入" />}
         amount={total} id="income-total"
-        sub={yoy !== null ? <>比去年{isThisYear ? '同期' : ''} <b className={`font-num ${yoy >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{pct(yoy)}</b>（{fmt(lastSame)}）</> : '去年沒有資料可以比'}
+        sub={yoy !== null ? <>比去年{isThisYear ? '同期' : ''} <b className={`font-num ${yoy >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{pct(yoy)}</b>（{fmt(lastSame)}）</> : '去年沒有資料可以比'}
         action={<HeroButton icon={Plus} label="記收入" onClick={() => openNew()} />}
       >
         <StackBar parts={[{ key: 'm', value: byPerson.myself, tone: 'blue' }, { key: 'p', value: byPerson.partner, tone: 'rose' }]} height={12} />
@@ -229,7 +229,7 @@ const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove,
             return (
               <Row key={owner} left={<PersonDot owner={owner} />} title={cur ? fmt(cur.amount) : '還沒設定'} muted={!cur}
                 sub={cur ? `${cur.date.slice(0, 7).replace('-', '/')} 起・調過 ${Math.max(0, list.length - 1)} 次` : '點這裡記下目前月薪'}
-                right={grow !== null ? <span className="text-emerald-600 flex items-center gap-0.5 justify-end"><TrendingUp className="w-3.5 h-3.5" strokeWidth={2.6} />{pct(grow, 0)}</span> : <Briefcase className="w-4 h-4 text-slate-300 ml-auto" />}
+                right={grow !== null ? <span className="text-emerald-700 flex items-center gap-0.5 justify-end"><TrendingUp className="w-3.5 h-3.5" strokeWidth={2.6} />{pct(grow, 0)}</span> : <Briefcase className="w-4 h-4 text-slate-300 ml-auto" />}
                 rightSub={grow !== null ? <span className="text-slate-400">從 {fmt(first.amount)}</span> : null}
                 onClick={() => setSheet({ kind: 'salary', owner })} />
             );
@@ -246,7 +246,7 @@ const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove,
                 <Divided>
                   {list.map((i) => (
                     <Row key={i.id} left={<PersonDot owner={ownerOf(i)} />} title={i.note || i.category} sub={`${md(i.date)}・${CAT_LABEL[i.category] || i.category}`}
-                      right={<span className="text-emerald-600">+{fmt(i.amount)}</span>}
+                      right={<span className="text-emerald-700">+{fmt(i.amount)}</span>}
                       onClick={() => setSheet({ kind: 'income', initial: { ...i, owner: ownerOf(i), amount: Number(i.amount) } })} />
                   ))}
                 </Divided>

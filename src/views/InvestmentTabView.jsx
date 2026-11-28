@@ -20,7 +20,7 @@ const statOf = (s, prices) => {
   const day = price > 0 ? value - value / (1 + change / 100) : 0;
   return { shares, cost, avg: shares ? cost / shares : 0, price, value, pnl: price > 0 ? value - cost : 0, change, day, hasPrice: price > 0 };
 };
-const tone = (n) => (n > 0 ? 'text-emerald-600' : n < 0 ? 'text-red-600' : 'text-slate-400');
+const tone = (n) => (n > 0 ? 'text-emerald-700' : n < 0 ? 'text-red-700' : 'text-slate-400');
 const groupColor = (gi) => barToHex(COLOR_VARIANTS[HOLDINGS_GROUP_THEMES[gi % HOLDINGS_GROUP_THEMES.length]].bar);
 const swatch = (color) => ({ background: `linear-gradient(150deg, color-mix(in srgb, ${color} 60%, #fff), ${color})`, boxShadow: `inset 0 1px 0 rgba(255,255,255,.6), 0 2px 5px -1px ${color}` });
 
@@ -75,7 +75,7 @@ const StockSheet = ({ stock, st, onBuyMore, onDeletePurchase, onDeleteStock, onC
         <Divided>
           {[...stock.purchases].sort((a, b) => (a.date < b.date ? 1 : -1)).map((p) => (
             <Row key={p.id} title={`${p.shares} 股 @ ${fmt(p.price, 2)}`} sub={p.date.replace(/-/g, '/')} right={fmt(Number(p.shares) * Number(p.price))}
-              rightSub={<button type="button" onClick={(e) => { e.stopPropagation(); onDeletePurchase(p.id); }} className="text-red-600 font-bold font-sans">刪除</button>} />
+              rightSub={<button type="button" onClick={(e) => { e.stopPropagation(); onDeletePurchase(p.id); }} className="text-red-700 font-bold font-sans">刪除</button>} />
           ))}
         </Divided>
       )}
@@ -89,7 +89,7 @@ const GroupSheet = ({ group, onRename, onDelete, onClose }) => {
     <Sheet title={group ? '群組' : '新增群組'} onClose={onClose} submitDisabled={!name.trim()} onSubmit={() => onRename(name.trim())}
       onDelete={group ? onDelete : undefined} deleteLabel="刪除群組">
       <TextInput value={name} onChange={setName} autoFocus placeholder="群組名稱，例如：核心 ETF" />
-      {group && (group.stocks || []).length > 0 && <p className="text-[13px] text-red-600">刪除群組會一起刪掉裡面 {(group.stocks || []).length} 檔持股的買入紀錄。</p>}
+      {group && (group.stocks || []).length > 0 && <p className="text-[13px] text-red-700">刪除群組會一起刪掉裡面 {(group.stocks || []).length} 檔持股的買入紀錄。</p>}
     </Sheet>
   );
 };
