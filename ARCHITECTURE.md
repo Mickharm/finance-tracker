@@ -56,6 +56,7 @@ finance-tracker/
         ├── BudgetView.jsx          # 2.0 預算設定（三桶、分類回測、這支手機的記帳人）
         ├── IncomeView.jsx          # 2.0 收入（今年收入、本月薪水進帳、每月長條、組成、月薪、明細）
         ├── PartnerView.jsx         # 2.0 佳欣儲蓄（餘額、存入／提領、餘額走勢、依年紀錄）
+        ├── PetView.jsx             # 阿奇的紀錄（基本資料、體重走勢、看診／洗澡／驅蟲／疫苗、照顧花費）
         ├── InvestmentTabView.jsx   # 2.0 持股（自行訂閱 holdings_config、抓 Finnhub 報價；買入抽屜）
         ├── StockGoalView.jsx       # 2.0 存股（今年進度、每年實際 vs 目標、換匯）
         ├── MortgageView.jsx        # 2.0 房產（本月房貸、月付階梯、每年還款、頭期款與雜支）
@@ -87,6 +88,7 @@ artifacts/finance-tracker-production/ledgers/Mick/
 | `mortgage_funding` | 頭期款來源 | `source, amount, symbol, shares, rate, date, note` |
 | `stock_goals` | 存股計畫（一年一筆） | `year, roi, firstrade, ib, withdrawal` |
 | `usd_exchanges` | 美金換匯 | `date, usdAmount, rate, account:'FT'\|'IB', type:'buy'\|'sell'` |
+| `pet_records` | 阿奇的照顧紀錄 | `kind:'vet'\|'bath'\|'deworm'\|'weight'\|'vaccine'\|'other', date, title, place, amount, costNote, note, weight, withCarrier, meds（只拿藥）, monthOnly（只記到月份）`；另有一筆 id＝`profile`：`kind:'profile', date:生日, name, breed, chip, homeDate` |
 | `principal_history` | 淨值結算快照 | `date(ISO), netPrincipal, details(config 全文快照)` |
 
 ### 4.2 settings/（單一文件）
@@ -146,14 +148,14 @@ setIsModalOpen(false);
 
 ### 5.5 設計系統（3.0「琉璃」：和紙底＋厚玻璃，低彩度的日本傳統色，只用淺色）
 2026-11-28 全面改版。舊的和紙風格保留在 `backup/pre-liquid-glass-20261128` 分支。
-第一版用多彩的極光背景與鮮豔色票，Mick 看過後要求改成**低飽和、低調、日式**，背景不要花俏、玻璃感要更明顯——以下是調整後的版本，之後請維持這個方向。
+第一版用多彩的極光背景與鮮豔色票，Mick 看過後要求改成**低飽和、低調、日式**；第二版在背景放了兩個有邊緣的圓讓玻璃去透，他覺得「太土、顏色與物件會影響文字閱讀」。以下是第三版，之後請維持這個方向：**背景要淺、要乾淨、不能有形狀**。
 - **不支援深色模式**（沿用 2.0 的決定）。`index.html` 宣告 `color-scheme: light only`。
-- **背景**：`components/glass.jsx` 的 `<Aurora />`（`.aurora`，名稱沿用）＝和紙底色＋**兩個不會動的淡色圓**＋一層細顆粒。
-  第一個圓的顏色依時段換（`html[data-mood]`＝dawn 退紅／day 青磁／dusk 藤鼠／night 勿忘草，由 `index.html` 開頭的小段 script
+- **背景**：`components/glass.jsx` 的 `<Aurora />`（`.aurora`，名稱沿用）＝很淺的底色（白磁灰）＋**兩團沒有邊緣的柔光**（一團淡色、一團白光，都不會動）＋極細的顆粒。
+  淡色那團依時段換（`html[data-mood]`＝dawn 退紅／day 青磁／dusk 藤鼠／night 勿忘草，由 `index.html` 開頭的小段 script
   在畫面出現前決定；網址加 `?mood=night` 可強制指定，檢查配色用）。
-  **這兩個圓不是裝飾**：玻璃後面要有東西才看得出是玻璃——圓在卡片外是清楚的，透過卡片看就變成霧霧的一片。不要拿掉，也不要加更多顏色。
+  **字的後面不能有形狀或明顯的顏色**。不要用米色／土色當底，也不要放有邊緣的圖形。
 - **玻璃**（都在 `src/index.css` 的 `@layer components`，全部是真的 `backdrop-filter`）：
-  - `.glass-card`：**內容卡片**，一片厚玻璃。後方模糊＋斜向的透明度變化＋上下高光＋內側一圈亮（厚度）＋深色細外緣（照 iOS 27）。
+  - `.glass-card`：**內容卡片**，一片厚玻璃。霧度高（字的後面是乾淨的白霧）；玻璃感靠邊緣：上下高光＋內側雙層亮邊（厚度）＋深色細外緣（照 iOS 27）＋柔和陰影。
     可加 `.tint-blue/rose/emerald/indigo/amber/red` 淡淡上色、`.r-tile` 用小一號圓角。
   - `.glass`：**浮在內容上方的介面**（頁首按鈕、底部導覽、子分頁），模糊更重。
     抽屜 `.sheet-panel`、對話框 `.modal-card`、提示 `.toast` 也是玻璃（抽屜幾乎不透，表單才好讀）。
@@ -199,7 +201,7 @@ setIsModalOpen(false);
   「沒花錢」＝ $0 紀錄，備註為 請客／自煮／沒吃。舊紀錄沒有這些欄位。
 
 ### 5.5c 2.0 導覽與預算三桶
-- 底部 5 個入口：總覽／明細／＋（記一筆）／分析（子分頁：支出、收入）／資產（子分頁：淨值、持股、存股、佳欣儲蓄、房產）。
+- 底部 5 個入口：總覽／明細／＋（記一筆）／分析（子分頁：支出、收入）／資產（子分頁：淨值、持股、存股、佳欣儲蓄、房產、阿奇）。
   預算設定從總覽右上角齒輪進入。App.jsx 用 `activeView` 表示子分頁實際顯示的頁面；舊代號（income、watchlist…）會自動轉到新位置。
 - 預算三桶（`lib/budget.js`）：固定＝啟用中的固定支出加總；彈性＝每月一個總額度，存在 `settings/budget_v2_{year}`（新文件，
   不動正式版的 `config_{year}`）；年度＝annualGroups 的金額。年度總預算＝固定×12＋彈性×12＋年度。

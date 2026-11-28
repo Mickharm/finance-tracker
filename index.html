@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="記帳助手" />
   <!-- PWA: Theme color（只用淺色主題） -->
-  <meta name="theme-color" content="#EAE8E2" />
+  <meta name="theme-color" content="#EEF0ED" />
   <meta name="color-scheme" content="light only" />
   <!-- PWA: Web App Manifest -->
   <link rel="manifest" href="manifest.webmanifest" />
@@ -22,7 +22,7 @@
   <!-- 字體：3.0 起全部使用系統字（SF Pro／SF Pro Rounded／蘋方），不再下載網路字體 -->
   <title>記帳助手</title>
   <script>
-    // 背景的圓依時段換色：清晨、白天、傍晚、夜晚（在畫面出現前就決定，避免閃一下）
+    // 背景的柔光依時段換色：清晨、白天、傍晚、夜晚（在畫面出現前就決定，避免閃一下）
     // 網址加 ?mood=dawn|day|dusk|night 可以強制指定（設計檢查用）
     (function () {
       var h = new Date().getHours();
@@ -32,11 +32,11 @@
     })();
   </script>
   <style>
-    /* 開啟瞬間（React 還沒載入）的畫面：和 App 內同一張和紙底、同一個圓＋一顆玻璃圖示 */
-    html { --pl-base: #EAE8E2; --pl-1: #B9D0C6; }
-    html[data-mood="dawn"]  { --pl-base: #ECE8E2; --pl-1: #E2C5BF; }
-    html[data-mood="dusk"]  { --pl-base: #EAE7E3; --pl-1: #C9C7DD; }
-    html[data-mood="night"] { --pl-base: #E5E5E4; --pl-1: #B7C8DA; }
+    /* 開啟瞬間（React 還沒載入）的畫面：和 App 內同一個底色、同一團柔光＋一顆玻璃圖示 */
+    html { --pl-base: #EEF0ED; --pl-1: #C6DCD2; }
+    html[data-mood="dawn"]  { --pl-base: #F1EFED; --pl-1: #EDD3CE; }
+    html[data-mood="dusk"]  { --pl-base: #EFEEF1; --pl-1: #D3D1E7; }
+    html[data-mood="night"] { --pl-base: #EBEDF0; --pl-1: #C3D3E5; }
     body { margin: 0; background: var(--pl-base); }
     #pre-loader {
       position: fixed; inset: 0; z-index: 200; overflow: hidden;
@@ -44,8 +44,8 @@
       background: var(--pl-base);
     }
     #pre-loader::before {
-      content: ''; position: absolute; width: 88%; max-width: 24rem; aspect-ratio: 1; border-radius: 50%;
-      right: -30%; top: 7%; background: var(--pl-1);
+      content: ''; position: absolute; width: 150%; max-width: 42rem; aspect-ratio: 1; border-radius: 50%;
+      right: -62%; top: -16%; background: radial-gradient(closest-side, var(--pl-1) 0%, transparent 100%);
     }
     #pre-loader > * { position: relative; }
     #pre-loader .pl-icon-box {

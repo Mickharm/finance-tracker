@@ -19,6 +19,7 @@ import { IncomeView } from './views/IncomeView';
 import { InvestmentTabView } from './views/InvestmentTabView';
 import { MortgageView } from './views/MortgageView';
 import { PartnerView } from './views/PartnerView';
+import { PetView } from './views/PetView';
 import { PrincipalView } from './views/PrincipalView';
 import { StockGoalView } from './views/StockGoalView';
 
@@ -62,7 +63,7 @@ function AppContent() {
     assets: ['資產', '資產與負債'], settings: ['預算設定', `${selectedDate.getFullYear()} 年`],
   };
   const ANALYSIS_TABS = [['spend', '支出'], ['income', '收入']];
-  const ASSET_TABS = [['principal', '淨值'], ['watchlist', '持股'], ['stock_goals', '存股'], ['partner', '佳欣儲蓄'], ['mortgage', '房產']];
+  const ASSET_TABS = [['principal', '淨值'], ['watchlist', '持股'], ['stock_goals', '存股'], ['partner', '佳欣儲蓄'], ['mortgage', '房產'], ['pet', '阿奇']];
   const [analysisTab, setAnalysisTab] = useState('spend');
   const [assetsTab, setAssetsTab] = useState('principal');
   const [ledgerFocus, setLedgerFocus] = useState(null);
@@ -109,6 +110,7 @@ function AppContent() {
   const [mortgageFunding, setMortgageFunding] = useState([]);
   const [stockGoals, setStockGoals] = useState([]);
   const [usdExchanges, setUsdExchanges] = useState([]);
+  const [petRecords, setPetRecords] = useState([]); // 阿奇的紀錄（看診、洗澡、驅蟲、體重…）
 
   // Loading State Tracking
   const [loadingStates, setLoadingStates] = useState({
@@ -123,6 +125,7 @@ function AppContent() {
     mortgageAnalysis: false,
     stockGoals: false,
     usdExchanges: false,
+    petRecords: false,
   });
 
   // App Phase: 'loading' -> 'ready' (hard cut, no fade)
@@ -246,6 +249,9 @@ function AppContent() {
     if (prefetch || currentView === 'stock_goals') {
       createSub('stock_goals', setStockGoals, 'stockGoals', 'year', 'desc');
       createSub('usd_exchanges', setUsdExchanges, 'usdExchanges');
+    }
+    if (prefetch || currentView === 'assets') {
+      createSub('pet_records', setPetRecords, 'petRecords');
     }
   }, [user, currentView, appPhase]);
 
@@ -623,6 +629,9 @@ function AppContent() {
             )}
             {activeView === 'income' && (
               <IncomeView loading={!loadingStates.incomes} incomes={incomes} salaryHistory={salaryHistory} onRequestHistory={requestHistory} onSave={saveRecord} onRemove={removeRecord} />
+            )}
+            {activeView === 'pet' && (
+              <PetView loading={!loadingStates.petRecords} records={petRecords} onSave={saveRecord} onRemove={removeRecord} />
             )}
             {activeView === 'partner' && (
               <PartnerView loading={!loadingStates.partnerTransactions} partnerTransactions={partnerTransactions} onSave={saveRecord} onRemove={removeRecord} />

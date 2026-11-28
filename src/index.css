@@ -2,11 +2,10 @@
 
 /* ════════════════════════════════════════════════════════════════════════
    3.0「琉璃」設計系統 —— 和紙底＋厚玻璃，低彩度的日本傳統色
-   · 背景：安靜的和紙底色，上面只有兩個淡色的圓（依時段換一個顏色）。
-     玻璃後面要有東西才看得出是玻璃，所以留這兩個圓讓卡片去「透」。
-   · 卡片與浮動介面都是真的玻璃（backdrop-filter）：圓在卡片外是清楚的，
-     透過卡片看就變成霧霧的一片顏色。
-   · 玻璃邊緣照 iOS 27：外圈一道深色細邊、上下高光、內側一圈亮（厚度）。
+   · 背景：很淺、很乾淨的底色，只有兩團沒有邊緣的柔光（一團依時段換色、一團白光）。
+     字的後面不能有形狀或明顯的顏色，否則會干擾閱讀。
+   · 卡片與浮動介面都是真的玻璃（backdrop-filter），霧度高：字的後面是乾淨的白霧。
+   · 玻璃感靠邊緣表現（照 iOS 27）：外圈一道深色細邊、上下高光、內側雙層亮邊（厚度）、柔和的陰影。
    · 顏色一律低飽和：墨、鼠、青磁、藤鼠、枯色、勿忘草、退紅、茜。
    ════════════════════════════════════════════════════════════════════════ */
 
@@ -82,7 +81,7 @@
   --ink-2: rgba(46, 49, 51, 0.72);
   --ink-3: rgba(46, 49, 51, 0.52);
   --hair: rgba(46, 49, 51, 0.09);
-  --edge: rgba(46, 49, 51, 0.2);           /* iOS 27：玻璃外圈的深色細邊 */
+  --edge: rgba(46, 49, 51, 0.22);          /* iOS 27：玻璃外圈的深色細邊 */
   --hi: rgba(255, 255, 255, 0.98);          /* 高光 */
 
   --r-card: 28px;
@@ -94,14 +93,13 @@
 
   --header-h: 104px;
 
-  /* 和紙底＋兩個圓（白天：青磁＋砂）。其他時段只換第一個圓的顏色 */
-  --au-base: #EAE8E2;
-  --au-1: #B9D0C6; --au-1-hi: #CADCD4;
-  --au-2: #DBD3C1; --au-2-hi: #E4DDCE;
+  /* 底色（很淺的白磁灰）＋一團淡色的柔光＋一團白光。其他時段只換那團淡色 */
+  --au-base: #EEF0ED;
+  --au-1: #C6DCD2;                         /* 白天：青磁 */
 }
-html[data-mood="dawn"]  { --au-base: #ECE8E2; --au-1: #E2C5BF; --au-1-hi: #EBD4CF; }                                   /* 清晨：退紅 */
-html[data-mood="dusk"]  { --au-base: #EAE7E3; --au-1: #C9C7DD; --au-1-hi: #D7D5E6; }                                   /* 傍晚：藤鼠 */
-html[data-mood="night"] { --au-base: #E5E5E4; --au-1: #B7C8DA; --au-1-hi: #C8D5E3; --au-2: #D6D4CE; --au-2-hi: #E0DED9; } /* 夜晚：勿忘草 */
+html[data-mood="dawn"]  { --au-base: #F1EFED; --au-1: #EDD3CE; }   /* 清晨：退紅 */
+html[data-mood="dusk"]  { --au-base: #EFEEF1; --au-1: #D3D1E7; }   /* 傍晚：藤鼠 */
+html[data-mood="night"] { --au-base: #EBEDF0; --au-1: #C3D3E5; }   /* 夜晚：勿忘草 */
 
 /* 彈簧曲線（支援 linear() 的瀏覽器用真的彈簧，其餘用上面的貝茲近似） */
 @supports (transition-timing-function: linear(0, 1)) {
@@ -153,18 +151,19 @@ html[data-mood="night"] { --au-base: #E5E5E4; --au-1: #B7C8DA; --au-1-hi: #C8D5E
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ════════════════════════════════════════════════════════════════════════
-   背景：和紙＋兩個圓（不動；卡片捲過去時，圓在玻璃後面會變霧）
+   背景：很淺的底色＋兩團沒有邊緣的柔光（不動）。
+   不放有形狀、有邊緣的東西——那會從玻璃後面透出來干擾閱讀
    ════════════════════════════════════════════════════════════════════════ */
 .aurora {
   position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
   background: var(--au-base);
 }
 .aurora i { position: absolute; display: block; border-radius: 50%; aspect-ratio: 1; }
-.aurora i:nth-child(1) { width: 88%; right: -30%; top: 7%; background: radial-gradient(circle at 34% 28%, var(--au-1-hi) 0%, var(--au-1) 64%); }
-.aurora i:nth-child(2) { width: 66%; left: -27%; bottom: 12%; background: radial-gradient(circle at 62% 30%, var(--au-2-hi) 0%, var(--au-2) 66%); }
-/* 和紙的細顆粒 */
+.aurora i:nth-child(1) { width: 150%; right: -62%; top: -16%; background: radial-gradient(closest-side, var(--au-1) 0%, color-mix(in srgb, var(--au-1) 62%, transparent) 40%, color-mix(in srgb, var(--au-1) 20%, transparent) 70%, transparent 100%); }
+.aurora i:nth-child(2) { width: 140%; left: -66%; bottom: -8%; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.6) 40%, rgba(255, 255, 255, 0.18) 70%, rgba(255, 255, 255, 0) 100%); }
+/* 極細的顆粒：避免漸層出現色階 */
 .aurora::after {
-  content: ''; position: absolute; inset: 0; opacity: 0.55;
+  content: ''; position: absolute; inset: 0; opacity: 0.3;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .42  0 0 0 0 .40  0 0 0 0 .36  0 0 0 .08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
@@ -182,20 +181,21 @@ html[data-mood="night"] { --au-base: #E5E5E4; --au-1: #B7C8DA; --au-1-hi: #C8D5E
     border-radius: var(--r-card);
     background:
       linear-gradient(var(--tint, transparent), var(--tint, transparent)),
-      linear-gradient(162deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.4) 40%, rgba(255, 255, 255, 0.3) 68%, rgba(255, 255, 255, 0.5) 100%);
-    -webkit-backdrop-filter: blur(18px) saturate(165%);
-    backdrop-filter: blur(18px) saturate(165%);
+      linear-gradient(162deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.56) 42%, rgba(255, 255, 255, 0.5) 70%, rgba(255, 255, 255, 0.66) 100%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
     box-shadow:
       inset 0 1.5px 0 0 var(--hi),
-      inset 0 -1.5px 0 0 rgba(255, 255, 255, 0.7),
-      inset 1px 0 0 0 rgba(255, 255, 255, 0.5),
-      inset -1px 0 0 0 rgba(255, 255, 255, 0.4),
-      inset 0 0 18px 0 rgba(255, 255, 255, 0.4),
-      inset 0 -20px 26px -22px rgba(46, 49, 51, 0.16),
+      inset 0 -1.5px 0 0 rgba(255, 255, 255, 0.8),
+      inset 1.5px 0 0 0 rgba(255, 255, 255, 0.6),
+      inset -1px 0 0 0 rgba(255, 255, 255, 0.5),
+      inset 0 0 0 5px rgba(255, 255, 255, 0.16),
+      inset 0 0 22px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -22px 28px -24px rgba(46, 49, 51, 0.14),
       0 0 0 0.5px var(--edge),
-      0 1px 1.5px rgba(46, 49, 51, 0.06),
-      0 22px 40px -24px rgba(46, 49, 51, 0.42),
-      0 8px 16px -10px rgba(46, 49, 51, 0.1);
+      0 1px 1.5px rgba(46, 49, 51, 0.07),
+      0 24px 44px -26px rgba(46, 49, 51, 0.4),
+      0 8px 18px -10px rgba(46, 49, 51, 0.1);
   }
   /* 斜向的折光邊：左上亮、右下再亮一次，中間淡掉 */
   .glass-card::before, .glass-card-fx::before {
