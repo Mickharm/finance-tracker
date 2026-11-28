@@ -200,7 +200,7 @@ const InvestmentTabView = ({ user, db, appId, requestConfirmation }) => {
             <Divided>
               {x.stocks.map(({ s, st }) => (
                 <Row key={s.symbol}
-                  left={<span className="font-num w-[52px] shrink-0 text-xs font-bold text-center py-1.5 rounded-xl text-slate-800 truncate bg-white/70" style={{ boxShadow: 'inset 0 1px 0 #fff, 0 0 0 0.5px var(--edge), 0 3px 8px -5px rgba(30,40,100,.35)' }}>{s.symbol}</span>}
+                  left={<span className="font-num w-[52px] shrink-0 text-xs font-bold text-center py-1.5 rounded-xl text-slate-800 truncate bg-white/70" style={{ boxShadow: 'inset 0 1px 0 #fff, 0 0 0 0.5px var(--edge), 0 3px 8px -5px rgba(36, 34, 31,.35)' }}>{s.symbol}</span>}
                   title={<span className="flex items-baseline gap-1.5 font-num">{summary.value ? `${((st.value / summary.value) * 100).toFixed(1)}%` : ''}{st.hasPrice && <span className={`text-xs font-bold ${tone(st.change)}`}>今天 {pct(st.change, 2)}</span>}</span>}
                   sub={`${st.shares} 股・均 ${fmt(st.avg, 2)}・現 ${st.hasPrice ? fmt(st.price, 2) : '—'}`}
                   right={fmt(st.value)}

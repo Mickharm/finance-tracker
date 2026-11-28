@@ -26,7 +26,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確�
   return <ConfirmCard onClose={onClose} onConfirm={onConfirm} message={message} title={title} confirmText={confirmText} danger={/rose|red/.test(confirmColor)} />;
 };
 
-// 開啟畫面：極光背景上一顆玻璃圖示，下面一條液體進度
+// 開啟畫面：紙白背景上一顆玻璃圖示，下面一條液體進度
 const LoadingScreen = ({ progress, isComplete, onDone }) => {
   // 進度只會往前：目標比目前顯示的大才更新（在 render 中推導，不用 effect）
   const [displayProgress, setDisplayProgress] = useState(15);
@@ -44,7 +44,7 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
 
   return (
     <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden">
-      <Aurora />
+      <Aurora still />
       <div className="relative z-10 flex flex-col items-center">
         <div className="glass-card !rounded-[30px] w-24 h-24 flex items-center justify-center mb-7 pop">
           <Wallet className="w-11 h-11 text-slate-800" strokeWidth={1.7} />
@@ -61,7 +61,7 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
 // 子分頁資料還在載入時顯示（區分「載入中」與「沒有資料」）
 const ViewLoader = ({ label = '載入中...' }) => (
   <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-    <span className="w-9 h-9 rounded-full mb-3" style={{ background: 'conic-gradient(from 0deg, rgba(106,109,112,0) 0%, #6A6D70 100%)', WebkitMask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', mask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', animation: 'spin-slow 0.9s linear infinite' }} />
+    <span className="w-9 h-9 rounded-full mb-3" style={{ background: 'conic-gradient(from 0deg, rgba(107, 103, 97,0) 0%, #6B6761 100%)', WebkitMask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', mask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', animation: 'spin-slow 0.9s linear infinite' }} />
     <span className="text-[13px] font-semibold">{label}</span>
   </div>
 );

@@ -26,7 +26,7 @@
 
 ```
 finance-tracker/
-├── index.html              # HTML 外殼：pre-loader、白畫面看門狗、極光時段（data-mood）、preconnect
+├── index.html              # HTML 外殼：pre-loader、白畫面看門狗、preconnect
 ├── vite.config.js          # base 路徑 + sw-precache 外掛（自動產生 dist/sw.js，見 §5.4）
 ├── public/
 │   ├── manifest.webmanifest  # PWA manifest（含 shortcuts 主畫面捷徑）
@@ -44,7 +44,7 @@ finance-tracker/
     │   ├── utils.js        # 日期工具、evalArithmetic 計算機、haptic、股價快取、千分位
     │   └── format.js       # 2.0 數字格式（fmt、fmtSigned、pct、short 萬/億）與兩人設定 PEOPLE
     ├── components/
-    │   ├── glass.jsx       # 3.0 基礎元件：Aurora、Num/Money、Vessel、Tube、Segmented、SheetShell、useGhostExit
+    │   ├── glass.jsx       # 基礎元件：Aurora（紙白背景）、Num/Money、Vessel、Tube、Segmented、SheetShell、useGhostExit
     │   ├── Toast.jsx       # ToastProvider / useToast（全域訊息提示）
     │   ├── ui.jsx          # ConfirmationModal、LoadingScreen、ViewLoader（舊版表單元件已全部移除）
     │   ├── QuickAddSheet.jsx # 記帳抽屜（新增與編輯支出共用）
@@ -146,32 +146,40 @@ setIsModalOpen(false);
 - `index.html` 有 12 秒**白畫面看門狗**：pre-loader 若還在就自動 reload 一次自救（sessionStorage 防循環，App 掛載成功會清旗標）。
 - ⚠️ `dist/` 與 `sw.js` 都是 build 產物，**不要手動編輯**；SW 邏輯要改就改 `vite.config.js` 的模板。
 
-### 5.5 設計系統（3.0「琉璃」：和紙底＋厚玻璃，低彩度的日本傳統色，只用淺色）
-2026-11-28 全面改版。舊的和紙風格保留在 `backup/pre-liquid-glass-20261128` 分支。
-第一版用多彩的極光背景與鮮豔色票，Mick 看過後要求改成**低飽和、低調、日式**；第二版在背景放了兩個有邊緣的圓讓玻璃去透，他覺得「太土、顏色與物件會影響文字閱讀」。以下是第三版，之後請維持這個方向：**背景要淺、要乾淨、不能有形狀**。
+### 5.5 設計系統（3.1「紙白墨金」：宣紙的白、墨色的字與按鈕、一點點金，只用淺色）
+2026-11-28 3.0「琉璃」全面改版（舊的和紙風格在 `backup/pre-liquid-glass-20261128` 分支）；同一天再把配色換成「紙白墨金」。
+配色是 Mick 在選色頁上一輪一輪挑出來的，方向請維持：
+- 他要的是**低飽和、低調、日式**，但低飽和色直接放在白底上他覺得「很醜」；最後選的是「墨金」的淺色版「紙白」。
+- **背景要淺、要乾淨、不能有形狀**（有邊緣的圖形會干擾閱讀）。特效是氣氛不是表演：**強度用「淡」**、
+  **手指碰到的地方不能發光**、粒子要**霧霧的**（像灰塵），不能是實體的碎片。
+- **最上面的大數字是純墨色，不要金光**；金色只留在卡片右下的邊、金繼線、墨色按鈕上的字、年度支出。
+- **裝水的球與瓶子用墨玻璃**（煙墨色的玻璃＋透光的淺色水）。淺色玻璃配實色的水他覺得「不像真的水」。
 - **不支援深色模式**（沿用 2.0 的決定）。`index.html` 宣告 `color-scheme: light only`。
-- **背景**：`components/glass.jsx` 的 `<Aurora />`（`.aurora`，名稱沿用）＝很淺的底色（白磁灰）＋**兩團沒有邊緣的柔光**（一團淡色、一團白光，都不會動）＋極細的顆粒。
-  淡色那團依時段換（`html[data-mood]`＝dawn 退紅／day 青磁／dusk 藤鼠／night 勿忘草，由 `index.html` 開頭的小段 script
-  在畫面出現前決定；網址加 `?mood=night` 可強制指定，檢查配色用）。
-  **字的後面不能有形狀或明顯的顏色**。不要用米色／土色當底，也不要放有邊緣的圖形。
-- **玻璃**（都在 `src/index.css` 的 `@layer components`，全部是真的 `backdrop-filter`）：
-  - `.glass-card`：**內容卡片**，一片厚玻璃。霧度高（字的後面是乾淨的白霧）；玻璃感靠邊緣：上下高光＋內側雙層亮邊（厚度）＋深色細外緣（照 iOS 27）＋柔和陰影。
+- **背景**：`components/glass.jsx` 的 `<Aurora />`（`.aurora`，名稱沿用）＝宣紙的底色＋兩張畫布＋和紙的顆粒。
+  畫布由 `lib/inkField.js` 繪製：一張是低解析度的**水墨**（幾團沒有邊緣的霧＋兩層雲霧紋理，慢慢飄，每秒只重畫約 9 次），
+  一張是**霧塵**（暖金褐色、邊緣完全化開的小點，約每秒 30 格）。分頁在背景時暫停；`prefers-reduced-motion` 時只畫一張靜止的。
+  強度寫死在 `inkField.js` 的 `K`（0.45＝淡）。`<Aurora still />` 只畫水墨（開啟畫面用）。
+- **卡片與玻璃**（都在 `src/index.css` 的 `@layer components`）：
+  - `.glass-card`：**內容卡片**，半透明的白玻璃。質感靠邊緣：左上白色高光、**右下一道金邊**、內側亮邊（厚度）、深色細外緣、柔和陰影。
+    **卡片不做 `backdrop-filter`**：紙白的底很乾淨，模糊看不出差別，拿掉後捲動與背景動畫都輕很多。
     可加 `.tint-blue/rose/emerald/indigo/amber/red` 淡淡上色、`.r-tile` 用小一號圓角。
-  - `.glass`：**浮在內容上方的介面**（頁首按鈕、底部導覽、子分頁），模糊更重。
-    抽屜 `.sheet-panel`、對話框 `.modal-card`、提示 `.toast` 也是玻璃（抽屜幾乎不透，表單才好讀）。
-  - 另有 `.glass-well`（凹槽）、`.glass-ink`／`.btn-ink`（墨色玻璃：主要按鈕與＋號）。
-- **色票**在 `@theme`，直接覆寫 Tailwind 色系，全部是低彩度的日本傳統色（和 2.0 同一組）：slate＝墨與鼠、blue＝勿忘草（士程）、
-  rose＝退紅（佳欣）、emerald＝青磁（彈性／正向）、indigo＝藤鼠（固定）、amber＝枯色（年度）、cyan＝水淺蔥、
+  - `.glass`：**浮在內容上方的介面**（頁首按鈕、底部導覽、子分頁），這些才是真的玻璃（`backdrop-filter`）。
+    抽屜 `.sheet-panel`、對話框 `.modal-card`、提示 `.toast` 也是（抽屜幾乎不透，表單才好讀）。
+  - 另有 `.glass-well`（凹槽）、`.glass-ink`／`.btn-ink`（墨色：主要按鈕與＋號，**字是淡金色 `--gold-ink`**）。
+  - `.vein`：金繼線（一段 SVG 路徑，畫在卡片內容後面）。目前只用在總覽最上面那張卡。
+- **色票**在 `@theme`，直接覆寫 Tailwind 色系，全部低彩度：slate＝墨與鼠（偏暖）、blue＝縹（士程）、
+  rose＝退紅（佳欣）、emerald＝松葉（彈性／正向）、indigo＝青墨（固定）、amber＝金（年度）、cyan＝水淺蔥、
   **red＝茜（警示／超支／刪除，和退紅分開）**、violet＝江戸紫（AI 建議）。**不要加鮮豔的顏色**，新顏色從這幾個色系取。
-  低彩度下 600 階的文字對比不夠，彩色文字一律用 700 以上。
-  漸層用 `.tone-*`（提供 `--a` 淺、`--b` 深、`--glow`），試管、長條、液體都吃這組變數。
+  彩色文字一律用 700 以上，對比才夠。
+  漸層用 `.tone-*`（`--a` 淺、`--b` 深、`--glow`；`--v` 是裝在墨玻璃容器裡的水色），試管、長條、液體都吃這組變數。
 - **字體**：全部系統字，不再下載網路字體。內文 SF Pro＋蘋方；`.font-num`、`.money` 與 `text-2xl` 以上用
   SF Pro Rounded（`ui-rounded`）等寬數字。
-- **液體**是這一版的視覺語言：`Vessel`（玻璃球／玻璃瓶裡會晃的液體，水位＝比例）、`.tube`（試管進度條）、
-  `.vbar`（直條圖）。總覽的「本月還能花」是一顆球、今年三桶是三個瓶子。
+- **液體**是視覺語言：`Vessel`（墨玻璃的球／瓶子裡裝著會晃、透光的水，水位＝比例；水面有一道亮線、水裡有氣泡）、
+  `.tube`（試管進度條）、`.vbar`（直條圖）。總覽的「本月還能花」是一顆球、今年三桶是三個瓶子。
+  `Vessel` 裡的標籤文字是淺色（繼承 `.vessel` 的 `color`），不要再加深色的文字類別。
 - **動畫**：彈簧曲線 `--spring`／`--spring-soft`（`linear()`，不支援時退回貝茲）。頁面內容用 `.stagger` 一張張浮上來；
   金額用 `Num` 數上去；按下去用 `.press`／`.btn` 的回彈。`prefers-reduced-motion` 時全部關掉。
-- ⚠️ **不要在有玻璃子孫的容器上做 `opacity`／`filter` 動畫**：那會讓容器變成 backdrop root，
+- ⚠️ **不要在有玻璃子孫（`.glass`、抽屜等有 `backdrop-filter` 的元素）的容器上做 `opacity`／`filter` 動畫**：那會讓容器變成 backdrop root，
   裡面的玻璃在動畫期間會失去背景模糊、動畫結束才突然出現。所以 `.stagger` 的進場（`rise`）只動 `transform`；
   玻璃元素自己做淡入（`.fade-up`）沒問題，包住玻璃的父層不行。
 - ⚠️ `@layer components` 裡的樣式可以被 Tailwind 工具類別覆寫（例如 `glass-card !rounded-[24px]`）；

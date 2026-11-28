@@ -1,15 +1,25 @@
 /* eslint-disable react-refresh/only-export-components -- 元件與 hook 同檔是刻意設計 */
 import { createElement, useEffect, useLayoutEffect, useRef } from 'react';
+import { startInk } from '../lib/inkField';
 
-// ─── 3.0「琉璃」共用元件：背景、會數數的金額、液體容器、試管進度條、滑動分段切換、抽屜外殼 ───
+// ─── 共用元件（3.1「紙白墨金」）：背景、會數數的金額、液體容器、試管進度條、滑動分段切換、抽屜外殼 ───
 
 const reduceMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const clamp01 = (n) => Math.max(0, Math.min(1, Number(n) || 0));
 
-// 背景（放在 App 最底層）：和紙底色＋兩個淡色的圓。名稱沿用 Aurora。
-export const Aurora = () => (
-  <div className="aurora" aria-hidden="true"><i /><i /></div>
-);
+// 背景（放在 App 最底層）：宣紙的白＋慢慢暈開的淡墨＋一點霧塵。名稱沿用 Aurora。
+// still：只畫水墨、不放霧塵（開啟畫面用，底下已經有一份完整的背景）
+export const Aurora = ({ still = false }) => {
+  const fieldRef = useRef(null);
+  const dustRef = useRef(null);
+  useEffect(() => (fieldRef.current ? startInk(fieldRef.current, still ? null : dustRef.current) : undefined), [still]);
+  return (
+    <div className="aurora" aria-hidden="true">
+      <canvas ref={fieldRef} />
+      {!still && <canvas ref={dustRef} />}
+    </div>
+  );
+};
 
 // ─── 數字 ────────────────────────────────────────────────────────────────
 // 會從上一次顯示的值「數」到新值。給 id 的話，切換分頁回來不會每次從 0 重數。
@@ -55,24 +65,39 @@ export const Money = ({ value, digits = 0, className = '', animate = false, id, 
 };
 
 // ─── 液體 ────────────────────────────────────────────────────────────────
-const WAVE = 'M0 6 C 12.5 0 37.5 0 50 6 S 87.5 12 100 6 S 137.5 0 150 6 S 187.5 12 200 6 V 13 H 0 Z';
+const WAVE_LINE = 'M0 6 C 12.5 0 37.5 0 50 6 S 87.5 12 100 6 S 137.5 0 150 6 S 187.5 12 200 6';
+const WAVE = `${WAVE_LINE} V 13 H 0 Z`;
 const Waves = () => (
   <>
     <svg className="liq-wave b" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true"><path d={WAVE} fill="currentColor" /></svg>
-    <svg className="liq-wave a" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true"><path d={WAVE} fill="currentColor" /></svg>
+    <svg className="liq-wave a" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true">
+      <path d={WAVE} fill="currentColor" />
+      <path className="liq-line" d={WAVE_LINE} vectorEffect="non-scaling-stroke" />
+    </svg>
   </>
 );
+// 水裡的氣泡：位置、大小、速度各不相同（固定的幾組，不用亂數，畫面才不會每次重繪都跳）
+const BUBBLES = [
+  { '--x': '18%', '--s': '3px', '--d': '3.8s', '--dl': '-0.4s' },
+  { '--x': '41%', '--s': '4px', '--d': '5.1s', '--dl': '-1.9s' },
+  { '--x': '64%', '--s': '3px', '--d': '4.4s', '--dl': '-3.0s' },
+  { '--x': '82%', '--s': '4px', '--d': '5.8s', '--dl': '-1.2s' },
+];
 
-// 玻璃容器裡裝著會晃的液體。pct：0–1 的水位；
+// 墨玻璃的容器裡裝著會晃、透光的水。pct：0–1 的水位；
 // mark：0–1，在容器裡畫一道虛線刻度（例如「今天應該剩多少」）——畫在玻璃內側，不會壓到旁邊的字
-export const Vessel = ({ pct, tone = 'emerald', shape = 'round', className = '', style, mark = null, children }) => (
-  <div className={`vessel ${shape} tone-${tone} shrink-0 ${className}`} style={style}>
-    <div className="liq" style={{ '--p': clamp01(pct) }}><Waves /></div>
-    {mark !== null && <span className="vessel-mark" style={{ top: `${(1 - clamp01(mark)) * 100}%` }} aria-hidden="true" />}
-    <div className="vessel-shine" />
-    {children && <div className="vessel-label">{children}</div>}
-  </div>
-);
+export const Vessel = ({ pct, tone = 'emerald', shape = 'round', className = '', style, mark = null, children }) => {
+  const p = clamp01(pct);
+  return (
+    <div className={`vessel ${shape} tone-${tone} shrink-0 ${className}`} style={{ ...style, '--p': p }}>
+      <div className="liq"><Waves /></div>
+      {p > 0.08 && <div className="bubs" aria-hidden="true">{BUBBLES.map((b) => <i key={b['--x']} className="bub" style={b} />)}</div>}
+      {mark !== null && <span className="vessel-mark" style={{ top: `${(1 - clamp01(mark)) * 100}%` }} aria-hidden="true" />}
+      <div className="vessel-shine" />
+      {children && <div className="vessel-label">{children}</div>}
+    </div>
+  );
+};
 
 // ─── 試管進度條 ──────────────────────────────────────────────────────────
 // value / max 的比例；marker：0–1，在條上畫一道刻度

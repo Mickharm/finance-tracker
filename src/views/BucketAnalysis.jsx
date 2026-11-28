@@ -201,7 +201,7 @@ const BucketAnalysis = ({ transactions, settings, flexMonthly, onRequestHistory,
               const on = selMonth === null || selMonth === i;
               return (
                 <button key={i} type="button" onClick={() => pickMonth(i)} className={`relative h-full flex items-end transition-opacity duration-300 ${on ? '' : 'opacity-30'}`} aria-label={`${i + 1} 月 ${fmt(total)}`} aria-pressed={selMonth === i}>
-                  <span className="grow-y w-full flex flex-col-reverse overflow-hidden rounded-[7px]" style={{ height: `${(total / max) * 100}%`, '--i': i, transformOrigin: '50% 100%', boxShadow: selMonth === i ? '0 8px 16px -6px rgba(46,49,51,.5)' : undefined }}>
+                  <span className="grow-y w-full flex flex-col-reverse overflow-hidden rounded-[7px]" style={{ height: `${(total / max) * 100}%`, '--i': i, transformOrigin: '50% 100%', boxShadow: selMonth === i ? '0 8px 16px -6px rgba(36, 34, 31,.5)' : undefined }}>
                     {BUCKETS.map((b) => <span key={b.key} className={`vbar !rounded-none tone-${b.tone}`} style={{ height: total ? `${(m[b.key] / total) * 100}%` : 0 }} />)}
                   </span>
                 </button>

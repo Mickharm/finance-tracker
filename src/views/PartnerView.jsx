@@ -92,7 +92,7 @@ const PartnerView = ({ partnerTransactions, loading = false, onSave, onRemove })
 
       <Section title="餘額走勢">
         <div className="glass-card px-4 pt-4 pb-2.5">
-          <LineChart points={trend} color="#C08480" color2="#E0B2AE" />
+          <LineChart points={trend} color="#B07A74" color2="#DBB0AB" />
         </div>
       </Section>
 

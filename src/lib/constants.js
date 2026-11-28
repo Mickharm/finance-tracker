@@ -6,13 +6,13 @@ const GLASS_CARD = "glass-card";
 const GLASS_INPUT = "field";
 
 const COLOR_VARIANTS = {
-  slate:   { bar: 'bg-[#85888A]' },
+  slate:   { bar: 'bg-[#868179]' },
   stone:   { bar: 'bg-[#8E9488]' },
-  sky:     { bar: 'bg-[#7C9DC0]' },
-  blue:    { bar: 'bg-[#8F8EB3]' },
-  rose:    { bar: 'bg-[#C08480]' },
-  emerald: { bar: 'bg-[#6B9A8D]' },
-  amber:   { bar: 'bg-[#C2A66E]' },
+  sky:     { bar: 'bg-[#5F7FA3]' },
+  blue:    { bar: 'bg-[#6B7286]' },
+  rose:    { bar: 'bg-[#B07A74]' },
+  emerald: { bar: 'bg-[#6F8F7C]' },
+  amber:   { bar: 'bg-[#B08A3E]' },
   indigo:  { bar: 'bg-[#A596BC]' },
   cyan:    { bar: 'bg-[#6FA3A4]' },
 };
@@ -49,7 +49,7 @@ const MENU_ITEMS_FLAT = MENU_SECTIONS.flatMap(section => section.items);
 // ─── Holdings View (持股檢視) ────────────────────────────────────────────────
 // Distinct accent per holdings group so each section reads differently (not all one colour).
 const HOLDINGS_GROUP_THEMES = ['sky', 'emerald', 'amber', 'rose', 'indigo', 'cyan', 'blue', 'slate'];
-// theme.bar is e.g. "bg-[#7C9DC0]"; pull the raw hex for inline styles (donut fills, accents).
+// theme.bar is e.g. "bg-[#5F7FA3]"; pull the raw hex for inline styles (donut fills, accents).
 const barToHex = (barClass) => barClass.replace('bg-[', '').replace(']', '');
 
 export { GLASS_CARD, GLASS_INPUT, COLOR_VARIANTS, DEFAULT_SETTINGS, DEFAULT_PRINCIPAL_CONFIG, INCOME_CATEGORIES, MENU_SECTIONS, MENU_ITEMS_FLAT, HOLDINGS_GROUP_THEMES, barToHex };

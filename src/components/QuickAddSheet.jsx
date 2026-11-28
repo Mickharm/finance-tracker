@@ -147,7 +147,7 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
     <SheetShell onClose={onClose} z="z-[60]" avoidKeyboard={false}>
       {/* ── 第一次使用：這支手機是誰的 */}
       {askPayer && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-5 p-8" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.97), rgba(246,248,254,.96))' }}>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-5 p-8" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.97), rgba(248, 246, 242,.96))' }}>
           <div className="text-[21px] font-bold tracking-tight text-slate-900">這支手機是誰在記帳？</div>
           <p className="text-sm text-slate-500 text-center -mt-2 leading-relaxed">之後記帳會自動記在這個人名下，<br />需要時點右上角頭像可以臨時切換。</p>
           <div className="flex gap-4">
@@ -273,7 +273,7 @@ const QuickAddSheet = ({ transactions, settings, initialDate, editing = null, is
                   return (
                     <button key={`${c.type}|${c.group}|${c.category}`} type="button" onClick={() => { setManualCat(c); setPicking(false); haptic(8); }} aria-pressed={!!on}
                       className={`press flex items-center gap-1.5 p-1.5 pr-2 rounded-2xl text-xs font-bold text-left ${on ? 'btn-ink' : 'text-slate-700 bg-white/65'}`}
-                      style={on ? undefined : { boxShadow: 'inset 0 1px 0 #fff, 0 0 0 0.5px var(--edge), 0 3px 8px -5px rgba(30,40,100,.3)' }}>
+                      style={on ? undefined : { boxShadow: 'inset 0 1px 0 #fff, 0 0 0 0.5px var(--edge), 0 3px 8px -5px rgba(36, 34, 31,.3)' }}>
                       <CategoryIcon category={c.category} group={c.group} type={c.type} size="sm" />
                       <span className="truncate">{c.category}</span>
                     </button>

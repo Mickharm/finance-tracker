@@ -295,7 +295,7 @@ const PetView = ({ records, loading = false, onSave, onRemove }) => {
       {/* ── 體重 */}
       <Section title="體重" extra={<AddButton label="記體重" onClick={() => openNew('weight')} />}>
         <div className="glass-card px-4 pt-4 pb-3">
-          <LineChart points={trend} color="#C2A66E" color2="#DFCCA2" formatY={(v) => `${v} kg`} />
+          <LineChart points={trend} color="#B08A3E" color2="#DCC489" formatY={(v) => `${v} kg`} />
           {heaviest && (
             <div className="mt-2 pt-3 flex justify-between text-[13px] text-slate-500" style={{ boxShadow: 'inset 0 0.5px 0 0 var(--hair)' }}>
               <span>共 <span className="font-num font-bold text-slate-700">{weights.length}</span> 次紀錄</span>

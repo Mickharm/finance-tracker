@@ -122,20 +122,20 @@ const PaymentSteps = ({ schedule, current }) => {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible" style={{ height: H }}>
       <defs>
-        <linearGradient id="ps-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7C9DC0" stopOpacity="0.3" /><stop offset="100%" stopColor="#7C9DC0" stopOpacity="0" /></linearGradient>
-        <linearGradient id="ps-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#86AFA3" /><stop offset="22%" stopColor="#7C9DC0" /><stop offset="100%" stopColor="#8F8EB3" /></linearGradient>
+        <linearGradient id="ps-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#5F7FA3" stopOpacity="0.3" /><stop offset="100%" stopColor="#5F7FA3" stopOpacity="0" /></linearGradient>
+        <linearGradient id="ps-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#8DAE9B" /><stop offset="22%" stopColor="#5F7FA3" /><stop offset="100%" stopColor="#6B7286" /></linearGradient>
       </defs>
-      <rect x="0" y={padT - 6} width={X(graceEnd)} height={H - padT - padB + 6} rx="8" fill="rgba(134, 175, 163, 0.22)" />
+      <rect x="0" y={padT - 6} width={X(graceEnd)} height={H - padT - padB + 6} rx="8" fill="rgba(141, 174, 155, 0.22)" />
       <path d={`${d} V${H - padB} H0 Z`} fill="url(#ps-area)" className="fade-up" style={{ animationDelay: '0.3s', animationDuration: '0.9s' }} />
       <path d={d} fill="none" stroke="url(#ps-line)" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" pathLength="1" style={{ strokeDasharray: 1, '--len': 1, animation: 'draw 1.4s var(--ease-out) backwards' }} />
-      <line x1={X(ci)} x2={X(ci)} y1="14" y2={H - padB} stroke="#2E3133" strokeWidth="1.5" strokeDasharray="2 3" />
-      <circle cx={X(ci)} cy={Y(current.amount)} r="8" fill="#7C9DC0" opacity="0.28" style={{ transformOrigin: `${X(ci)}px ${Y(current.amount)}px`, animation: 'breathe 2.6s ease-in-out infinite' }} />
-      <circle cx={X(ci)} cy={Y(current.amount)} r="4.5" fill="#fff" stroke="#2E3133" strokeWidth="2.4" />
-      <text x={Math.min(W - 26, X(ci) + 6)} y="11" fontSize="10.5" fontWeight="700" fill="#2E3133">現在</text>
-      <text x="6" y={H - padB - 6} fontSize="10" fontWeight="700" fill="#4D7D70">寬限期</text>
-      <text x={W} y="11" fontSize="10.5" fontWeight="600" fill="#9C9E9B" textAnchor="end">{fmt(max)}</text>
-      <text x="0" y={H - 4} fontSize="10.5" fontWeight="600" fill="#9C9E9B">{schedule[0].date.getFullYear()}</text>
-      <text x={W} y={H - 4} fontSize="10.5" fontWeight="600" fill="#9C9E9B" textAnchor="end">{schedule[schedule.length - 1].date.getFullYear()}</text>
+      <line x1={X(ci)} x2={X(ci)} y1="14" y2={H - padB} stroke="#2C2A27" strokeWidth="1.5" strokeDasharray="2 3" />
+      <circle cx={X(ci)} cy={Y(current.amount)} r="8" fill="#5F7FA3" opacity="0.28" style={{ transformOrigin: `${X(ci)}px ${Y(current.amount)}px`, animation: 'breathe 2.6s ease-in-out infinite' }} />
+      <circle cx={X(ci)} cy={Y(current.amount)} r="4.5" fill="#fff" stroke="#2C2A27" strokeWidth="2.4" />
+      <text x={Math.min(W - 26, X(ci) + 6)} y="11" fontSize="10.5" fontWeight="700" fill="#2C2A27">現在</text>
+      <text x="6" y={H - padB - 6} fontSize="10" fontWeight="700" fill="#4E7561">寬限期</text>
+      <text x={W} y="11" fontSize="10.5" fontWeight="600" fill="#9E9A93" textAnchor="end">{fmt(max)}</text>
+      <text x="0" y={H - 4} fontSize="10.5" fontWeight="600" fill="#9E9A93">{schedule[0].date.getFullYear()}</text>
+      <text x={W} y={H - 4} fontSize="10.5" fontWeight="600" fill="#9E9A93" textAnchor="end">{schedule[schedule.length - 1].date.getFullYear()}</text>
     </svg>
   );
 };

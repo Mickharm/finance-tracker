@@ -123,7 +123,7 @@ const PrincipalView = ({ user, db, appId, requestDelete, requestConfirmation }) 
       </Hero>
 
       <Section title="淨值走勢">
-        <div className="glass-card px-4 pt-4 pb-2.5"><LineChart points={trend} color="#7C9DC0" color2="#A9A8C6" /></div>
+        <div className="glass-card px-4 pt-4 pb-2.5"><LineChart points={trend} color="#5F7FA3" color2="#9399AB" /></div>
       </Section>
 
       {GROUPS.map((g) => (
