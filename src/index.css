@@ -2,13 +2,13 @@
 
 /* ════════════════════════════════════════════════════════════════════════
    3.1「紙白墨金」設計系統 —— 宣紙的白、墨色的字與按鈕、一點點金
-   · 背景：宣紙的白，上面一層很淡的墨慢慢暈開，空氣裡飄著一點暖色的霧塵（特效強度固定在「淡」）。
+   · 背景：宣紙的白，上面一層很淡的墨慢慢暈開（特效強度固定在「淡」，沒有粒子）。
      字的後面不能有形狀或明顯的顏色，否則會干擾閱讀。
    · 卡片是半透明的白玻璃，靠邊緣表現質感：左上一道白色高光、右下一道金邊、柔和的陰影。
      卡片本身不做後方模糊（底色很乾淨，模糊看不出差別，卻很吃效能）；
      浮在內容上面的介面（頁首按鈕、底部導覽、抽屜）才是真的玻璃（backdrop-filter）。
    · 墨色的按鈕配淡金色的字；大數字是純墨色，沒有金光。
-   · 裝水的容器（球與瓶子）是煙墨色的玻璃，裡面是透光的淺色水。
+   · 裝水的容器（球與瓶子）是透明的玻璃，裡面是很淡、透光的水（清水）。
    · 顏色一律低飽和：墨、鼠、松葉、青墨、金、縹、退紅、茜。
    ════════════════════════════════════════════════════════════════════════ */
 
@@ -154,8 +154,8 @@
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ════════════════════════════════════════════════════════════════════════
-   背景：宣紙的白，上面一層很淡的墨慢慢暈開，空氣裡有一點暖色的霧塵。
-   兩張畫布由 src/lib/inkField.js 繪製；這裡只放底色、畫布的位置與和紙的纖維感。
+   背景：宣紙的白，上面一層很淡的墨慢慢暈開。
+   水墨那張畫布由 src/lib/inkField.js 繪製；這裡只放底色、畫布的位置與和紙的纖維感。
    不放有形狀、有邊緣的東西——那會從卡片後面透出來干擾閱讀
    ════════════════════════════════════════════════════════════════════════ */
 .aurora {
@@ -377,16 +377,16 @@
   .tube.stack .tube-fill + .tube-fill { box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
   .tube.stack .tube-fill::after { left: 0; right: 0; border-radius: 0; }
 
-  /* 色調：--a 淺、--b 深、--glow 光暈（全部低彩度）；--v 是裝在墨玻璃容器裡的水色（調淡、會透光） */
-  .tone-emerald { --a: #AFC8B9; --b: #6F8F7C; --glow: rgba(95, 138, 114, 0.4); --v: #CFE0D2; }   /* 松葉 → 青磁的水 */
-  .tone-indigo  { --a: #B9BDCB; --b: #6B7286; --glow: rgba(92, 99, 119, 0.4);  --v: #BCC2DC; }   /* 青墨 → 銀 */
-  .tone-amber   { --a: #DCC489; --b: #B08A3E; --glow: rgba(150, 117, 49, 0.4); --v: #E6C27A; }   /* 金 */
-  .tone-blue    { --a: #ABBED5; --b: #5F7FA3; --glow: rgba(80, 112, 148, 0.4); --v: #B9CDE4; }   /* 縹 */
-  .tone-rose    { --a: #DBB0AB; --b: #B07A74; --glow: rgba(154, 100, 94, 0.4); --v: #E8C0BA; }   /* 退紅 */
-  .tone-red     { --a: #D6968D; --b: #B0524A; --glow: rgba(156, 70, 63, 0.4);  --v: #EDA093; }   /* 茜 */
-  .tone-cyan    { --a: #A7CDCD; --b: #6FA3A4; --glow: rgba(92, 147, 148, 0.4); --v: #BFDDDD; }   /* 水淺蔥 */
-  .tone-slate   { --a: #D0CCC4; --b: #9E9A93; --glow: rgba(107, 103, 97, 0.35); --v: #D8D4CC; }  /* 鼠 */
-  .tone-ink     { --a: #6B6761; --b: #2C2A27; --glow: rgba(36, 34, 31, 0.4);   --v: #D8D4CC; }   /* 墨 */
+  /* 色調：--a 淺、--b 深、--glow 光暈（全部低彩度） */
+  .tone-emerald { --a: #AFC8B9; --b: #6F8F7C; --glow: rgba(95, 138, 114, 0.4); }    /* 松葉 */
+  .tone-indigo  { --a: #B9BDCB; --b: #6B7286; --glow: rgba(92, 99, 119, 0.4); }     /* 青墨 */
+  .tone-amber   { --a: #DCC489; --b: #B08A3E; --glow: rgba(150, 117, 49, 0.4); }    /* 金 */
+  .tone-blue    { --a: #ABBED5; --b: #5F7FA3; --glow: rgba(80, 112, 148, 0.4); }    /* 縹 */
+  .tone-rose    { --a: #DBB0AB; --b: #B07A74; --glow: rgba(154, 100, 94, 0.4); }    /* 退紅 */
+  .tone-red     { --a: #D6968D; --b: #B0524A; --glow: rgba(156, 70, 63, 0.4); }     /* 茜 */
+  .tone-cyan    { --a: #A7CDCD; --b: #6FA3A4; --glow: rgba(92, 147, 148, 0.4); }    /* 水淺蔥 */
+  .tone-slate   { --a: #D0CCC4; --b: #9E9A93; --glow: rgba(107, 103, 97, 0.35); }   /* 鼠 */
+  .tone-ink     { --a: #6B6761; --b: #2C2A27; --glow: rgba(36, 34, 31, 0.4); }      /* 墨 */
 
   /* ─── 直條圖的長條 ─────────────────────────────────────────────────── */
   .vbar {
@@ -504,43 +504,41 @@
   }
   .toast-dot { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; }
 
-  /* ─── 液體（球與瓶子）：墨玻璃裡裝著透光的水 ───────────────────────────
-     瓶身是一塊煙墨色的玻璃；水用各色調調淡後的顏色（--v），上淡下濃、底部發一點光；
-     水面有一道亮線，水裡有幾顆慢慢往上升的氣泡。--p（0–1）是水位，設在 .vessel 上 */
+  /* ─── 液體（球與瓶子）：清水 ───────────────────────────────────────────
+     透明的玻璃裡裝著很淡、透光的水：水色是各色調的深色（--b）調得很透，上淡下濃，瓶底有一點白光；
+     水面有一道同色系的亮線，水裡有幾顆慢慢往上升的氣泡。--p（0–1）是水位，設在 .vessel 上 */
   .vessel {
     position: relative; isolation: isolate; overflow: hidden; transform: translateZ(0);
-    --c: var(--v, #D8D4CC);
-    color: #F3EEE4;
-    background:
-      linear-gradient(160deg, rgba(255, 240, 205, 0.18), rgba(255, 240, 205, 0.03) 70%),
-      linear-gradient(165deg, rgba(74, 72, 72, 0.8), rgba(38, 37, 39, 0.95));
-    box-shadow: inset 0 0 0 1px rgba(240, 214, 160, 0.1), inset 0 1.5px 2px rgba(240, 214, 160, 0.4), 0 0 0 0.5px rgba(0, 0, 0, 0.5), 0 16px 34px -14px rgba(36, 34, 31, 0.62);
+    --c: var(--b, #9E9A93);
+    --liq-line: color-mix(in srgb, var(--c) 50%, #fff);
+    color: var(--ink);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.3) 70%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.95), inset 0 0 16px rgba(36, 34, 31, 0.1), inset 0 -10px 16px -10px rgba(36, 34, 31, 0.22), 0 0 0 0.5px rgba(36, 34, 31, 0.3), 0 16px 30px -16px color-mix(in srgb, var(--c) 40%, rgba(36, 34, 31, 0.35));
   }
   .vessel.round { border-radius: 50%; }
   .vessel.jar { border-radius: 22px; }
   /* 水是一整塊往下推（只動 transform）；漸層的高度跟著水位縮放，所以水少的時候底部一樣是濃的 */
   .liq { position: absolute; left: 0; right: 0; top: 0; height: 100%; transform: translateY(calc((1 - var(--p, 0)) * 100%)); transition: transform 1.5s var(--spring-soft); will-change: transform;
     background:
-      radial-gradient(120% 60% at 50% 108%, color-mix(in srgb, var(--c) 95%, transparent) 0%, transparent 70%),
-      linear-gradient(180deg, color-mix(in srgb, var(--c) 34%, transparent) 0%, color-mix(in srgb, var(--c) 84%, transparent) 100%);
-    background-size: 100% calc(var(--p, 0) * 100%); background-repeat: no-repeat;
-    box-shadow: 0 -10px 22px -10px color-mix(in srgb, var(--c) 70%, transparent); }
+      radial-gradient(90% 46% at 50% 106%, rgba(255, 255, 255, 0.6) 0%, transparent 70%),
+      linear-gradient(180deg, color-mix(in srgb, var(--c) 12%, transparent) 0%, color-mix(in srgb, var(--c) 56%, transparent) 100%);
+    background-size: 100% calc(var(--p, 0) * 100%); background-repeat: no-repeat; }
   @starting-style { .liq { transform: translateY(100%); } }
-  .liq-wave { position: absolute; left: 0; bottom: calc(100% - 1px); width: 200%; height: 9px; display: block; color: color-mix(in srgb, var(--c) 34%, transparent); }
+  .liq-wave { position: absolute; left: 0; bottom: calc(100% - 1px); width: 200%; height: 9px; display: block; color: color-mix(in srgb, var(--c) 12%, transparent); }
   .liq-wave.a { animation: wave-x 6.5s linear infinite; }
   .liq-wave.b { height: 13px; opacity: 0.55; animation: wave-x 10s linear infinite reverse; }
-  .liq-line { fill: none; stroke: rgba(255, 246, 220, 0.92); stroke-width: 1.4; }
+  .liq-line { fill: none; stroke: var(--liq-line); stroke-width: 1.4; }
   /* 氣泡：容器的高度等於水深，氣泡從底部升到水面（100cqh） */
   .bubs { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--p, 0) * 100%); container-type: size; pointer-events: none; animation: fade-in 0.8s 1.2s backwards; }
   .bub { position: absolute; bottom: -5px; left: var(--x, 50%); width: var(--s, 4px); height: var(--s, 4px); border-radius: 50%; opacity: 0;
-    background: radial-gradient(circle at 35% 30%, #fff, rgba(255, 246, 220, 0.92) 60%, transparent 70%);
+    background: radial-gradient(circle at 35% 30%, #fff, var(--liq-line) 60%, transparent 70%);
     animation: bub-rise var(--d, 4s) linear infinite; animation-delay: var(--dl, 0s); }
   /* 容器上「應該剩多少」的刻度線（畫在玻璃裡面，不會壓到旁邊的字） */
-  .vessel-mark { position: absolute; left: 0; right: 0; height: 0; z-index: 2; pointer-events: none; border-top: 1.5px dashed rgba(255, 246, 220, 0.62); }
+  .vessel-mark { position: absolute; left: 0; right: 0; height: 0; z-index: 2; pointer-events: none; border-top: 1.5px dashed rgba(36, 34, 31, 0.5); }
   /* 玻璃上的反光（蓋在水上面）：左邊一道、右邊淡淡一道 */
   .vessel-shine { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
-    background: linear-gradient(100deg, rgba(255, 240, 205, 0) 8%, rgba(255, 240, 205, 0.22) 16%, rgba(255, 240, 205, 0) 30%, rgba(255, 240, 205, 0) 72%, rgba(255, 240, 205, 0.1) 90%, rgba(255, 240, 205, 0) 100%); }
-  .vessel-label { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; text-shadow: 0 1px 8px rgba(24, 23, 25, 0.9), 0 0 2px rgba(24, 23, 25, 0.9); }
+    background: linear-gradient(100deg, rgba(255, 255, 255, 0) 8%, rgba(255, 255, 255, 0.6) 16%, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, 0.3) 90%, rgba(255, 255, 255, 0) 100%); }
+  .vessel-label { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; text-shadow: 0 1px 8px rgba(255, 255, 255, 0.92), 0 0 2px rgba(255, 255, 255, 0.92); }
 
   /* 金繼：主卡上一道細細的金線，畫在內容後面 */
   .vein { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }

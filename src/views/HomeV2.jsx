@@ -107,14 +107,14 @@ const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, 
     <div className="space-y-7 stagger">
       {/* ── 本月還能花：大數字＋裝著「剩餘額度」的液體球 */}
       <section className={`glass-card p-5 ${status === 'over' ? 'tint-red' : status === 'warn' ? 'tint-amber' : ''}`}>
-        {/* 金繼：一道細細的金線，從左邊繞到液體球後面 */}
+        {/* 金繼：一道細細的金線，從左邊往上走，到液體球前面就淡掉（球是透明的，線不能穿過去） */}
         <svg className="vein" viewBox="0 0 340 220" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="vein-grad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="#C9A45C" stopOpacity="0" /><stop offset="0.25" stopColor="#C9A45C" /><stop offset="0.75" stopColor="#8A6A22" /><stop offset="1" stopColor="#8A6A22" stopOpacity="0" />
+              <stop offset="0" stopColor="#C9A45C" stopOpacity="0" /><stop offset="0.3" stopColor="#C9A45C" /><stop offset="0.72" stopColor="#8A6A22" /><stop offset="1" stopColor="#8A6A22" stopOpacity="0" />
             </linearGradient>
           </defs>
-          <path pathLength="1" d="M0 154 C 36 142 64 164 104 150 S 168 120 198 130 S 236 114 262 106 S 318 98 340 104" />
+          <path pathLength="1" d="M0 154 C 36 142 64 164 104 150 S 168 120 198 130 S 210 126 216 122" />
         </svg>
         <div className="flex items-center justify-between">
           <span className="eyebrow">{isCurrentMonth ? '本月還能花' : `${monthIdx + 1} 月彈性結餘`}</span>

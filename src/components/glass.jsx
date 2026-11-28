@@ -7,17 +7,12 @@ import { startInk } from '../lib/inkField';
 const reduceMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const clamp01 = (n) => Math.max(0, Math.min(1, Number(n) || 0));
 
-// 背景（放在 App 最底層）：宣紙的白＋慢慢暈開的淡墨＋一點霧塵。名稱沿用 Aurora。
-// still：只畫水墨、不放霧塵（開啟畫面用，底下已經有一份完整的背景）
-export const Aurora = ({ still = false }) => {
+// 背景（放在 App 最底層）：宣紙的白＋慢慢暈開的淡墨。名稱沿用 Aurora。
+export const Aurora = () => {
   const fieldRef = useRef(null);
-  const dustRef = useRef(null);
-  useEffect(() => (fieldRef.current ? startInk(fieldRef.current, still ? null : dustRef.current) : undefined), [still]);
+  useEffect(() => (fieldRef.current ? startInk(fieldRef.current) : undefined), []);
   return (
-    <div className="aurora" aria-hidden="true">
-      <canvas ref={fieldRef} />
-      {!still && <canvas ref={dustRef} />}
-    </div>
+    <div className="aurora" aria-hidden="true"><canvas ref={fieldRef} /></div>
   );
 };
 
@@ -84,7 +79,7 @@ const BUBBLES = [
   { '--x': '82%', '--s': '4px', '--d': '5.8s', '--dl': '-1.2s' },
 ];
 
-// 墨玻璃的容器裡裝著會晃、透光的水。pct：0–1 的水位；
+// 透明的玻璃容器裡裝著會晃、透光的水（清水）。pct：0–1 的水位；
 // mark：0–1，在容器裡畫一道虛線刻度（例如「今天應該剩多少」）——畫在玻璃內側，不會壓到旁邊的字
 export const Vessel = ({ pct, tone = 'emerald', shape = 'round', className = '', style, mark = null, children }) => {
   const p = clamp01(pct);

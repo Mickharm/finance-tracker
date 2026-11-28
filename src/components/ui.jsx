@@ -44,7 +44,7 @@ const LoadingScreen = ({ progress, isComplete, onDone }) => {
 
   return (
     <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden">
-      <Aurora still />
+      <Aurora />
       <div className="relative z-10 flex flex-col items-center">
         <div className="glass-card !rounded-[30px] w-24 h-24 flex items-center justify-center mb-7 pop">
           <Wallet className="w-11 h-11 text-slate-800" strokeWidth={1.7} />
