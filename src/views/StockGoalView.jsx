@@ -3,8 +3,9 @@ import { Plus, ArrowDownLeft, ArrowUpRight, Repeat } from 'lucide-react';
 import { ViewLoader } from '../components/ui';
 import { getFixedDepositAmount, getTodayString } from '../lib/utils';
 import { fmt, fmtSigned, pct } from '../lib/format';
+import { Tube } from '../components/glass';
 import {
-  Hero, HeroButton, Section, LinkButton, Row, Divided, Empty, IconDot, Seg, Field, SmallInput, Sheet,
+  Hero, HeroButton, Section, LinkButton, Row, Divided, Empty, IconDot, Dot, Seg, Field, SmallInput, DateInput, Sheet,
 } from '../components/v2';
 
 const n = (v) => Number(v) || 0;
@@ -38,11 +39,11 @@ const GoalSheet = ({ row, onSave, onDelete, onClose }) => {
         <SmallInput label="提領／調節（加回去算）" inputMode="decimal" value={f.withdrawal} onChange={set('withdrawal')} suffix="USD" />
         <SmallInput label="年化目標" inputMode="decimal" value={f.roi} onChange={set('roi')} suffix="%" />
       </div>
-      <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-500 space-y-1">
-        <div className="flex justify-between"><span>前一年實際</span><span className="tabular-nums">{fmt(row.prev)}</span></div>
-        <div className="flex justify-between"><span>今年固定存入</span><span className="tabular-nums">{fmt(row.deposit)}</span></div>
-        <div className="flex justify-between font-bold text-slate-700"><span>目標（×{(1 + n(f.roi) / 100).toFixed(2)}）</span><span className="tabular-nums">{fmt(target)}</span></div>
-        <div className="flex justify-between font-bold"><span>實際</span><span className={`tabular-nums ${eff >= target ? 'text-emerald-700' : 'text-slate-700'}`}>{fmt(eff)}（{fmtSigned(eff - target)}）</span></div>
+      <div className="glass-card r-tile p-4 text-[13px] text-slate-600 space-y-2">
+        <div className="flex justify-between"><span>前一年實際</span><span className="font-num font-semibold tabular-nums">{fmt(row.prev)}</span></div>
+        <div className="flex justify-between"><span>今年固定存入</span><span className="font-num font-semibold tabular-nums">{fmt(row.deposit)}</span></div>
+        <div className="flex justify-between font-bold text-slate-800"><span>目標（×{(1 + n(f.roi) / 100).toFixed(2)}）</span><span className="font-num tabular-nums">{fmt(target)}</span></div>
+        <div className="flex justify-between font-bold"><span className="text-slate-800">實際</span><span className={`font-num tabular-nums ${eff >= target ? 'text-emerald-600' : 'text-slate-800'}`}>{fmt(eff)}（{fmtSigned(eff - target)}）</span></div>
       </div>
     </Sheet>
   );
@@ -57,19 +58,19 @@ const ExchangeSheet = ({ initial, lastRate, onSave, onDelete, onClose }) => {
       submitLabel={twd > 0 ? `${f.type === 'sell' ? '賣出' : '買入'}，NT${fmt(twd)}` : '儲存'}
       onSubmit={() => onSave({ type: f.type, account: f.account, usdAmount: n(f.usdAmount), rate: n(f.rate), date: f.date }, f.id)}
       onDelete={f.id ? () => onDelete(f.id) : undefined}>
-      <Seg options={[['buy', '買美金'], ['sell', '賣美金']]} value={f.type} onChange={(type) => set({ type })} />
-      <Seg options={[['FT', 'Firstrade'], ['IB', 'IB']]} value={f.account} onChange={(account) => set({ account })} />
+      <Seg size="lg" options={[['buy', '買美金'], ['sell', '賣美金']]} value={f.type} onChange={(type) => set({ type })} />
+      <Seg size="lg" options={[['FT', 'Firstrade'], ['IB', 'IB']]} value={f.account} onChange={(account) => set({ account })} />
       <div className="grid grid-cols-2 gap-3">
         <SmallInput label="美金" inputMode="decimal" value={f.usdAmount} onChange={(e) => set({ usdAmount: e.target.value.replace(/[^\d.]/g, '') })} autoFocus={!f.id} suffix="USD" />
         <SmallInput label="匯率" inputMode="decimal" value={f.rate} onChange={(e) => set({ rate: e.target.value.replace(/[^\d.]/g, '') })} placeholder={lastRate ? String(lastRate) : '32.0'} suffix="TWD" />
       </div>
-      {lastRate && !f.rate && <button type="button" onClick={() => set({ rate: String(lastRate) })} className="-mt-2 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">用上次匯率 {lastRate}</button>}
-      <Field label="日期"><input type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm tabular-nums" /></Field>
+      {lastRate && !f.rate && <button type="button" onClick={() => set({ rate: String(lastRate) })} className="chip chip-sm on-emerald tabular-nums !-mt-1">用上次匯率 {lastRate}</button>}
+      <Field label="日期"><DateInput value={f.date} onChange={(date) => set({ date })} /></Field>
     </Sheet>
   );
 };
 
-// 2.0 存股：今年進度 → 每年實際 vs 目標 → 每年列表 → 換匯
+// 3.0 存股：今年進度 → 每年實際 vs 目標 → 每年列表 → 換匯
 const StockGoalView = ({ goals, exchanges, onAddYear, onDeleteYear, onSave, onRemove, loading = false }) => {
   const [sheet, setSheet] = useState(null);
   const [showAllEx, setShowAllEx] = useState(false);
@@ -90,53 +91,56 @@ const StockGoalView = ({ goals, exchanges, onAddYear, onDeleteYear, onSave, onRe
 
   if (loading) return <ViewLoader label="載入存股資料..." />;
   const shownEx = showAllEx ? ex.sorted : ex.sorted.slice(0, 6);
+  const newEx = () => setSheet({ kind: 'ex', initial: { id: null, type: 'buy', account: 'FT', usdAmount: '', rate: '', date: getTodayString() } });
+  const toneOf = (r) => (r.diff >= 0 ? 'emerald' : r.g.year < thisYear ? 'rose' : 'blue');
 
   return (
-    <div className="space-y-6 pb-24 animate-in fade-in">
+    <div className="space-y-6 stagger">
       {cur ? (
-        <>
-          <Hero label={`${cur.g.year} 年存股（美金）`} value={fmt(cur.eff)}
-            sub={<>目標 {fmt(cur.target)}・{cur.diff >= 0 ? <b className="text-emerald-700">已達成 {fmtSigned(cur.diff)}</b> : <b className="text-slate-700">還差 {fmt(-cur.diff)}</b>}</>}
-            action={<HeroButton icon={Repeat} label="換匯" onClick={() => setSheet({ kind: 'ex', initial: { id: null, type: 'buy', account: 'FT', usdAmount: '', rate: '', date: getTodayString() } })} />} />
-          <div className="px-1 -mt-3">
-            <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden"><div className={`h-full rounded-full ${cur.diff >= 0 ? 'bg-emerald-300' : 'bg-blue-300'}`} style={{ width: `${cur.target ? Math.min(100, (cur.eff / cur.target) * 100) : 0}%` }} /></div>
-            <div className="text-[11px] text-slate-400 mt-1">年化目標 {n(cur.g.roi)}%・固定存入 {fmt(cur.deposit)}{n(cur.g.withdrawal) ? `・含提領 ${fmt(cur.g.withdrawal)}` : ''}</div>
+        <Hero label={`${cur.g.year} 年存股（美金）`} amount={cur.eff} id="stockgoal-eff"
+          sub={<>目標 <span className="font-num font-semibold">{fmt(cur.target)}</span>・{cur.diff >= 0 ? <b className="font-num text-emerald-600">已達成 {fmtSigned(cur.diff)}</b> : <b className="font-num text-slate-800">還差 {fmt(-cur.diff)}</b>}</>}
+          action={<HeroButton icon={Repeat} label="換匯" onClick={newEx} />}>
+          <Tube value={cur.eff} max={cur.target || 1} tone={cur.diff >= 0 ? 'emerald' : 'blue'} height={12} />
+          <div className="flex justify-between text-xs text-slate-500 mt-2.5">
+            <span>年化目標 <span className="font-num font-bold text-slate-700">{n(cur.g.roi)}%</span>・固定存入 <span className="font-num font-bold text-slate-700">{fmt(cur.deposit)}</span></span>
+            <span className="font-num font-bold text-slate-700">{cur.target ? Math.round(Math.min(999, (cur.eff / cur.target) * 100)) : 0}%</span>
           </div>
-        </>
+          {n(cur.g.withdrawal) ? <div className="text-xs text-slate-400 mt-1">含提領 {fmt(cur.g.withdrawal)}</div> : null}
+        </Hero>
       ) : <Empty>還沒有存股資料</Empty>}
 
       {chartRows.length > 0 && (
         <Section title="每年實際 vs 目標">
-          <div className="glass-card-fx border rounded-2xl px-3 pt-4 pb-3">
-            <div className="flex items-end gap-2 h-32">
-              {chartRows.map((r) => (
-                <button key={r.g.id} type="button" onClick={() => setSheet({ kind: 'goal', id: r.g.id })} className="flex-1 h-full relative flex flex-col justify-end" aria-label={`${r.g.year} 年`}>
-                  <span className={`w-full rounded-t-md ${r.diff >= 0 ? 'bg-emerald-300' : r.g.year < thisYear ? 'bg-rose-200' : 'bg-blue-300'}`} style={{ height: `${(r.eff / max) * 100}%` }} />
-                  <span className="absolute left-[-3px] right-[-3px] border-t-2 border-slate-600" style={{ bottom: `${(r.target / max) * 100}%` }} />
+          <div className="glass-card px-4 pt-5 pb-3.5">
+            <div className="flex items-end gap-2.5 h-36">
+              {chartRows.map((r, i) => (
+                <button key={r.g.id} type="button" onClick={() => setSheet({ kind: 'goal', id: r.g.id })} className="press flex-1 h-full relative flex flex-col justify-end" aria-label={`${r.g.year} 年`}>
+                  <span className={`vbar grow-y !rounded-[9px] tone-${toneOf(r)} ${r.g.year === thisYear ? 'lit' : ''}`} style={{ height: `${(r.eff / max) * 100}%`, '--i': i }} />
+                  <span className="absolute left-[-3px] right-[-3px] h-[2.5px] rounded-full bg-slate-800" style={{ bottom: `calc(${(r.target / max) * 100}% - 1px)`, boxShadow: '0 0 0 1.5px rgba(255,255,255,.75)' }} />
                 </button>
               ))}
             </div>
-            <div className="flex gap-2 mt-1">{chartRows.map((r) => <span key={r.g.id} className="flex-1 text-center text-[10px] text-slate-400 tabular-nums">{String(r.g.year).slice(2)}</span>)}</div>
-            <div className="flex justify-center gap-3 mt-2 text-[10px] text-slate-400">
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-300" />達成</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-blue-300" />進行中</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-rose-200" />未達成</span>
-              <span className="flex items-center gap-1"><span className="w-3 border-t-2 border-slate-600" />目標</span>
+            <div className="flex gap-2.5 mt-1.5">{chartRows.map((r) => <span key={r.g.id} className={`font-num flex-1 text-center text-[11px] font-bold tabular-nums ${r.g.year === thisYear ? 'text-slate-900' : 'text-slate-400'}`}>{String(r.g.year).slice(2)}</span>)}</div>
+            <div className="flex justify-center flex-wrap gap-x-3.5 gap-y-1 mt-3 text-[11px] font-semibold text-slate-500">
+              <span className="flex items-center gap-1.5"><Dot tone="emerald" className="!w-2 !h-2" />達成</span>
+              <span className="flex items-center gap-1.5"><Dot tone="blue" className="!w-2 !h-2" />進行中</span>
+              <span className="flex items-center gap-1.5"><Dot tone="rose" className="!w-2 !h-2" />未達成</span>
+              <span className="flex items-center gap-1.5"><span className="w-3.5 h-[2.5px] rounded-full bg-slate-800" />目標</span>
             </div>
           </div>
         </Section>
       )}
 
-      <Section title="每年" extra={<LinkButton onClick={onAddYear}><Plus className="w-3.5 h-3.5" />新增年份</LinkButton>}>
+      <Section title="每年" extra={<LinkButton onClick={onAddYear}><Plus className="w-3.5 h-3.5" strokeWidth={2.6} />新增年份</LinkButton>}>
         {rows.length === 0 ? <Empty>從「新增年份」開始</Empty> : (
           <Divided>
             {rows.map((r) => {
-              const status = r.diff >= 0 ? ['達成', 'bg-emerald-50 text-emerald-700'] : r.g.year < thisYear ? ['未達成', 'bg-rose-50 text-rose-700'] : ['進行中', 'bg-slate-100 text-slate-500'];
+              const status = r.diff >= 0 ? ['達成', 'tag-emerald'] : r.g.year < thisYear ? ['未達成', 'tag-rose'] : ['進行中', 'tag-blue'];
               return (
                 <Row key={r.g.id}
-                  title={<span className="flex items-center gap-1.5">{r.g.year} 年<span className={`text-[10px] px-1.5 py-0.5 rounded-full ${status[1]}`}>{status[0]}</span></span>}
+                  title={<span className="flex items-center gap-2 font-num">{r.g.year} 年<span className={`tag ${status[1]}`}>{status[0]}</span></span>}
                   sub={`目標 ${fmt(r.target)}・年化 ${n(r.g.roi)}%`}
-                  right={fmt(r.eff)} rightSub={<span className={r.diff >= 0 ? 'text-emerald-700' : 'text-rose-700'}>{fmtSigned(r.diff)}{r.target ? `（${pct((r.diff / r.target) * 100)}）` : ''}</span>}
+                  right={fmt(r.eff)} rightSub={<span className={r.diff >= 0 ? 'text-emerald-600' : 'text-red-600'}>{fmtSigned(r.diff)}{r.target ? `（${pct((r.diff / r.target) * 100)}）` : ''}</span>}
                   onClick={() => setSheet({ kind: 'goal', id: r.g.id })} />
               );
             })}
@@ -144,11 +148,11 @@ const StockGoalView = ({ goals, exchanges, onAddYear, onDeleteYear, onSave, onRe
         )}
       </Section>
 
-      <Section title="換匯" extra={<LinkButton onClick={() => setSheet({ kind: 'ex', initial: { id: null, type: 'buy', account: 'FT', usdAmount: '', rate: '', date: getTodayString() } })}><Plus className="w-3.5 h-3.5" />記一筆</LinkButton>}>
-        <div className="grid grid-cols-3 text-center mb-3">
-          <div><div className="text-[11px] text-slate-400">淨持有美金</div><div className="font-num text-lg text-slate-800">{fmt(ex.net)}</div></div>
-          <div><div className="text-[11px] text-slate-400">平均買入</div><div className="font-num text-lg text-emerald-700">{ex.buyRate ? ex.buyRate.toFixed(2) : '—'}</div></div>
-          <div><div className="text-[11px] text-slate-400">平均賣出</div><div className="font-num text-lg text-rose-700">{ex.sellRate ? ex.sellRate.toFixed(2) : '—'}</div></div>
+      <Section title="換匯" extra={<LinkButton onClick={newEx}><Plus className="w-3.5 h-3.5" strokeWidth={2.6} />記一筆</LinkButton>}>
+        <div className="glass-card r-tile grid grid-cols-3 text-center py-4 mb-3">
+          <div><div className="text-[11px] font-semibold text-slate-500">淨持有美金</div><div className="font-num text-[19px] font-bold text-slate-900 mt-0.5">{fmt(ex.net)}</div></div>
+          <div><div className="text-[11px] font-semibold text-slate-500">平均買入</div><div className="font-num text-[19px] font-bold text-emerald-600 mt-0.5">{ex.buyRate ? ex.buyRate.toFixed(2) : '—'}</div></div>
+          <div><div className="text-[11px] font-semibold text-slate-500">平均賣出</div><div className="font-num text-[19px] font-bold text-rose-600 mt-0.5">{ex.sellRate ? ex.sellRate.toFixed(2) : '—'}</div></div>
         </div>
         {ex.sorted.length === 0 ? <Empty>還沒有換匯紀錄</Empty> : (
           <>
@@ -156,14 +160,14 @@ const StockGoalView = ({ goals, exchanges, onAddYear, onDeleteYear, onSave, onRe
               {shownEx.map((e) => {
                 const sell = e.type === 'sell';
                 return (
-                  <Row key={e.id} left={<IconDot icon={sell ? ArrowUpRight : ArrowDownLeft} tone={sell ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'} />}
+                  <Row key={e.id} left={<IconDot icon={sell ? ArrowUpRight : ArrowDownLeft} tone={sell ? 'rose' : 'emerald'} />}
                     title={`${sell ? '賣出' : '買入'} ${fmt(e.usdAmount)} 美金`} sub={`${String(e.date).replace(/-/g, '/')}・${ACCOUNT[e.account] || e.account}・匯率 ${n(e.rate).toFixed(2)}`}
-                    right={<span className={sell ? 'text-emerald-700' : 'text-slate-700'}>{sell ? '+' : '−'}NT{fmt(n(e.usdAmount) * n(e.rate))}</span>}
+                    right={<span className={sell ? 'text-emerald-600' : 'text-slate-800'}>{sell ? '+' : '−'}NT{fmt(n(e.usdAmount) * n(e.rate))}</span>}
                     onClick={() => setSheet({ kind: 'ex', initial: { ...e, usdAmount: String(e.usdAmount ?? ''), rate: String(e.rate ?? ''), account: e.account || 'FT', type: e.type || 'buy' } })} />
                 );
               })}
             </Divided>
-            {ex.sorted.length > 6 && <button type="button" onClick={() => setShowAllEx(!showAllEx)} className="w-full py-2 text-xs font-bold text-slate-400">{showAllEx ? '收起' : `顯示全部 ${ex.sorted.length} 筆`}</button>}
+            {ex.sorted.length > 6 && <button type="button" onClick={() => setShowAllEx(!showAllEx)} className="press w-full py-3 text-[13px] font-semibold text-slate-500">{showAllEx ? '收起' : `顯示全部 ${ex.sorted.length} 筆`}</button>}
           </>
         )}
       </Section>

@@ -1,70 +1,68 @@
 import { useState, useEffect, useRef } from 'react';
-import { Wallet, RefreshCw } from 'lucide-react';
-import { GLASS_CARD } from '../lib/constants';
+import { Wallet } from 'lucide-react';
+import { Aurora, modalExit, useGhostExit } from './glass';
 
-
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確認", confirmText = "確定", confirmColor = "bg-slate-800" }) => {
-  if (!isOpen) return null;
+// 確認對話框：玻璃卡從中間彈出來
+const ConfirmCard = ({ onClose, onConfirm, message, title, confirmText, danger }) => {
+  const rootRef = useRef(null);
+  useGhostExit(rootRef, modalExit);
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
-      <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative ${GLASS_CARD} p-6 w-full max-w-xs animate-in zoom-in-95 duration-200`}>
-        <h3 className="text-lg font-bold text-slate-800 mb-2">{title}</h3>
-        <p className="text-slate-500 text-sm mb-6 leading-relaxed">{message}</p>
-        <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold active:scale-95 transition-transform text-xs">取消</button>
-          <button onClick={() => { onConfirm(); onClose(); }} className={`flex-1 py-3 text-white rounded-xl font-bold shadow-lg active:scale-95 transition-transform text-xs ${confirmColor}`}>{confirmText}</button>
+    <div ref={rootRef} className="fixed inset-0 z-[65] flex items-center justify-center p-7">
+      <div data-scrim className="sheet-scrim" onClick={onClose} />
+      <div data-panel className="modal-card" role="alertdialog" aria-modal="true">
+        <h3 className="text-[19px] font-bold tracking-tight text-slate-900 mb-1.5">{title}</h3>
+        <p className="text-slate-600 text-[15px] mb-6 leading-relaxed">{message}</p>
+        <div className="flex gap-2.5">
+          <button onClick={onClose} className="btn btn-glass flex-1 h-12 text-[15px]">取消</button>
+          <button onClick={() => { onConfirm(); onClose(); }} className={`btn flex-1 h-12 text-[15px] ${danger ? 'btn-red' : 'btn-ink'}`}>{confirmText}</button>
         </div>
       </div>
     </div>
   );
 };
 
-const LoadingScreen = ({ progress, isComplete, onDone }) => {
-  const [displayProgress, setDisplayProgress] = useState(15);
-  const [statusText, setStatusText] = useState('載入資料中...');
-  const doneCalledRef = useRef(false);
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, message, title = "確認", confirmText = "確定", confirmColor = "bg-slate-800" }) => {
+  if (!isOpen) return null;
+  return <ConfirmCard onClose={onClose} onConfirm={onConfirm} message={message} title={title} confirmText={confirmText} danger={/rose|red/.test(confirmColor)} />;
+};
 
-  useEffect(() => {
-    setDisplayProgress(prev => Math.max(prev, isComplete ? 100 : progress));
-  }, [progress, isComplete]);
+// 開啟畫面：極光背景上一顆玻璃圖示，下面一條液體進度
+const LoadingScreen = ({ progress, isComplete, onDone }) => {
+  // 進度只會往前：目標比目前顯示的大才更新（在 render 中推導，不用 effect）
+  const [displayProgress, setDisplayProgress] = useState(15);
+  const target = isComplete ? 100 : progress;
+  if (target > displayProgress) setDisplayProgress(target);
+  const doneCalledRef = useRef(false);
 
   useEffect(() => {
     if (isComplete && !doneCalledRef.current) {
       doneCalledRef.current = true;
-      setStatusText('完成');
-      const timer = setTimeout(() => {
-        onDone();
-      }, 350);
+      const timer = setTimeout(() => { onDone(); }, 380);
       return () => clearTimeout(timer);
     }
   }, [isComplete, onDone]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center app-bg">
+    <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden">
+      <Aurora />
       <div className="relative z-10 flex flex-col items-center">
-        <div className="w-20 h-20 rounded-2xl glass-card-fx bg-white border flex items-center justify-center mb-8 animate-pulse">
-          <Wallet className="w-10 h-10 text-slate-600" />
+        <div className="glass-card !rounded-[30px] w-24 h-24 flex items-center justify-center mb-7 pop">
+          <Wallet className="w-11 h-11 text-slate-800" strokeWidth={1.7} />
         </div>
-        <h1 className="text-xl font-bold text-slate-800 mb-6 tracking-wide">記帳助手</h1>
-        <div className="w-48 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-emerald-400 rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${Math.min(displayProgress, 100)}%` }}
-          />
+        <h1 className="text-[22px] font-extrabold text-slate-900 mb-6 tracking-tight">記帳助手</h1>
+        <div className="tube w-44" style={{ height: 8 }}>
+          <span className="tube-fill tone-ink" style={{ width: `${Math.min(displayProgress, 100)}%`, transitionDuration: '0.5s' }} />
         </div>
-        <p className="text-xs text-slate-400 mt-3 tabular-nums">{statusText}</p>
       </div>
     </div>
   );
 };
 
-// Shown while a secondary tab's data is still loading (distinguishes "loading" from "empty").
-
+// 子分頁資料還在載入時顯示（區分「載入中」與「沒有資料」）
 const ViewLoader = ({ label = '載入中...' }) => (
-  <div className="flex flex-col items-center justify-center py-20 text-slate-400 animate-in fade-in duration-300">
-    <RefreshCw className="w-6 h-6 animate-spin mb-3 text-slate-300" />
-    <span className="text-sm font-bold">{label}</span>
+  <div className="flex flex-col items-center justify-center py-24 text-slate-400">
+    <span className="w-9 h-9 rounded-full mb-3" style={{ background: 'conic-gradient(from 0deg, rgba(92,154,251,0) 0%, #5C9AFB 100%)', WebkitMask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', mask: 'radial-gradient(farthest-side, transparent 62%, #000 64%)', animation: 'spin-slow 0.9s linear infinite' }} />
+    <span className="text-[13px] font-semibold">{label}</span>
   </div>
 );
 

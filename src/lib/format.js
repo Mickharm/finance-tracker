@@ -14,6 +14,6 @@ export const short = (n) => {
 };
 
 export const PEOPLE = {
-  myself: { name: '士程', short: '士', text: 'text-blue-700', bar: 'bg-blue-300', soft: 'bg-blue-50', on: 'bg-blue-100 text-blue-700 border-blue-300' },
-  partner: { name: '佳欣', short: '欣', text: 'text-rose-700', bar: 'bg-rose-300', soft: 'bg-rose-50', on: 'bg-rose-100 text-rose-700 border-rose-300' },
+  myself: { name: '士程', short: '士', tone: 'blue', tint: 'tint-blue', text: 'text-blue-700', orb: 'orb-me', chip: 'on-blue', tag: 'tag-blue' },
+  partner: { name: '佳欣', short: '欣', tone: 'rose', tint: 'tint-rose', text: 'text-rose-700', orb: 'orb-her', chip: 'on-rose', tag: 'tag-rose' },
 };

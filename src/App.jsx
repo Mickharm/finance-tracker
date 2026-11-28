@@ -1,12 +1,13 @@
 import * as React from 'react';
-const { useState, useEffect, useMemo, useCallback, useRef } = React;
+const { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } = React;
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, setDoc, serverTimestamp, getDoc, runTransaction, where } from 'firebase/firestore';
-import { ChevronLeft, ChevronRight, Plus, Calendar, PieChart, Home, Target, Users, Settings as SettingsIcon, BarChart2, Building2, Clock, ClipboardList, PenTool, Layers, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, House, Settings as SettingsIcon, ChartNoAxesColumn, Wallet } from 'lucide-react';
 import { ToastProvider, useToast } from './components/Toast';
 import QuickAddSheet from './components/QuickAddSheet';
 import { ConfirmationModal, LoadingScreen } from './components/ui';
-import { DEFAULT_SETTINGS, GLASS_CARD, GLASS_INPUT, INCOME_CATEGORIES } from './lib/constants';
+import { DEFAULT_SETTINGS } from './lib/constants';
+import { Aurora, Segmented } from './components/glass';
 import { LEDGER_ID, appId, auth, db } from './lib/firebase';
 import { getTodayString, haptic } from './lib/utils';
 import HomeV2 from './views/HomeV2';
@@ -28,7 +29,6 @@ import { StockGoalView } from './views/StockGoalView';
 function AppContent() {
   const { showToast } = useToast();
   const [user, setUser] = useState(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const mainRef = useRef(null);
@@ -39,177 +39,30 @@ function AppContent() {
   const incomeDataPartsRef = useRef({});
   const generalSubsRef = useRef({}); // Track general subscriptions
 
-  // Drawer drag gesture for hamburger menu
-  const sidebarRef = useRef(null);
-  const backdropRef = useRef(null);
-  const drawerContainerRef = useRef(null);
-  const DRAWER_WIDTH = 256; // w-64 = 16rem = 256px
-
-  useEffect(() => {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let isDragging = false;
-    let directionLocked = false;
-    let primaryTouchId = null;
-
-    const setDrawerPosition = (offsetX) => {
-      const clamped = Math.max(-DRAWER_WIDTH, Math.min(0, offsetX));
-      const progress = 1 + clamped / DRAWER_WIDTH; // 0 (closed) to 1 (open)
-      if (sidebarRef.current) sidebarRef.current.style.transform = `translateX(${clamped}px)`;
-      if (backdropRef.current) backdropRef.current.style.opacity = `${progress}`;
-      if (drawerContainerRef.current) drawerContainerRef.current.style.pointerEvents = progress > 0 ? 'auto' : 'none';
-    };
-
-    const enableTransition = () => {
-      if (sidebarRef.current) sidebarRef.current.style.transition = 'transform 0.3s ease-out';
-      if (backdropRef.current) backdropRef.current.style.transition = 'opacity 0.3s ease-out';
-    };
-
-    const disableTransition = () => {
-      if (sidebarRef.current) sidebarRef.current.style.transition = 'none';
-      if (backdropRef.current) backdropRef.current.style.transition = 'none';
-    };
-
-    const snapToNearest = (deltaX) => {
-      enableTransition();
-      if (isMenuOpen) {
-        if (deltaX < -(DRAWER_WIDTH * 0.3)) {
-          setDrawerPosition(-DRAWER_WIDTH);
-          setIsMenuOpen(false);
-        } else {
-          setDrawerPosition(0);
-        }
-      } else {
-        if (deltaX > DRAWER_WIDTH * 0.3) {
-          setDrawerPosition(0);
-          setIsMenuOpen(true);
-        } else {
-          setDrawerPosition(-DRAWER_WIDTH);
-        }
-      }
-    };
-
-    const handleTouchStart = (e) => {
-      // Only track the first finger; ignore additional touches
-      if (primaryTouchId !== null) return;
-      const touch = e.touches[0];
-      primaryTouchId = touch.identifier;
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-      isDragging = false;
-      directionLocked = false;
-      if (touchStartX < 30 || isMenuOpen) {
-        disableTransition();
-      }
-    };
-
-    const getTrackedTouch = (touches) => {
-      for (let i = 0; i < touches.length; i++) {
-        if (touches[i].identifier === primaryTouchId) return touches[i];
-      }
-      return null;
-    };
-
-    const handleTouchMove = (e) => {
-      const touch = getTrackedTouch(e.touches);
-      if (!touch) return;
-
-      const currentX = touch.clientX;
-      const currentY = touch.clientY;
-      const deltaX = currentX - touchStartX;
-      const deltaY = Math.abs(currentY - touchStartY);
-
-      if (!directionLocked && (Math.abs(deltaX) > 10 || deltaY > 10)) {
-        directionLocked = true;
-        if (deltaY > Math.abs(deltaX)) { isDragging = false; return; }
-        if (touchStartX < 30 || isMenuOpen) isDragging = true;
-      }
-
-      if (!isDragging) return;
-
-      if (isMenuOpen) {
-        setDrawerPosition(Math.min(0, deltaX));
-      } else {
-        setDrawerPosition(-DRAWER_WIDTH + Math.max(0, deltaX));
-      }
-    };
-
-    const handleTouchEnd = (e) => {
-      const touch = getTrackedTouch(e.changedTouches);
-      if (!touch) return;
-      primaryTouchId = null;
-      if (!isDragging) return;
-      isDragging = false;
-      const deltaX = touch.clientX - touchStartX;
-      snapToNearest(deltaX);
-    };
-
-    const handleTouchCancel = (e) => {
-      // Only react if the cancelled touch is our tracked primary touch
-      if (e && e.changedTouches) {
-        const cancelled = getTrackedTouch(e.changedTouches);
-        if (!cancelled) return; // A different finger was cancelled, ignore
-      }
-      if (isDragging) {
-        isDragging = false;
-        enableTransition();
-        // Snap based on actual drawer position rather than stale isMenuOpen
-        const currentTransform = sidebarRef.current ? sidebarRef.current.style.transform : '';
-        const match = currentTransform.match(/translateX\((-?[\d.]+)px\)/);
-        const currentOffset = match ? parseFloat(match[1]) : (isMenuOpen ? 0 : -DRAWER_WIDTH);
-        const progress = 1 + currentOffset / DRAWER_WIDTH;
-        if (progress > 0.5) {
-          setDrawerPosition(0);
-          setIsMenuOpen(true);
-        } else {
-          setDrawerPosition(-DRAWER_WIDTH);
-          setIsMenuOpen(false);
-        }
-      } else {
-        // Not dragging — just reset, snap to current logical state
-        enableTransition();
-        setDrawerPosition(isMenuOpen ? 0 : -DRAWER_WIDTH);
-      }
-      primaryTouchId = null;
-    };
-
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
-    document.addEventListener('touchcancel', handleTouchCancel, { passive: true });
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-      document.removeEventListener('touchcancel', handleTouchCancel);
-    };
-  }, [isMenuOpen]);
-
-
-
   // 新版快速記帳抽屜（新增用；編輯既有紀錄仍走舊表單）。null = 關閉，否則 { date }
   const [quickAdd, setQuickAdd] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', title: '確認', confirmText: '確定', confirmColor: 'bg-slate-800', onConfirm: () => { } });
 
   const [currentView, setCurrentView] = useState('home');
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [transitionClass, setTransitionClass] = useState('page-enter-fade');
 
   // 2.0 導覽：5 個入口（總覽／明細／＋／分析／資產）。收入併入分析；
   // 持股、存股、佳欣儲蓄、淨值、房產併入資產；預算設定從總覽右上角進入。
   const TAB_ITEMS = [
-    { id: 'home',          label: '總覽', icon: Home },
-    { id: 'calendar',      label: '明細', icon: Calendar },
-    { id: 'add',           label: '記一筆', icon: Plus },
-    { id: 'visualization', label: '分析', icon: BarChart2 },
+    { id: 'home',          label: '總覽', icon: House },
+    { id: 'calendar',      label: '明細', icon: CalendarDays },
+    { id: 'visualization', label: '分析', icon: ChartNoAxesColumn },
     { id: 'assets',        label: '資產', icon: Wallet },
   ];
+  // 每頁的大標題與上方的小字
+  const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+  const todayLabel = (() => { const d = new Date(); return `${d.getMonth() + 1} 月 ${d.getDate()} 日・週${WEEKDAYS[d.getDay()]}`; })();
   const VIEW_TITLES = {
-    home: ['總覽', Home], calendar: ['明細', Calendar], visualization: ['分析', BarChart2],
-    assets: ['資產', Wallet], settings: ['預算設定', SettingsIcon],
+    home: ['總覽', todayLabel], calendar: ['明細', '每一天的紀錄'], visualization: ['分析', '支出與收入'],
+    assets: ['資產', '資產與負債'], settings: ['預算設定', `${selectedDate.getFullYear()} 年`],
   };
   const ANALYSIS_TABS = [['spend', '支出'], ['income', '收入']];
-  const ASSET_TABS = [['principal', '淨值', PieChart], ['watchlist', '持股', Layers], ['stock_goals', '存股', Target], ['partner', '佳欣儲蓄', Users], ['mortgage', '房產', Building2]];
+  const ASSET_TABS = [['principal', '淨值'], ['watchlist', '持股'], ['stock_goals', '存股'], ['partner', '佳欣儲蓄'], ['mortgage', '房產']];
   const [analysisTab, setAnalysisTab] = useState('spend');
   const [assetsTab, setAssetsTab] = useState('principal');
   const [ledgerFocus, setLedgerFocus] = useState(null);
@@ -225,21 +78,20 @@ function AppContent() {
     let viewId = viewIdRaw;
     if (viewId === 'income') { setAnalysisTab('income'); viewId = 'visualization'; }
     else if (ASSET_TABS.some(([k]) => k === viewId)) { setAssetsTab(viewId); viewId = 'assets'; }
-    const prevIdx = TAB_ORDER.indexOf(currentView);
-    const nextIdx = TAB_ORDER.indexOf(viewId);
-    setTransitionClass(
-      prevIdx !== -1 && nextIdx !== -1
-        ? (nextIdx > prevIdx ? 'page-enter-right' : 'page-enter-left')
-        : 'page-enter-fade'
-    );
     haptic(10);
     setCurrentView(viewId);
-    setIsMenuOpen(false);
   };
 
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTo(0, 0);
   }, [currentView]);
+
+  // 頁首浮在內容上方：量它的高度給內容留白（--header-h），內容捲到它底下時才出現霧面
+  const rootRef = useRef(null);
+  const headerRef = useRef(null);
+  const onMainScroll = useCallback((e) => {
+    if (headerRef.current) headerRef.current.dataset.scrolled = e.currentTarget.scrollTop > 6 ? 'true' : 'false';
+  }, []);
 
   // 移除強制 reload：Firestore onSnapshot 會自動 re-sync；reload 會摧毀 UI state
 
@@ -715,9 +567,25 @@ function AppContent() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const header = headerRef.current;
+    if (!root || !header) return undefined;
+    const set = () => root.style.setProperty('--header-h', `${header.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(header);
+    return () => ro.disconnect();
+  }, [appPhase, currentView]);
+
+  const activeTabIdx = Math.max(0, TAB_ORDER.indexOf(currentView === 'settings' ? 'home' : currentView));
+  const subTabs = currentView === 'visualization' ? ANALYSIS_TABS : currentView === 'assets' ? ASSET_TABS : null;
+
   // --- Main Render ---
   return (
-    <div className="flex flex-col h-screen app-bg text-slate-800 tabular-nums overflow-hidden max-w-md mx-auto relative shadow-2xl">
+    <div ref={rootRef} className="relative mx-auto max-w-md h-[100dvh] overflow-hidden text-slate-900 tabular-nums shadow-2xl">
+      <Aurora />
+
       {/* Loading Screen - completely covers viewport until done, then unmounts */}
       {appPhase === 'loading' && (
         <LoadingScreen progress={loadingProgress} isComplete={isDataReady} onDone={handleLoadingDone} />
@@ -726,49 +594,10 @@ function AppContent() {
       {/* Main App Content - only renders after LoadingScreen unmounts */}
       {appPhase === 'ready' && (
         <>
-          {/* ── Header (fixed positioning avoids sticky-in-flex glitch) */}
-          <header className="app-header px-6 flex items-center justify-between fixed top-0 left-0 right-0 z-20 animate-in fade-in duration-300 header-safe max-w-md mx-auto" style={{ paddingBottom: '0.75rem' }}>
-            <div className="w-auto min-w-[36px] shrink-0" aria-hidden="true" />
-            <div className="flex-1 flex justify-center min-w-0 px-3">
-              <h1 className="text-base font-bold text-slate-700 tracking-wide flex items-center gap-1.5 truncate">
-                {VIEW_TITLES[currentView] && React.createElement(VIEW_TITLES[currentView][1], { className: "w-4 h-4 text-slate-400" })}
-                {VIEW_TITLES[currentView]?.[0]}
-              </h1>
-            </div>
-            <div className="w-auto min-w-[36px] flex justify-end shrink-0">
-              {currentView === 'settings' && (
-                <button onClick={() => handleViewChange('home')} className="text-xs font-bold text-slate-500 px-2 py-1 rounded-full hover:bg-slate-100">完成</button>
-              )}
-              {currentView === 'home' && (
-                <button onClick={() => handleViewChange('settings')} className="p-1.5 mr-1.5 rounded-full text-slate-400 hover:bg-slate-100 active:scale-95" aria-label="預算設定"><SettingsIcon className="w-4 h-4" /></button>
-              )}
-              {currentView === 'home' && (
-                <div className="flex items-center bg-white rounded-full px-1 py-0.5 border border-slate-200 shadow-sm">
-                  <button onClick={() => handleDateNavigate(-1)} className="p-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95"><ChevronLeft className="w-3 h-3 text-slate-600" /></button>
-                  <span className="text-xs font-bold text-slate-700 mx-1 tabular-nums whitespace-nowrap">{selectedDate.getFullYear() !== new Date().getFullYear() ? `${selectedDate.getFullYear()}/` : ''}{selectedDate.getMonth() + 1} 月</span>
-                  <button onClick={() => handleDateNavigate(1)} className="p-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95"><ChevronRight className="w-3 h-3 text-slate-600" /></button>
-                </div>
-              )}
-            </div>
-          </header>
-
-          {/* Spacer to compensate for fixed header height (header-safe + ~3.5rem content) */}
-          <div className="shrink-0 header-safe" style={{ paddingBottom: '3.5rem' }} />
-
-          <main ref={mainRef} className="flex-1 overflow-y-auto p-5 scrollbar-hide relative z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}>
-            <div key={currentView} className={transitionClass}>
-            {/* 分析、資產頁的子分頁 */}
-            {(currentView === 'visualization' || currentView === 'assets') && (
-              <div className="flex gap-1 overflow-x-auto scrollbar-hide bg-slate-100 rounded-full p-0.5 mb-5">
-                {(currentView === 'visualization' ? ANALYSIS_TABS : ASSET_TABS).map(([k, label]) => {
-                  const on = currentView === 'visualization' ? analysisTab === k : assetsTab === k;
-                  return (
-                    <button key={k} onClick={() => { haptic(8); if (currentView === 'visualization') setAnalysisTab(k); else setAssetsTab(k); }}
-                      className={`flex-1 shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>{label}</button>
-                  );
-                })}
-              </div>
-            )}
+          {/* ── 內容：整個畫面都能捲，頁首與底部導覽浮在上面 */}
+          <main ref={mainRef} onScroll={onMainScroll} className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden scrollbar-hide px-4"
+            style={{ paddingTop: 'calc(var(--header-h) + 4px)', paddingBottom: 'calc(max(12px, env(safe-area-inset-bottom, 0px) - 10px) + 100px)' }}>
+            <div key={activeView}>
             {currentView === 'home' && (
               <HomeV2
                 transactions={transactions}
@@ -822,36 +651,60 @@ function AppContent() {
                 requestDelete={requestDelete}
               />
             )}
-            </div>{/* /page-transition-wrapper */}
+            </div>
           </main>
 
-          {/* ── Bottom Tab Bar */}
-          <nav className="tab-bar tab-bar-safe safe-x">
-            <div className="flex items-center justify-around px-2 pt-2">
+          {/* ── 頁首：大標題＋玻璃按鈕；分析、資產頁多一條子分頁 */}
+          <header ref={headerRef} className="topbar" data-scrolled="false">
+            <div className="topbar-fade" aria-hidden="true" />
+            <div className="topbar-row">
+              <div key={currentView} className="min-w-0 fade-up">
+                <div className="topbar-sub">{VIEW_TITLES[currentView]?.[1]}</div>
+                <h1 className="topbar-title truncate">{VIEW_TITLES[currentView]?.[0]}</h1>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 pb-0.5">
+                {currentView === 'settings' && (
+                  <button onClick={() => handleViewChange('home')} className="btn btn-ink h-[38px] px-4 text-sm">完成</button>
+                )}
+                {currentView === 'home' && (
+                  <>
+                    <div className="glass flex items-center h-[38px] rounded-full px-0.5">
+                      <button onClick={() => handleDateNavigate(-1)} className="icon-btn !w-[34px] !h-[34px]" aria-label="上個月"><ChevronLeft className="w-[18px] h-[18px]" strokeWidth={2.4} /></button>
+                      <span className="font-num text-sm font-bold text-slate-800 tabular-nums whitespace-nowrap min-w-[2.9rem] text-center">{selectedDate.getFullYear() !== new Date().getFullYear() ? `${selectedDate.getFullYear()}/` : ''}{selectedDate.getMonth() + 1} 月</span>
+                      <button onClick={() => handleDateNavigate(1)} className="icon-btn !w-[34px] !h-[34px]" aria-label="下個月"><ChevronRight className="w-[18px] h-[18px]" strokeWidth={2.4} /></button>
+                    </div>
+                    <button onClick={() => handleViewChange('settings')} className="icon-btn glass" aria-label="預算設定"><SettingsIcon className="w-[18px] h-[18px]" strokeWidth={2.1} /></button>
+                  </>
+                )}
+              </div>
+            </div>
+            {subTabs && (
+              <div className="relative px-4 pb-2.5" data-subtabs>
+                <Segmented float scroll options={subTabs} value={currentView === 'visualization' ? analysisTab : assetsTab}
+                  onChange={(k) => { haptic(8); if (currentView === 'visualization') setAnalysisTab(k); else setAssetsTab(k); if (mainRef.current) mainRef.current.scrollTo(0, 0); }} />
+              </div>
+            )}
+          </header>
+
+          {/* ── 底部導覽：玻璃膠囊（選中的那格有一片會滑動的玻璃）＋墨色玻璃的「記一筆」 */}
+          <div className="bottom-fade" aria-hidden="true" />
+          <nav className="tabbar">
+            <div className="tabbar-capsule glass">
+              <span className="tabbar-thumb" style={{ '--i': activeTabIdx }} aria-hidden="true"><i key={activeTabIdx} /></span>
               {TAB_ITEMS.map(tab => {
-                if (tab.id === 'add') {
-                  return (
-                    <button key={tab.id} onClick={() => handleViewChange('add')} aria-label="記一筆"
-                      className="-mt-5 w-14 h-14 rounded-full bg-slate-800 text-white shadow-lg shadow-slate-400/40 flex items-center justify-center active:scale-90 transition-transform">
-                      <Plus className="w-6 h-6" />
-                    </button>
-                  );
-                }
                 const isActive = currentView === tab.id || (tab.id === 'home' && currentView === 'settings');
                 return (
-                  <button key={tab.id} onClick={() => handleViewChange(tab.id)}
-                    className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all active:scale-90 min-w-[3.5rem] ${isActive ? 'text-slate-800' : 'text-slate-400'}`}>
-                    <div className={`p-1.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-slate-100' : ''}`}>
-                      <tab.icon className={`w-5 h-5 transition-all duration-200 ${isActive ? 'text-slate-800' : 'text-slate-400'}`} />
-                    </div>
-                    <span className={`text-[10px] font-bold tracking-tight transition-all duration-200 ${isActive ? 'text-slate-800' : 'text-slate-400'}`}>{tab.label}</span>
+                  <button key={tab.id} onClick={() => handleViewChange(tab.id)} className="tab" aria-current={isActive ? 'page' : undefined}>
+                    <tab.icon className="w-[22px] h-[22px]" strokeWidth={isActive ? 2.4 : 2} />
+                    <span className="tab-label">{tab.label}</span>
                   </button>
                 );
               })}
             </div>
+            <button onClick={() => handleViewChange('add')} aria-label="記一筆" className="fab glass-ink">
+              <Plus className="w-7 h-7" strokeWidth={2.4} />
+            </button>
           </nav>
-
-
 
           {/* --- Modals --- */}
           {quickAdd && (

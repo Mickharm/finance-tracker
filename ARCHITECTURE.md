@@ -17,7 +17,7 @@
 |---|---|---|
 | 框架 | React 19 | 無 router，用 `currentView` state 切頁 |
 | 建置 | Vite（`rolldown-vite@7.2.5`） | `package.json` 用 overrides 固定 |
-| 樣式 | Tailwind CSS v4 | 玻璃擬態風格；深色模式見 §6 |
+| 樣式 | Tailwind CSS v4 | 3.0 液態玻璃設計系統，見 §5.5 |
 | 圖示 | lucide-react | |
 | 資料 | Firebase Auth（匿名）+ Firestore | persistent local cache 開啟 |
 | 股價 | Finnhub API | 免費 key 寫在 `lib/utils.js`，localStorage 快取 5 分鐘 |
@@ -26,7 +26,7 @@
 
 ```
 finance-tracker/
-├── index.html              # HTML 外殼：pre-loader、白畫面看門狗、深色 meta、preconnect
+├── index.html              # HTML 外殼：pre-loader、白畫面看門狗、極光時段（data-mood）、preconnect
 ├── vite.config.js          # base 路徑 + sw-precache 外掛（自動產生 dist/sw.js，見 §5.4）
 ├── public/
 │   ├── manifest.webmanifest  # PWA manifest（含 shortcuts 主畫面捷徑）
@@ -36,7 +36,7 @@ finance-tracker/
     ├── main.jsx            # React 掛載 + Service Worker 註冊/更新流程
     ├── App.jsx             # AppContent：全域 state、Firestore 訂閱、所有寫入 handler、
     │                       #            頁面路由（currentView）、所有「新增/編輯」Modal 的 JSX
-    ├── index.css           # Tailwind 進入點 + 自訂 CSS（tab bar、動畫、深色模式重對映層）
+    ├── index.css           # Tailwind 進入點 + 3.0 設計系統（色票、極光、玻璃材質、液體、動畫）
     ├── lib/
     │   ├── firebase.js     # Firebase 初始化；匯出 auth, db, appId, LEDGER_ID
     │   ├── constants.js    # GLASS_CARD/GLASS_INPUT 玻璃樣式、COLOR_VARIANTS 主題色、
@@ -44,10 +44,11 @@ finance-tracker/
     │   ├── utils.js        # 日期工具、evalArithmetic 計算機、haptic、股價快取、千分位
     │   └── format.js       # 2.0 數字格式（fmt、fmtSigned、pct、short 萬/億）與兩人設定 PEOPLE
     ├── components/
+    │   ├── glass.jsx       # 3.0 基礎元件：Aurora、Num/Money、Vessel、Tube、Segmented、SheetShell、useGhostExit
     │   ├── Toast.jsx       # ToastProvider / useToast（全域訊息提示）
     │   ├── ui.jsx          # ConfirmationModal、LoadingScreen、ViewLoader（舊版表單元件已全部移除）
     │   ├── QuickAddSheet.jsx # 記帳抽屜（新增與編輯支出共用）
-    │   └── v2.jsx          # 2.0 收入／資產頁共用：Hero、Section、Row、Divided、Seg、Chips、MoneyInput、Sheet、LineChart…
+    │   └── v2.jsx          # 各頁共用：Hero、Section、Row、Divided、Seg、Chips、MoneyInput、TextInput、Sheet、LineChart…
     └── views/              # 每個頁面一個檔案（皆為純呈現＋自身互動，資料多由 App.jsx 傳入）
         ├── HomeV2.jsx              # 2.0 總覽（本月還能花、今天兩人與每餐、這週、今年三桶）
         ├── LedgerView.jsx          # 2.0 明細（月曆顯示每日金額／卡片＋搜尋、當日明細）
@@ -143,17 +144,43 @@ setIsModalOpen(false);
 - `index.html` 有 12 秒**白畫面看門狗**：pre-loader 若還在就自動 reload 一次自救（sessionStorage 防循環，App 掛載成功會清旗標）。
 - ⚠️ `dist/` 與 `sw.js` 都是 build 產物，**不要手動編輯**；SW 邏輯要改就改 `vite.config.js` 的模板。
 
-### 5.5 色票與字體（2.0：只用淺色）
-- **不支援深色模式**（刻意的設計決定）。`index.html` 宣告 `color-scheme: light only`。
-- 色票在 `src/index.css` 的 `@theme`：**直接覆寫 Tailwind 色系變數**，既有的
-  `slate/rose/emerald/blue/amber/indigo/cyan/gray` 工具類別全部換成低彩度日本傳統色：
-  slate＝墨與鼠、rose＝退紅、emerald＝青磁（彈性）、blue＝勿忘草（士程）、amber＝枯色（年度）、
-  indigo＝藤鼠（固定）、cyan＝水淺蔥。新增顏色請用這些色系，不要再寫任意色碼。
-- 卡片：`GLASS_CARD`/`GLASS_INPUT` 名稱沿用，實際是紙卡（`.glass-card-fx`：實色 `--card`、
-  髮絲線 `--hair`、柔和陰影），底色 `--paper`。整個 App 背景（`.app-bg`）與頁首疊一層極淡的和紙纖維顆粒（SVG feTurbulence），沒有圖案、沒有印章。
-- 字體（Google Fonts，`display=swap`）：標題 h1–h4 用 Noto Serif TC；`text-2xl` 以上的大字
-  與 `.font-num` 用 Shippori Mincho（明朝體數字）。離線時退回系統字。
-- 分類圖示：`lib/categoryIcons.js`（分類→Lucide 圖示、三桶色調），元件 `components/CategoryIcon.jsx`。
+### 5.5 設計系統（3.0「琉璃」：流動的極光＋液態玻璃，只用淺色）
+2026-11-28 全面改版。舊的和紙風格保留在 `backup/pre-liquid-glass-20261128` 分支。
+- **不支援深色模式**（沿用 2.0 的決定）。`index.html` 宣告 `color-scheme: light only`。
+- **背景**：`components/glass.jsx` 的 `<Aurora />`（`.aurora`）＝五團緩慢漂移的色光＋一層細顆粒。
+  顏色依時段換（`html[data-mood]`＝dawn／day／dusk／night，由 `index.html` 開頭的小段 script 在畫面出現前決定；
+  網址加 `?mood=night` 可強制指定，檢查配色用）。玻璃要有顏色可以透才好看，所以背景不能是純色。
+- **兩種玻璃**（都在 `src/index.css` 的 `@layer components`）：
+  - `.glass-card`：**內容卡片**。半透明漸層＋上下高光＋斜向折光邊＋深色細外緣（照 iOS 27：靠邊線而不是大陰影）。
+    **刻意不用 `backdrop-filter`**——卡片底下只有柔和的極光，模糊了也看不出差別，卻很耗電。
+    可加 `.tint-blue/rose/emerald/indigo/amber/red` 上色、`.r-tile` 用小一號圓角。
+  - `.glass`：**浮在內容上方的介面**（頁首按鈕、底部導覽、子分頁）才用真的 `backdrop-filter`。
+    抽屜 `.sheet-panel`、對話框 `.modal-card`、提示 `.toast` 也是真玻璃。
+  - 另有 `.glass-well`（凹槽）、`.glass-ink`／`.btn-ink`（墨色玻璃：主要按鈕與＋號）。
+- **色票**在 `@theme`，直接覆寫 Tailwind 色系：slate＝帶冷藍的墨色、blue＝士程、rose＝佳欣、
+  emerald＝彈性／正向、indigo＝固定、amber＝年度、**red＝警示／超支／刪除**（和佳欣的粉分開）。
+  漸層用 `.tone-*`（提供 `--a` 淺、`--b` 深、`--glow`），試管、長條、液體都吃這組變數。
+- **字體**：全部系統字，不再下載網路字體。內文 SF Pro＋蘋方；`.font-num`、`.money` 與 `text-2xl` 以上用
+  SF Pro Rounded（`ui-rounded`）等寬數字。
+- **液體**是這一版的視覺語言：`Vessel`（玻璃球／玻璃瓶裡會晃的液體，水位＝比例）、`.tube`（試管進度條）、
+  `.vbar`（直條圖）。總覽的「本月還能花」是一顆球、今年三桶是三個瓶子。
+- **動畫**：彈簧曲線 `--spring`／`--spring-soft`（`linear()`，不支援時退回貝茲）。頁面內容用 `.stagger` 一張張浮上來；
+  金額用 `Num` 數上去；按下去用 `.press`／`.btn` 的回彈。`prefers-reduced-motion` 時全部關掉。
+- ⚠️ **不要在有 `backdrop-filter` 子孫的容器上做 `opacity`／`filter` 動畫**：那會讓容器變成 backdrop root，
+  玻璃在動畫期間會突然變透明。真玻璃的進場一律只動 `transform`（見 `sheet-in`）。
+- ⚠️ `@layer components` 裡的樣式可以被 Tailwind 工具類別覆寫（例如 `glass-card !rounded-[24px]`）；
+  寫在 layer 外的樣式會贏過所有工具類別，新增元件樣式請放進 layer。
+- 分類圖示：`lib/categoryIcons.js`（分類→Lucide 圖示、三桶色調），元件 `components/CategoryIcon.jsx`（`.orb-icon` 玻璃球）。
+
+### 5.5a 離場動畫與抽屜（3.0）
+- 呼叫端關閉抽屜都是直接 `setSheet(null)`，元件當下就被卸載，沒有機會播離場動畫。
+  `useGhostExit`（`components/glass.jsx`）在卸載的那一刻把 DOM 節點複製一份（`.ghost`）留在原地，
+  用 Web Animations 播完離場再移除。所以**不需要為了動畫延後卸載**，新抽屜照舊寫就有離場動畫。
+- `SheetShell`：浮在底部的玻璃抽屜外殼（進場彈上來、把手可往下拖曳關閉、鍵盤出現時用 `--kb` 往上推並縮小高度）。
+  `v2.jsx` 的 `Sheet` 與 `QuickAddSheet` 都用它。記帳抽屜設 `avoidKeyboard={false}`：它夠高，備註欄本來就在鍵盤上方。
+- `Segmented`：分段切換，選中的玻璃片會量位置滑過去（各格不等寬也可以）。頁首的子分頁、`Seg` 都用它。
+- 頁首 `.topbar` 浮在內容上方，高度由 App.jsx 量出來寫進 `--header-h`，`<main>` 用它留白；
+  內容捲到頁首底下時（`data-scrolled`）才出現漸層霧面。
 
 ### 5.5b 快速記帳（2.0 P1）
 - 新增支出走 `components/QuickAddSheet.jsx`（FAB、日曆「在這天新增」、`?action=add-expense`）；
@@ -223,16 +250,24 @@ setIsModalOpen(false);
 
 ## 6. UI 慣例
 
-- **卡片**：一律用 `GLASS_CARD` / `GLASS_INPUT`（`lib/constants.js`，2.0 起是紙卡樣式），不要自己拼卡片樣式。
-- **主題色**：從 `COLOR_VARIANTS` 取（slate/sky/rose/emerald/amber/indigo/cyan…），
-  每個主題含 bg/border/text/iconBg/iconText/bar。
+- **卡片**：用 `.glass-card`（或 `GLASS_CARD`）；清單用 `Divided`＋`Row`；不要自己拼卡片樣式，也不要再加 Tailwind 的 `border`
+  （預設是文字色，會畫出一圈深色框）。
+- **每頁版型**：最上面一張 `Hero` 大玻璃卡（`amount` 給數字就會數數；比例條、小統計放進 children）→ `Section` 一段一段往下。
+  頁面最外層加 `stagger`。
+- **顏色**：語意色用 `tone` 名稱（emerald／indigo／amber／blue／rose／red／cyan／slate），元件會對到
+  `.tone-*`、`.orb-*`、`.tag-*`、`.chip.on-*`。持股群組的顏色仍從 `COLOR_VARIANTS` 取。
+- **按鈕**：主要 `.btn .btn-ink`、次要 `.btn .btn-glass`、刪除 `.btn .btn-danger`（確認刪除用 `.btn-red`）、
+  「新增一筆」這類空位用 `.btn .btn-dashed`；圓形小鈕 `.icon-btn`；可選的小籤 `.chip`（選中 `aria-pressed` 或 `.on`）。
+- **輸入**：文字 `TextInput`、日期 `DateInput`、金額 `MoneyInput`、小欄位 `SmallInput`（都在 `v2.jsx`，樣式是 `.field`）。
 - **抽屜**：新增／編輯一律用 `components/v2.jsx` 的 `Sheet`（支出用 `QuickAddSheet`）；刪除確認用
   `requestDelete` / `requestConfirmation`（App.jsx）觸發共用 `ConfirmationModal`。
-- **提示**：`useToast()` → `showToast(msg, 'success'|'warning'|'error')`；操作成功搭配 `haptic()`。
-- **金額**：顯示用 `toLocaleString()`；千分位輸入框用 `AmountInput`。
+- **提示**：`useToast()` → `showToast(msg, 'success'|'warning'|'error')`；操作成功搭配 `haptic()`
+  （iPhone 沒有 Vibration API，`lib/utils.js` 改用 iOS 17.4+ 的 switch 核取方塊觸發輕觸回饋，必須在點按當下呼叫）。
+- **金額**：顯示用 `Money`（小一號的 `$`＋等寬數字；`animate` 會數數）或 `fmt()`。
 - **日期**：一律 `'YYYY-MM-DD'` 字串（`toLocalISOString`/`getTodayString`），比較用字串比較。
-- **進度條警示**：剩餘 <10% 加 `budget-alert-glow` class（呼吸光）。
-- Safe area：header 用 `.header-safe`、底部用 `.tab-bar-safe`，勿硬編 padding。
+- **進度條**：`Tube`／`StackTube`；剩餘 <10% 可加 `alert`（`budget-alert-glow` 呼吸光）。
+- Safe area：頁首、底部導覽、抽屜都已在各自的 class 裡處理 `env(safe-area-inset-*)`，勿硬編 padding。
+- **改畫面後怎麼檢查**：無頭 WebKit 的截圖不會畫出 `backdrop-filter`，要看玻璃模糊請用 Chromium 截圖或實機。
 
 ## 7. 開發與部署
 
@@ -255,7 +290,7 @@ npx eslint src/    # 檢查（有少量既有警告為 baseline）
 2. **不要移除 recurring 的 `settingsFromServer` / `runTransaction`**（見 §5.3）——會重現「多裝置重複入帳」bug。
 3. **`config_{year}` 是一年一份**：讀寫預算/固定支出設定時注意「檢視年份」與「今年」的差異；
    `lastRecurringCheck` 一律寫「今年」的 config + config_v2。
-4. **新色彩類別要補深色對映**（見 §5.5）。
+4. **真玻璃（`backdrop-filter`）只給浮在內容上方的介面用**，內容卡片用 `.glass-card`（見 §5.5），否則手機會掉幀、耗電。
 5. **SW 是 build 產物**：改快取策略只能動 `vite.config.js`；部署後第一次開啟仍是舊版、第二次（或自動 reload 後）才是新版，這是預期行為。
 6. Finnhub API key 是免費方案且暴露在前端（可接受的風險）；報價有 5 分鐘 localStorage 快取，抓價間隔 100ms 防 rate limit。
 7. `getFixedDepositAmount()`（lib/utils.js）內含佳欣儲蓄的年度定存金額規則（寫死的年份區間），是業務邏輯不是 bug。

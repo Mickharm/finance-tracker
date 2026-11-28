@@ -4,9 +4,10 @@ import { ViewLoader } from '../components/ui';
 import { INCOME_CATEGORIES } from '../lib/constants';
 import { getTodayString } from '../lib/utils';
 import { getDevicePayer } from '../lib/quickAdd';
-import { fmt, pct, short, PEOPLE } from '../lib/format';
+import { fmt, pct, PEOPLE } from '../lib/format';
+import { Money, StackTube } from '../components/glass';
 import {
-  Hero, HeroButton, Section, LinkButton, Row, Divided, Empty, PersonDot, PersonPick, MoneyInput, Chips, Field, DatePick, Sheet, StackBar, YearSwitch,
+  Hero, HeroButton, Section, LinkButton, Row, Divided, Empty, PersonDot, PersonPick, MoneyInput, Chips, Field, DatePick, DateInput, TextInput, Sheet, StackBar, YearSwitch,
 } from '../components/v2';
 
 const CAT_LABEL = { 薪水: '薪水', 年終獎金: '年終', 激勵獎金: '激勵', 其他獎金: '其他' };
@@ -34,17 +35,16 @@ const IncomeSheet = ({ initial, incomes, salaryHistory, onSave, onDelete, onClos
       <PersonPick value={f.owner} onChange={(owner) => set({ owner })} />
       <MoneyInput value={f.amount} onChange={(amount) => set({ amount })} autoFocus={!f.id} />
       {fills.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 justify-end -mt-2">
+        <div className="flex flex-wrap gap-2 justify-end -mt-1.5">
           {fills.map(([v, l]) => (
-            <button key={l} type="button" onClick={() => set({ amount: v })} className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 active:scale-95">{l}</button>
+            <button key={l} type="button" onClick={() => set({ amount: v })} className="chip chip-sm on-emerald tabular-nums">{l}</button>
           ))}
         </div>
       )}
       <Field label="分類"><Chips options={INCOME_CATEGORIES.map((c) => [c, c])} value={f.category} onChange={(category) => set({ category })} /></Field>
       <Field label="日期"><DatePick value={f.date} onChange={(date) => set({ date })} /></Field>
       <Field label="備註（可不填）">
-        <input value={f.note || ''} onChange={(e) => set({ note: e.target.value })} placeholder="例如：11 月薪資、Q3 激勵"
-          className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-slate-400" />
+        <TextInput value={f.note} onChange={(note) => set({ note })} placeholder="例如：11 月薪資、Q3 激勵" />
       </Field>
     </Sheet>
   );
@@ -60,9 +60,9 @@ const SalarySheet = ({ owner, history, onSave, onDelete, onClose }) => {
       onSubmit={() => { onSave({ owner, amount: Number(f.amount), date: f.date }, f.id); setF(blank); }}
       onDelete={f.id ? () => { onDelete(f.id); setF(blank); } : undefined}>
       <MoneyInput value={f.amount} onChange={(amount) => setF((p) => ({ ...p, amount }))} />
-      <Field label="生效日期"><input type="date" value={f.date} onChange={(e) => setF((p) => ({ ...p, date: e.target.value }))} className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm tabular-nums" /></Field>
+      <Field label="生效日期"><DateInput value={f.date} onChange={(date) => setF((p) => ({ ...p, date }))} /></Field>
       <div>
-        <div className="text-[11px] font-bold text-slate-400 mb-1.5">歷程（點一筆可以修改）</div>
+        <div className="eyebrow mb-1.5">歷程（點一筆可以修改）</div>
         {list.length === 0 ? <Empty>還沒有調薪紀錄</Empty> : (
           <Divided>
             {list.map((s, i) => {
@@ -70,7 +70,7 @@ const SalarySheet = ({ owner, history, onSave, onDelete, onClose }) => {
               const g = prev && Number(prev.amount) > 0 ? ((s.amount - prev.amount) / prev.amount) * 100 : null;
               return (
                 <Row key={s.id} title={fmt(s.amount)} sub={s.date.replace(/-/g, '/')} onClick={() => setF({ id: s.id, amount: Number(s.amount), date: s.date })}
-                  right={g !== null ? <span className={g >= 0 ? 'text-emerald-700' : 'text-rose-700'}>{pct(g)}</span> : <span className="text-slate-300 text-xs">起薪</span>} />
+                  right={g !== null ? <span className={g >= 0 ? 'text-emerald-600' : 'text-red-600'}>{pct(g)}</span> : <span className="text-slate-400 text-xs">起薪</span>} />
               );
             })}
           </Divided>
@@ -80,7 +80,7 @@ const SalarySheet = ({ owner, history, onSave, onDelete, onClose }) => {
   );
 };
 
-// 2.0 收入頁：今年收入 → 這個月薪水進帳了沒 → 每月長條（點月份篩選）→ 組成 → 月薪 → 明細
+// 3.0 收入頁：今年收入 → 這個月薪水進帳了沒 → 每月長條（點月份篩選）→ 組成 → 月薪 → 明細
 const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove, onRequestHistory }) => {
   const [year, setYear] = useState(() => new Date().getFullYear());
   const changeYear = (y) => { setYear(y); setSelMonth(null); if (onRequestHistory) { onRequestHistory(y); onRequestHistory(y - 1); } };
@@ -132,21 +132,19 @@ const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove,
   if (loading) return <ViewLoader label="載入收入資料..." />;
 
   return (
-    <div className="space-y-6 pb-24 animate-in fade-in">
+    <div className="space-y-6 stagger">
       <Hero
         label={<YearSwitch year={year} onChange={changeYear} suffix=" 年收入" />}
-        value={fmt(total)}
-        sub={yoy !== null ? <>比去年{isThisYear ? '同期' : ''} <b className={yoy >= 0 ? 'text-emerald-700' : 'text-rose-700'}>{pct(yoy)}</b>（{fmt(lastSame)}）</> : '去年沒有資料可以比'}
+        amount={total} id="income-total"
+        sub={yoy !== null ? <>比去年{isThisYear ? '同期' : ''} <b className={`font-num ${yoy >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{pct(yoy)}</b>（{fmt(lastSame)}）</> : '去年沒有資料可以比'}
         action={<HeroButton icon={Plus} label="記收入" onClick={() => openNew()} />}
-      />
-
-      <div className="px-1 -mt-3">
-        <StackBar parts={[{ key: 'm', value: byPerson.myself, bar: PEOPLE.myself.bar }, { key: 'p', value: byPerson.partner, bar: PEOPLE.partner.bar }]} height="h-2" />
-        <div className="flex justify-between mt-1.5 text-xs">
-          <span className={PEOPLE.myself.text}><b>士程</b> {fmt(byPerson.myself)}</span>
-          <span className={PEOPLE.partner.text}>{fmt(byPerson.partner)} <b>佳欣</b></span>
+      >
+        <StackBar parts={[{ key: 'm', value: byPerson.myself, tone: 'blue' }, { key: 'p', value: byPerson.partner, tone: 'rose' }]} height={12} />
+        <div className="flex justify-between mt-3 text-[13px]">
+          <span className="flex items-center gap-2"><PersonDot owner="myself" size="w-6 h-6 text-[11px]" /><b className="text-blue-700">士程</b><span className="font-num font-bold text-slate-800 tabular-nums">{fmt(byPerson.myself)}</span></span>
+          <span className="flex items-center gap-2"><span className="font-num font-bold text-slate-800 tabular-nums">{fmt(byPerson.partner)}</span><b className="text-rose-700">佳欣</b><PersonDot owner="partner" size="w-6 h-6 text-[11px]" /></span>
         </div>
-      </div>
+      </Hero>
 
       {isThisYear && (
         <Section title={`${now.getMonth() + 1} 月薪水`}>
@@ -155,14 +153,22 @@ const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove,
               const got = salaryThisMonth(owner);
               const expect = latestSalary(owner)[0];
               return got ? (
-                <button key={owner} type="button" onClick={() => setSheet({ kind: 'income', initial: { ...got, amount: Number(got.amount) } })} className="glass-card-fx border rounded-2xl p-3 text-left">
-                  <div className="flex items-center gap-1.5 text-xs font-bold"><span className={PEOPLE[owner].text}>{PEOPLE[owner].name}</span><Check className="w-3.5 h-3.5 text-emerald-600" /><span className="text-slate-400 font-normal">{md(got.date)} 入帳</span></div>
-                  <div className="font-num text-xl text-slate-800 mt-1">{fmt(got.amount)}</div>
+                <button key={owner} type="button" onClick={() => setSheet({ kind: 'income', initial: { ...got, amount: Number(got.amount) } })} className={`press glass-card !rounded-[24px] ${PEOPLE[owner].tint} p-3.5 text-left min-w-0`}>
+                  <div className="flex items-center gap-2">
+                    <PersonDot owner={owner} size="w-7 h-7 text-xs" />
+                    <span className={`text-[13px] font-bold ${PEOPLE[owner].text}`}>{PEOPLE[owner].name}</span>
+                    <span className="tag tag-emerald ml-auto"><Check className="w-3 h-3" strokeWidth={3} />{md(got.date)}</span>
+                  </div>
+                  <div className="mt-2.5"><Money value={got.amount} className="text-[24px] text-slate-900" /></div>
                 </button>
               ) : (
-                <button key={owner} type="button" onClick={() => openNew({ owner, amount: expect ? Number(expect.amount) : '' })} className="rounded-2xl p-3 text-left border border-dashed border-slate-300 bg-white/40 active:scale-[0.98]">
-                  <div className="text-xs font-bold"><span className={PEOPLE[owner].text}>{PEOPLE[owner].name}</span> <span className="text-slate-400 font-normal">還沒記</span></div>
-                  <div className="text-sm font-bold text-slate-600 mt-1.5 flex items-center gap-1"><Plus className="w-3.5 h-3.5" />{expect ? `記 ${fmt(expect.amount)}` : '記薪水'}</div>
+                <button key={owner} type="button" onClick={() => openNew({ owner, amount: expect ? Number(expect.amount) : '' })} className="press btn-dashed !rounded-[24px] p-3.5 text-left min-w-0">
+                  <div className="flex items-center gap-2">
+                    <PersonDot owner={owner} size="w-7 h-7 text-xs" />
+                    <span className={`text-[13px] font-bold ${PEOPLE[owner].text}`}>{PEOPLE[owner].name}</span>
+                    <span className="tag tag-slate ml-auto">還沒記</span>
+                  </div>
+                  <div className="text-[15px] font-bold text-slate-600 mt-3 flex items-center gap-1"><Plus className="w-4 h-4" strokeWidth={2.6} />{expect ? `記 ${fmt(expect.amount)}` : '記薪水'}</div>
                 </button>
               );
             })}
@@ -171,39 +177,41 @@ const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove,
       )}
 
       <Section title="每月" extra={selMonth !== null && <LinkButton onClick={() => setSelMonth(null)}>看全年</LinkButton>}>
-        <div className="glass-card-fx border rounded-2xl px-3 pt-4 pb-3">
-          <div className="grid grid-cols-12 gap-1 items-end h-32">
+        <div className="glass-card px-4 pt-5 pb-3.5">
+          <div className="grid grid-cols-12 gap-[5px] items-end h-36">
             {months.map((m, i) => {
               const t = m.myself + m.partner;
               const on = selMonth === null || selMonth === i;
               return (
-                <button key={i} type="button" onClick={() => setSelMonth(selMonth === i ? null : i)} aria-label={`${i + 1} 月 ${fmt(t)}`}
-                  className={`h-full flex flex-col justify-end transition-opacity ${on ? '' : 'opacity-30'}`}>
-                  {t > 0 && <span className="text-[8px] text-slate-400 tabular-nums text-center mb-0.5">{short(t).replace('萬', 'w')}</span>}
-                  <span className="w-full flex flex-col-reverse rounded-sm overflow-hidden" style={{ height: `${(t / monthMax) * 100}%` }}>
-                    <span className={PEOPLE.myself.bar} style={{ height: `${t ? (m.myself / t) * 100 : 0}%` }} />
-                    <span className={PEOPLE.partner.bar} style={{ height: `${t ? (m.partner / t) * 100 : 0}%` }} />
+                <button key={i} type="button" onClick={() => setSelMonth(selMonth === i ? null : i)} aria-label={`${i + 1} 月 ${fmt(t)}`} aria-pressed={selMonth === i}
+                  className={`h-full flex flex-col justify-end transition-opacity duration-300 ${on ? '' : 'opacity-30'}`}>
+                  {t > 0 && <span className="font-num text-[9px] leading-none font-bold text-slate-500 tabular-nums text-center tracking-tighter mb-1.5 -mx-1">{t >= 1e6 ? Math.round(t / 1e4) : (t / 1e4).toFixed(1)}</span>}
+                  <span className="grow-y w-full flex flex-col-reverse rounded-[7px] overflow-hidden" style={{ height: `${(t / monthMax) * 100}%`, '--i': i, transformOrigin: '50% 100%' }}>
+                    <span className="vbar !rounded-none tone-blue" style={{ height: `${t ? (m.myself / t) * 100 : 0}%` }} />
+                    <span className="vbar !rounded-none tone-rose" style={{ height: `${t ? (m.partner / t) * 100 : 0}%` }} />
                   </span>
                 </button>
               );
             })}
           </div>
-          <div className="grid grid-cols-12 gap-1 mt-1">
-            {months.map((_, i) => <span key={i} className={`text-center text-[9px] tabular-nums ${selMonth === i ? 'text-slate-800 font-bold' : 'text-slate-400'}`}>{i + 1}</span>)}
+          <div className="grid grid-cols-12 gap-[5px] mt-1.5">
+            {months.map((_, i) => <span key={i} className={`font-num text-center text-[10.5px] tabular-nums font-bold ${selMonth === i ? 'text-slate-900' : 'text-slate-400'}`}>{i + 1}</span>)}
           </div>
-          <p className="text-[11px] text-slate-400 text-center mt-2">單位：w＝萬。點一個月，下面只看那個月。</p>
+          <p className="text-[11px] text-slate-400 text-center mt-3">單位：萬・點一個月，下面只看那個月</p>
         </div>
       </Section>
 
       {cats.length > 0 && (
-        <Section title={selMonth === null ? '收入組成' : `${selMonth + 1} 月組成`} extra={<span className="text-xs text-slate-400 tabular-nums">{fmt(scopedTotal)}</span>}>
+        <Section title={selMonth === null ? '收入組成' : `${selMonth + 1} 月組成`} extra={<span className="font-num text-[13px] font-bold text-slate-500 tabular-nums">{fmt(scopedTotal)}</span>}>
           <Divided>
             {cats.map((r) => (
-              <div key={r.c} className="px-3 py-2.5">
-                <div className="flex justify-between text-sm"><span className="font-bold text-slate-700">{r.c}</span><span className="tabular-nums text-slate-700 font-bold">{fmt(r.total)} <span className="text-[11px] text-slate-400 font-normal">{Math.round((r.total / scopedTotal) * 100)}%</span></span></div>
-                <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden flex" style={{ width: `${Math.max(8, (r.total / cats[0].total) * 100)}%` }}>
-                  <span className={PEOPLE.myself.bar} style={{ width: `${(r.myself / r.total) * 100}%` }} />
-                  <span className={PEOPLE.partner.bar} style={{ width: `${(r.partner / r.total) * 100}%` }} />
+              <div key={r.c} className="px-4 py-3">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[15px] font-semibold text-slate-800">{r.c}</span>
+                  <span className="font-num text-[15px] tabular-nums text-slate-800 font-bold">{fmt(r.total)}<span className="ml-1.5 text-xs text-slate-400 font-semibold">{Math.round((r.total / scopedTotal) * 100)}%</span></span>
+                </div>
+                <div className="mt-2" style={{ width: `${Math.max(8, (r.total / cats[0].total) * 100)}%` }}>
+                  <StackTube height={7} parts={[{ key: 'm', value: r.myself, tone: 'blue' }, { key: 'p', value: r.partner, tone: 'rose' }]} />
                 </div>
               </div>
             ))}
@@ -221,7 +229,7 @@ const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove,
             return (
               <Row key={owner} left={<PersonDot owner={owner} />} title={cur ? fmt(cur.amount) : '還沒設定'} muted={!cur}
                 sub={cur ? `${cur.date.slice(0, 7).replace('-', '/')} 起・調過 ${Math.max(0, list.length - 1)} 次` : '點這裡記下目前月薪'}
-                right={grow !== null ? <span className="text-emerald-700 flex items-center gap-0.5 justify-end"><TrendingUp className="w-3.5 h-3.5" />{pct(grow, 0)}</span> : <Briefcase className="w-4 h-4 text-slate-300 ml-auto" />}
+                right={grow !== null ? <span className="text-emerald-600 flex items-center gap-0.5 justify-end"><TrendingUp className="w-3.5 h-3.5" strokeWidth={2.6} />{pct(grow, 0)}</span> : <Briefcase className="w-4 h-4 text-slate-300 ml-auto" />}
                 rightSub={grow !== null ? <span className="text-slate-400">從 {fmt(first.amount)}</span> : null}
                 onClick={() => setSheet({ kind: 'salary', owner })} />
             );
@@ -229,16 +237,16 @@ const IncomeView = ({ incomes, salaryHistory, loading = false, onSave, onRemove,
         </Divided>
       </Section>
 
-      <Section title={selMonth === null ? '明細' : `${selMonth + 1} 月明細`} extra={<span className="text-xs text-slate-400">{scoped.length} 筆</span>}>
+      <Section title={selMonth === null ? '明細' : `${selMonth + 1} 月明細`} extra={<span className="text-[13px] font-semibold text-slate-400">{scoped.length} 筆</span>}>
         {grouped.length === 0 ? <Empty>這段期間沒有收入紀錄</Empty> : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {grouped.map(([k, list]) => (
               <div key={k}>
-                <div className="flex justify-between px-1 mb-1 text-xs font-bold text-slate-400"><span>{Number(k.slice(5))} 月</span><span className="tabular-nums">{fmt(sum(list))}</span></div>
+                <div className="flex justify-between px-2 mb-1.5 text-[13px] font-bold text-slate-500"><span>{Number(k.slice(5))} 月</span><span className="font-num tabular-nums">{fmt(sum(list))}</span></div>
                 <Divided>
                   {list.map((i) => (
                     <Row key={i.id} left={<PersonDot owner={ownerOf(i)} />} title={i.note || i.category} sub={`${md(i.date)}・${CAT_LABEL[i.category] || i.category}`}
-                      right={<span className="text-emerald-700">+{fmt(i.amount)}</span>}
+                      right={<span className="text-emerald-600">+{fmt(i.amount)}</span>}
                       onClick={() => setSheet({ kind: 'income', initial: { ...i, owner: ownerOf(i), amount: Number(i.amount) } })} />
                   ))}
                 </Divided>

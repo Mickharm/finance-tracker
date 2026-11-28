@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Home, Sofa, Coins, Calculator } from 'lucide-react';
+import { Home, Sofa, Coins, Calculator } from 'lucide-react';
 import { ViewLoader } from '../components/ui';
 import { FINNHUB_API_KEY, getCachedPrices, getTodayString, setCachedPrices } from '../lib/utils';
 import { fmt, fmtSigned, short } from '../lib/format';
+import { Tube } from '../components/glass';
 import {
-  Hero, Section, LinkButton, Row, Divided, Empty, IconDot, MoneyInput, Field, SmallInput, Sheet,
+  Hero, Section, LinkButton, AddButton, Row, Divided, Empty, IconDot, MoneyInput, Field, SmallInput, TextInput, DateInput, Sheet,
 } from '../components/v2';
 
 // 新青安房貸（2025-02 撥款）。依青安 3.0「3+3」：2023/8/1 後撥款的案件自撥款日起
@@ -61,11 +62,6 @@ const ymLabel = (d) => `${d.getFullYear()}/${d.getMonth() + 1}`;
 const fundingTotal = (it) => n(it.amount) * (n(it.shares) > 0 ? n(it.shares) : 1) * (n(it.rate) > 0 ? n(it.rate) : 1);
 const COL = { down_payment: 'mortgage_expenses', misc_appliances: 'mortgage_expenses', analysis: 'mortgage_analysis', funding: 'mortgage_funding' };
 
-const TextInput = ({ value, onChange, ...props }) => (
-  <input value={value || ''} onChange={(e) => onChange(e.target.value)} {...props}
-    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-slate-400" />
-);
-
 // 房產相關紀錄的編輯抽屜（四種資料共用）
 const RecordSheet = ({ kind, initial, onSave, onDelete, onClose }) => {
   const [f, setF] = useState(initial);
@@ -93,7 +89,7 @@ const RecordSheet = ({ kind, initial, onSave, onDelete, onClose }) => {
             <SmallInput label="匯率（台幣填 1）" inputMode="decimal" value={f.rate ?? ''} onChange={(e) => set('rate')(e.target.value.replace(/[^\d.]/g, ''))} placeholder="1" />
             <SmallInput label="股票代碼（選填）" value={f.symbol || ''} onChange={(e) => set('symbol')(e.target.value.toUpperCase())} placeholder="VOO" />
           </div>
-          <div className="text-right text-sm text-slate-500">合計 <b className="font-num text-lg text-slate-800">{fmt(fundingTotal(f))}</b></div>
+          <div className="text-right text-sm text-slate-500">合計 <b className="font-num text-[22px] text-slate-900 ml-1">{fmt(fundingTotal(f))}</b></div>
         </>
       ) : (
         <>
@@ -104,7 +100,7 @@ const RecordSheet = ({ kind, initial, onSave, onDelete, onClose }) => {
       )}
       {kind !== 'analysis' && (
         <>
-          <Field label="日期"><input type="date" value={f.date || getTodayString()} onChange={(e) => set('date')(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm tabular-nums" /></Field>
+          <Field label="日期"><DateInput value={f.date || getTodayString()} onChange={set('date')} /></Field>
           <Field label="備註"><TextInput value={f.note} onChange={set('note')} placeholder="選填" /></Field>
         </>
       )}
@@ -114,7 +110,7 @@ const RecordSheet = ({ kind, initial, onSave, onDelete, onClose }) => {
 
 // 月付金額隨時間的階梯圖，標出現在的位置與寬限期
 const PaymentSteps = ({ schedule, current }) => {
-  const W = 320; const H = 96; const padT = 16; const padB = 16;
+  const W = 320; const H = 112; const padT = 20; const padB = 20;
   const max = Math.max(...schedule.map((r) => r.amount));
   const X = (i) => (i / (schedule.length - 1)) * W;
   const Y = (v) => padT + (1 - v / max) * (H - padT - padB);
@@ -124,27 +120,34 @@ const PaymentSteps = ({ schedule, current }) => {
   const ci = current.id - 1;
   const graceEnd = MORTGAGE_LOAN.graceMonths;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }}>
-      <rect x="0" y={padT - 4} width={X(graceEnd)} height={H - padT - padB + 4} fill="#EEF3F1" />
-      <path d={d} fill="none" stroke="#557AA3" strokeWidth="2" />
-      <line x1={X(ci)} x2={X(ci)} y1="4" y2={H - padB} stroke="#2F2E2C" strokeDasharray="2 2" />
-      <text x={Math.min(W - 24, X(ci) + 4)} y="12" fontSize="10" fill="#2F2E2C">現在</text>
-      <text x="4" y={H - padB - 4} fontSize="9" fill="#4D7D70">寬限期</text>
-      <text x={W} y="12" fontSize="10" fill="#9C9690" textAnchor="end">{fmt(max)}</text>
-      <text x="0" y={H - 3} fontSize="10" fill="#9C9690">{schedule[0].date.getFullYear()}</text>
-      <text x={W} y={H - 3} fontSize="10" fill="#9C9690" textAnchor="end">{schedule[schedule.length - 1].date.getFullYear()}</text>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible" style={{ height: H }}>
+      <defs>
+        <linearGradient id="ps-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2F7BF6" stopOpacity="0.26" /><stop offset="100%" stopColor="#2F7BF6" stopOpacity="0" /></linearGradient>
+        <linearGradient id="ps-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#3DD1A5" /><stop offset="22%" stopColor="#2F7BF6" /><stop offset="100%" stopColor="#6F64F2" /></linearGradient>
+      </defs>
+      <rect x="0" y={padT - 6} width={X(graceEnd)} height={H - padT - padB + 6} rx="8" fill="rgba(61, 209, 165, 0.16)" />
+      <path d={`${d} V${H - padB} H0 Z`} fill="url(#ps-area)" className="fade-up" style={{ animationDelay: '0.3s', animationDuration: '0.9s' }} />
+      <path d={d} fill="none" stroke="url(#ps-line)" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" pathLength="1" style={{ strokeDasharray: 1, '--len': 1, animation: 'draw 1.4s var(--ease-out) backwards' }} />
+      <line x1={X(ci)} x2={X(ci)} y1="14" y2={H - padB} stroke="#14161F" strokeWidth="1.5" strokeDasharray="2 3" />
+      <circle cx={X(ci)} cy={Y(current.amount)} r="8" fill="#2F7BF6" opacity="0.2" style={{ transformOrigin: `${X(ci)}px ${Y(current.amount)}px`, animation: 'breathe 2.6s ease-in-out infinite' }} />
+      <circle cx={X(ci)} cy={Y(current.amount)} r="4.5" fill="#fff" stroke="#14161F" strokeWidth="2.4" />
+      <text x={Math.min(W - 26, X(ci) + 6)} y="11" fontSize="10.5" fontWeight="700" fill="#14161F">現在</text>
+      <text x="6" y={H - padB - 6} fontSize="10" fontWeight="700" fill="#0A7B5D">寬限期</text>
+      <text x={W} y="11" fontSize="10.5" fontWeight="600" fill="#8D92A3" textAnchor="end">{fmt(max)}</text>
+      <text x="0" y={H - 4} fontSize="10.5" fontWeight="600" fill="#8D92A3">{schedule[0].date.getFullYear()}</text>
+      <text x={W} y={H - 4} fontSize="10.5" fontWeight="600" fill="#8D92A3" textAnchor="end">{schedule[schedule.length - 1].date.getFullYear()}</text>
     </svg>
   );
 };
 
 const ListBlock = ({ title, items, total, icon, tone, render, onAdd, onOpen }) => (
-  <Section title={title} extra={<span className="flex items-center gap-2"><span className="text-xs font-bold tabular-nums text-slate-500">{fmt(total)}</span>
-    <button type="button" onClick={onAdd} className="p-1 rounded-full bg-slate-100 text-slate-500" aria-label={`新增${title}`}><Plus className="w-3.5 h-3.5" /></button></span>}>
+  <Section title={title} extra={<span className="flex items-center gap-2.5"><span className="font-num text-[13px] font-bold tabular-nums text-slate-500">{fmt(total)}</span>
+    <AddButton onClick={onAdd} label={`新增${title}`} /></span>}>
     {items.length === 0 ? <Empty>還沒有紀錄</Empty> : <Divided>{items.map((it) => <Row key={it.id} left={<IconDot icon={icon} tone={tone} />} {...render(it)} onClick={() => onOpen(it)} />)}</Divided>}
   </Section>
 );
 
-// 2.0 房產：這個月房貸 → 還款進度與月付階梯 → 每年還款 → 買房花的錢與資金來源 → 划算試算
+// 3.0 房產：這個月房貸 → 還款進度與月付階梯 → 每年還款 → 買房花的錢與資金來源 → 划算試算
 const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, loading = false, onSave, onRemove }) => {
   const schedule = useMemo(() => buildMortgageSchedule(MORTGAGE_LOAN), []);
   const current = schedule.find((r) => !r.isPaid) || schedule[schedule.length - 1];
@@ -191,25 +194,29 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, loa
   const shownYears = showAllYears ? years : years.filter(([y]) => y >= thisYear - 1).slice(0, 5);
 
   return (
-    <div className="space-y-6 pb-24 animate-in fade-in">
-      <Hero label={`${current.date.getMonth() + 1} 月房貸`} value={fmt(current.amount)}
-        sub={<>第 {current.id} / {MORTGAGE_LOAN.totalMonths} 期・利率 {current.rate}%{current.id <= MORTGAGE_LOAN.graceMonths ? '・寬限期只繳息' : ''}</>} />
-
-      <div className="px-1 -mt-3">
-        <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-blue-300 rounded-full" style={{ width: `${((MORTGAGE_LOAN.principal - balance) / MORTGAGE_LOAN.principal) * 100}%` }} /></div>
-        <div className="flex justify-between text-xs mt-1.5 text-slate-500">
-          <span>剩餘本金 <b className="tabular-nums text-slate-700">{fmt(balance)}</b></span>
-          <span>已繳 <b className="tabular-nums text-slate-700">{fmt(paidTotal)}</b>（{paid.length} 期）</span>
+    <div className="space-y-6 stagger">
+      <Hero label={`${current.date.getMonth() + 1} 月房貸`} amount={current.amount} id="mortgage-month"
+        sub={<>第 <span className="font-num font-bold text-slate-700">{current.id}</span> / {MORTGAGE_LOAN.totalMonths} 期・利率 <span className="font-num font-bold text-slate-700">{current.rate}%</span>{current.id <= MORTGAGE_LOAN.graceMonths ? '・寬限期只繳息' : ''}</>}>
+        <Tube value={MORTGAGE_LOAN.principal - balance} max={MORTGAGE_LOAN.principal} tone="blue" height={12} />
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold text-slate-500">剩餘本金</div>
+            <div className="font-num text-[17px] font-bold tabular-nums text-slate-800 mt-0.5 truncate">{fmt(balance)}</div>
+          </div>
+          <div className="min-w-0 text-right">
+            <div className="text-[11px] font-semibold text-slate-500">已繳（{paid.length} 期）</div>
+            <div className="font-num text-[17px] font-bold tabular-nums text-slate-800 mt-0.5 truncate">{fmt(paidTotal)}</div>
+          </div>
         </div>
-      </div>
+      </Hero>
 
       <Section title="月付會怎麼變">
-        <div className="glass-card-fx border rounded-2xl px-3 pt-3 pb-2">
+        <div className="glass-card px-4 pt-4 pb-3">
           <PaymentSteps schedule={schedule} current={current} />
           {nextChange && (
-            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between text-xs text-slate-500">
-              <span>下次調整 {ymLabel(nextChange.date)}・利率 {nextChange.rate}%</span>
-              <span className="tabular-nums font-bold text-slate-700">{fmt(nextChange.amount)}（{fmtSigned(nextChange.amount - current.amount)}）</span>
+            <div className="mt-2.5 pt-3 flex justify-between items-baseline text-[13px] text-slate-500" style={{ boxShadow: 'inset 0 0.5px 0 0 var(--hair)' }}>
+              <span>下次調整 <span className="font-num font-semibold">{ymLabel(nextChange.date)}</span>・利率 <span className="font-num font-semibold">{nextChange.rate}%</span></span>
+              <span className="font-num tabular-nums font-bold text-slate-800">{fmt(nextChange.amount)}<span className="text-xs text-red-600 ml-1">{fmtSigned(nextChange.amount - current.amount)}</span></span>
             </div>
           )}
         </div>
@@ -221,7 +228,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, loa
             const rates = [...new Set(rows.map((r) => r.rate))];
             const done = rows.every((r) => r.isPaid);
             return (
-              <Row key={y} title={<span className="flex items-center gap-1.5">{y} 年{done && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">繳完</span>}</span>}
+              <Row key={y} title={<span className="flex items-center gap-2 font-num">{y} 年{done && <span className="tag tag-emerald">繳完</span>}</span>}
                 sub={`${rows.length} 期・利率 ${rates.join(' → ')}%`} right={fmt(rows.reduce((s, r) => s + r.amount, 0))}
                 rightSub={<span className="text-slate-400">年底剩 {short(rows[rows.length - 1].balance)}</span>}
                 onClick={() => setSheet({ kind: 'year', y, rows })} />
@@ -231,30 +238,30 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, loa
       </Section>
 
       <Section title="買房的錢">
-        <div className="grid grid-cols-3 text-center">
-          <div><div className="text-[11px] text-slate-400">頭期款來源</div><div className="font-num text-lg text-slate-800">{short(fundTotal)}</div></div>
-          <div><div className="text-[11px] text-slate-400">頭期雜支</div><div className="font-num text-lg text-slate-800">{short(sum(down))}</div></div>
-          <div><div className="text-[11px] text-slate-400">家電雜支</div><div className="font-num text-lg text-slate-800">{short(sum(misc))}</div></div>
+        <div className="glass-card r-tile grid grid-cols-3 text-center py-4">
+          <div><div className="text-[11px] font-semibold text-slate-500">頭期款來源</div><div className="font-num text-[19px] font-bold text-slate-900 mt-0.5">{short(fundTotal)}</div></div>
+          <div><div className="text-[11px] font-semibold text-slate-500">頭期雜支</div><div className="font-num text-[19px] font-bold text-slate-900 mt-0.5">{short(sum(down))}</div></div>
+          <div><div className="text-[11px] font-semibold text-slate-500">家電雜支</div><div className="font-num text-[19px] font-bold text-slate-900 mt-0.5">{short(sum(misc))}</div></div>
         </div>
       </Section>
 
-      <ListBlock title="頭期款來源" items={mortgageFunding} total={fundTotal} icon={Coins} tone="bg-indigo-50 text-indigo-700" onAdd={() => open('funding')} onOpen={(it) => open('funding', it)}
+      <ListBlock title="頭期款來源" items={mortgageFunding} total={fundTotal} icon={Coins} tone="indigo" onAdd={() => open('funding')} onOpen={(it) => open('funding', it)}
         render={(it) => {
           const sym = (it.symbol || '').trim().toUpperCase();
           const p = prices[sym];
           const hold = p && n(it.shares) > 0 ? p * n(it.shares) * (n(it.rate) || 1) - fundingTotal(it) : null;
           return {
-            title: <span className="flex items-center gap-1.5">{it.source || '資金來源'}{sym && <span className="text-[10px] px-1 rounded bg-indigo-50 text-indigo-700">{sym}</span>}</span>,
+            title: <span className="flex items-center gap-1.5">{it.source || '資金來源'}{sym && <span className="tag tag-indigo font-num">{sym}</span>}</span>,
             sub: `${n(it.shares) > 0 ? `${n(it.shares).toLocaleString()} 股 × ${fmt(it.amount, 2)}` : fmt(it.amount)}${n(it.rate) > 1 ? `・匯率 ${it.rate}` : ''}`,
             right: fmt(fundingTotal(it)),
             rightSub: hold !== null ? <span className="text-slate-400">{hold > 0 ? `沒賣現值多 ${short(hold)}` : `沒賣現值少 ${short(-hold)}`}</span> : null,
           };
         }} />
-      <ListBlock title="頭期雜支" items={down} total={sum(down)} icon={Home} tone="bg-amber-50 text-amber-800" onAdd={() => open('down_payment')} onOpen={(it) => open('down_payment', it)}
+      <ListBlock title="頭期雜支" items={down} total={sum(down)} icon={Home} tone="amber" onAdd={() => open('down_payment')} onOpen={(it) => open('down_payment', it)}
         render={(it) => ({ title: it.name, sub: `${String(it.date || '').replace(/-/g, '/')}${it.note ? `・${it.note}` : ''}`, right: fmt(it.amount) })} />
-      <ListBlock title="家電雜支" items={misc} total={sum(misc)} icon={Sofa} tone="bg-blue-50 text-blue-700" onAdd={() => open('misc_appliances')} onOpen={(it) => open('misc_appliances', it)}
+      <ListBlock title="家電雜支" items={misc} total={sum(misc)} icon={Sofa} tone="blue" onAdd={() => open('misc_appliances')} onOpen={(it) => open('misc_appliances', it)}
         render={(it) => ({ title: it.name, sub: `${String(it.date || '').replace(/-/g, '/')}${it.brand ? `・${it.brand}` : ''}${it.note ? `・${it.note}` : ''}`, right: fmt(it.amount) })} />
-      <ListBlock title="划算試算" items={mortgageAnalysis} total={sum(mortgageAnalysis)} icon={Calculator} tone="bg-emerald-50 text-emerald-700" onAdd={() => open('analysis')} onOpen={(it) => open('analysis', it)}
+      <ListBlock title="划算試算" items={mortgageAnalysis} total={sum(mortgageAnalysis)} icon={Calculator} tone="emerald" onAdd={() => open('analysis')} onOpen={(it) => open('analysis', it)}
         render={(it) => ({ title: it.name, right: fmt(it.amount) })} />
 
       {sheet?.kind === 'year' && (
@@ -262,7 +269,7 @@ const MortgageView = ({ mortgageExpenses, mortgageAnalysis, mortgageFunding, loa
           <Divided>
             {sheet.rows.map((r) => (
               <Row key={r.id} title={`${r.date.getMonth() + 1} 月・第 ${r.id} 期`} sub={`利率 ${r.rate}%・剩 ${fmt(r.balance)}`} muted={!r.isPaid && r.id !== current.id}
-                right={fmt(r.amount)} rightSub={r.isPaid ? <span className="text-emerald-700">已繳</span> : r.id === current.id ? <span className="text-blue-700">這期</span> : null} />
+                right={fmt(r.amount)} rightSub={r.isPaid ? <span className="text-emerald-600">已繳</span> : r.id === current.id ? <span className="text-blue-600">這期</span> : null} />
             ))}
           </Divided>
         </Sheet>

@@ -1,33 +1,50 @@
 import { createElement, useMemo, useState } from 'react';
-import { Sun, Moon, Users, Minus, ChevronRight } from 'lucide-react';
-import { GLASS_CARD } from '../lib/constants';
+import { Sun, Moon, Users, Minus, ChevronRight, Check, CircleDashed, TrendingUp, Sparkles, TriangleAlert } from 'lucide-react';
 import { getTodayString, toLocalISOString } from '../lib/utils';
 import { makeFixedMatcher, bucketOf, budgetPlan, yearByMonth } from '../lib/budget';
 import { mealStatusFor, isNoSpend } from '../lib/meals';
+import { short } from '../lib/format';
+import { Money, Vessel, Segmented, StackTube } from '../components/glass';
+import { PersonDot, Section, LinkButton, Dot } from '../components/v2';
 
 const fmt = (n) => `$${Math.round(n).toLocaleString()}`;
 const PEOPLE = [
-  { key: 'myself', name: '士程', dot: 'bg-blue-400', text: 'text-blue-700', soft: 'bg-blue-50' },
-  { key: 'partner', name: '佳欣', dot: 'bg-rose-400', text: 'text-rose-700', soft: 'bg-rose-50' },
+  { key: 'myself', name: '士程', text: 'text-blue-700', tint: 'tint-blue', dot: 'blue' },
+  { key: 'partner', name: '佳欣', text: 'text-rose-700', tint: 'tint-rose', dot: 'rose' },
 ];
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
-const MealPill = ({ label, icon: Icon, status }) => {
-  const look = {
-    paid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    nospend: 'bg-slate-50 text-slate-500 border-dashed border-slate-300',
-    together: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  }[status] || 'bg-white text-slate-300 border-slate-200';
-  const text = { paid: '有記', nospend: '沒花', together: '一起' }[status] || '未記';
+// 今年已經過了多少（0–1）
+const yearProgress = (d) => {
+  const y = d.getFullYear();
+  const days = new Date(y, 1, 29).getMonth() === 1 ? 366 : 365;
+  return (Math.floor((d - new Date(y, 0, 1)) / 86400000) + 1) / days;
+};
+
+// 一餐的狀態：有記／沒花／一起／未記
+const MEAL_LOOK = {
+  paid: ['tag-emerald', Check, '有記'],
+  nospend: ['tag-slate', Minus, '沒花'],
+  together: ['tag-indigo', Users, '一起'],
+};
+const MealToken = ({ label, icon, status }) => {
+  const [look, mark, text] = MEAL_LOOK[status] || ['', CircleDashed, '未記'];
   return (
-    <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-bold ${look}`}>
-      {createElement(Icon, { className: "w-3 h-3" })}{label}<span className="opacity-70">{text}</span>
+    <span className={`flex-1 min-w-0 flex items-center justify-center gap-1 h-7 rounded-full text-[11px] font-bold whitespace-nowrap ${status ? `tag ${look}` : 'text-slate-400 border border-dashed border-slate-300/90'}`}>
+      {createElement(status ? mark : icon, { className: 'w-3 h-3 shrink-0', strokeWidth: 2.6 })}{label}<span className="font-semibold opacity-75">{text}</span>
     </span>
   );
 };
 
-// 2.0 總覽：照「多常看」由上往下排 —
-// 本月還能花多少 → 今天兩個人記了什麼、每餐有沒有交代 → 這週 → 今年
+const Stat = ({ label, children, tone = 'text-slate-800' }) => (
+  <div className="min-w-0 px-1 first:pl-0 last:pr-0">
+    <div className="text-[11px] font-semibold text-slate-500 truncate">{label}</div>
+    <div className={`font-num text-[17px] leading-tight font-bold tabular-nums mt-1 truncate ${tone}`}>{children}</div>
+  </div>
+);
+
+// 3.0 總覽：照「多常看」由上往下排 —
+// 本月還能花多少（液體球）→ 今天兩個人記了什麼、每餐有沒有交代 → 這週 → 今年三桶
 const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, onOpenBudget, onEdit }) => {
   const [dayMode, setDayMode] = useState(0); // 0 今天、1 昨天
   const isFixed = useMemo(() => makeFixedMatcher(settings), [settings]);
@@ -39,13 +56,20 @@ const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, 
   const isCurrentMonth = year === now.getFullYear() && monthIdx === now.getMonth();
   const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
   const dayOfMonth = isCurrentMonth ? now.getDate() : daysInMonth;
+  const yearPct = year === now.getFullYear() ? yearProgress(now) : null; // 今年已過的比例（看別的年份時不顯示）
 
   const months = useMemo(() => yearByMonth(transactions, year, isFixed), [transactions, year, isFixed]);
   const mb = months[monthIdx];
   const flexLeft = plan.flex - mb.flex;
   const pace = mb.flex / dayOfMonth * daysInMonth;
-  const spentPct = Math.min(100, (mb.flex / plan.flex) * 100);
   const timePct = (dayOfMonth / daysInMonth) * 100;
+  const leftPct = plan.flex > 0 ? Math.max(0, flexLeft) / plan.flex : 0;
+  const daysLeft = isCurrentMonth ? daysInMonth - dayOfMonth + 1 : 0; // 含今天
+  const perDay = daysLeft > 0 ? Math.max(0, flexLeft) / daysLeft : 0;
+  const status = flexLeft < 0 ? 'over' : isCurrentMonth && pace > plan.flex ? 'warn' : 'ok';
+  const tone = { over: 'red', warn: 'amber', ok: 'emerald' }[status];
+  const heroLen = Math.abs(Math.round(flexLeft)).toLocaleString().length + (flexLeft < 0 ? 1 : 0);
+  const heroSize = heroLen <= 5 ? 'text-[54px]' : heroLen === 6 ? 'text-[46px]' : heroLen === 7 ? 'text-[40px]' : 'text-[34px]';
 
   // ── 今天／昨天
   const dayStr = (() => { const d = new Date(); d.setDate(d.getDate() - dayMode); return toLocalISOString(d); })();
@@ -74,139 +98,149 @@ const HomeV2 = ({ transactions, settings, flexMonthly, selectedDate, onOpenDay, 
   const ytd = months.reduce((a, m) => ({ fixed: a.fixed + m.fixed, flex: a.flex + m.flex, annual: a.annual + m.annual }), { fixed: 0, flex: 0, annual: 0 });
   const ytdTotal = ytd.fixed + ytd.flex + ytd.annual;
   const bucketRows = [
-    { key: 'fixed', label: '固定', used: ytd.fixed, budget: plan.fixed * 12, bar: 'bg-indigo-400' },
-    { key: 'flex', label: '彈性', used: ytd.flex, budget: plan.flex * 12, bar: 'bg-emerald-400' },
-    { key: 'annual', label: '年度', used: ytd.annual, budget: plan.annual, bar: 'bg-amber-400' },
+    { key: 'fixed', label: '固定', used: ytd.fixed, budget: plan.fixed * 12, tone: 'indigo' },
+    { key: 'flex', label: '彈性', used: ytd.flex, budget: plan.flex * 12, tone: 'emerald' },
+    { key: 'annual', label: '年度', used: ytd.annual, budget: plan.annual, tone: 'amber' },
   ];
 
   return (
-    <div className="space-y-7 pb-24 animate-in fade-in duration-500">
-      {/* ── 本月還能花（直接寫在紙上，不放卡片） */}
-      <section className="px-1 pt-1">
-        <div className="flex items-baseline justify-between">
-          <span className="text-sm font-bold text-slate-500">{isCurrentMonth ? '本月還能花' : `${monthIdx + 1} 月彈性結餘`}</span>
-          <button type="button" onClick={onOpenBudget} className="text-xs text-slate-400 flex items-center gap-0.5">彈性額度 {fmt(plan.flex)}<ChevronRight className="w-3 h-3" /></button>
+    <div className="space-y-7 stagger">
+      {/* ── 本月還能花：大數字＋裝著「剩餘額度」的液體球 */}
+      <section className={`glass-card p-5 ${status === 'over' ? 'tint-red' : status === 'warn' ? 'tint-amber' : ''}`}>
+        <div className="flex items-center justify-between">
+          <span className="eyebrow">{isCurrentMonth ? '本月還能花' : `${monthIdx + 1} 月彈性結餘`}</span>
+          <button type="button" onClick={onOpenBudget} className="press text-xs font-semibold text-slate-500 flex items-center">每月額度 {fmt(plan.flex)}<ChevronRight className="w-3.5 h-3.5 -mr-1" strokeWidth={2.4} /></button>
         </div>
-        <div className={`font-num text-5xl leading-tight mt-1 ${flexLeft < 0 ? 'text-rose-700' : 'text-slate-800'}`}>
-          {flexLeft < 0 ? '−' : ''}{fmt(Math.abs(flexLeft))}
-        </div>
-        <div className="relative mt-3 h-2 rounded-full bg-slate-200/70 overflow-hidden">
-          <div className={`h-full rounded-full transition-all duration-700 ${flexLeft < 0 ? 'bg-rose-400' : spentPct > timePct + 8 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${spentPct}%` }} />
-        </div>
-        {isCurrentMonth && (
-          <div className="relative h-0">
-            <span className="absolute -top-3 w-px h-3 bg-slate-500/60" style={{ left: `${timePct}%` }} />
+
+        <div className="flex items-center justify-between mt-3">
+          <div className="min-w-0 flex-1">
+            <Money value={flexLeft} animate id={`home-left-${year}-${monthIdx}`} className={`${heroSize} leading-none tracking-[-0.035em] ${flexLeft < 0 ? 'text-red-600' : 'money-ink'}`} />
+            <div className={`mt-3.5 flex items-start gap-1.5 text-[13px] leading-snug font-semibold ${status === 'over' ? 'text-red-700' : status === 'warn' ? 'text-amber-800' : 'text-slate-600'}`}>
+              {createElement(status === 'ok' ? Sparkles : status === 'warn' ? TrendingUp : TriangleAlert, { className: `w-4 h-4 shrink-0 mt-px ${status === 'ok' ? 'text-emerald-500' : ''}`, strokeWidth: 2.3 })}
+              <span>
+                {!isCurrentMonth ? (status === 'over' ? `這個月超出 ${fmt(-flexLeft)}` : `這個月用了額度的 ${Math.round((mb.flex / plan.flex) * 100)}%`)
+                  : status === 'over' ? `已超出額度，還有 ${daysLeft} 天`
+                    : status === 'warn' ? <>照這速度月底會超出 <span className="font-num font-bold">{fmt(pace - plan.flex)}</span></>
+                      : <>剩 {daysLeft} 天，每天可花 <span className="font-num font-bold text-slate-900">{fmt(perDay)}</span></>}
+              </span>
+            </div>
           </div>
-        )}
-        <div className="flex justify-between mt-2 text-xs text-slate-500">
-          <span>已花 <b className="text-slate-700 tabular-nums">{fmt(mb.flex)}</b>{isCurrentMonth && <span className="text-slate-400 ml-2">{dayOfMonth}/{daysInMonth} 天</span>}</span>
-          {isCurrentMonth && <span className={pace > plan.flex ? 'text-rose-700 font-bold' : ''}>照這速度月底約 {fmt(pace)}</span>}
+          <Vessel pct={leftPct} tone={tone} className="w-[104px] h-[104px] ml-4 mr-0.5" mark={isCurrentMonth ? 1 - timePct / 100 : null} markLabel="應剩">
+            <span className="font-num text-[25px] leading-none font-bold tracking-tight text-slate-900">{Math.round(leftPct * 100)}<span className="text-[13px] font-bold ml-px">%</span></span>
+            <span className="text-[10px] font-bold text-slate-600 mt-1">剩餘</span>
+          </Vessel>
         </div>
-        <div className="mt-1 text-[11px] text-slate-400">本月另有固定 {fmt(mb.fixed)}{mb.annual > 0 ? `、年度 ${fmt(mb.annual)}` : ''}（不算在彈性裡）</div>
+
+        <div className="grid grid-cols-3 gap-2 mt-5 pt-4" style={{ boxShadow: 'inset 0 0.5px 0 0 var(--hair)' }}>
+          <Stat label="彈性已花">{fmt(mb.flex)}</Stat>
+          {isCurrentMonth
+            ? <Stat label="月底預估" tone={pace > plan.flex ? 'text-red-600' : 'text-slate-800'}>{fmt(pace)}</Stat>
+            : <Stat label="每天平均">{fmt(mb.flex / daysInMonth)}</Stat>}
+          <Stat label={mb.annual > 0 ? '固定＋年度' : '固定支出'}>{fmt(mb.fixed + mb.annual)}</Stat>
+        </div>
       </section>
 
       {/* ── 今天：兩個人、每一餐 */}
-      <section className={`${GLASS_CARD} p-4`}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-bold text-slate-800">{dayMode === 0 ? '今天' : '昨天'}<span className="ml-2 text-xs font-normal text-slate-400" style={{ fontFamily: 'var(--font-sans)' }}>{Number(dayStr.slice(5, 7))}/{Number(dayStr.slice(8, 10))}</span></h3>
-          <div className="flex bg-slate-100 rounded-full p-0.5">
-            {['今天', '昨天'].map((l, i) => (
-              <button key={l} type="button" onClick={() => setDayMode(i)} className={`px-3 py-0.5 rounded-full text-xs font-bold ${dayMode === i ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>{l}</button>
-            ))}
-          </div>
-        </div>
+      <Section
+        title={<span className="flex items-baseline gap-2">{dayMode === 0 ? '今天' : '昨天'}<span className="font-num text-[13px] font-semibold text-slate-400">{Number(dayStr.slice(5, 7))}/{Number(dayStr.slice(8, 10))}</span></span>}
+        extra={<Segmented size="sm" options={[[0, '今天'], [1, '昨天']]} value={dayMode} onChange={setDayMode} />}>
         <div className="grid grid-cols-2 gap-3">
           {PEOPLE.map((p) => {
             const mine = dayTx.filter((t) => (t.payer === 'partner' ? 'partner' : 'myself') === p.key);
             const st = mealStatusFor(dayTx, p.key);
             const total = mine.reduce((s, t) => s + (Number(t.amount) || 0), 0);
             return (
-              <div key={p.key} className="min-w-0">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className={`text-sm font-bold ${p.text} flex items-center gap-1.5`}><span className={`w-2 h-2 rounded-full ${p.dot}`} />{p.name}</span>
-                  <span className="text-sm font-bold text-slate-700 tabular-nums">{fmt(total)}</span>
+              <div key={p.key} className={`glass-card !rounded-[24px] ${p.tint} p-3.5 min-w-0`}>
+                <div className="flex items-center gap-2">
+                  <PersonDot owner={p.key} size="w-8 h-8 text-[13px]" />
+                  <span className={`text-[13px] font-bold ${p.text}`}>{p.name}</span>
+                  <Money value={total} className="ml-auto text-[19px] text-slate-900" />
                 </div>
-                <div className="flex flex-wrap gap-1 mb-2">
-                  <MealPill label="午" icon={st.lunch === 'together' ? Users : Sun} status={st.lunch} />
-                  <MealPill label="晚" icon={st.dinner === 'together' ? Users : Moon} status={st.dinner} />
+                <div className="flex gap-1.5 mt-3">
+                  <MealToken label="午" icon={Sun} status={st.lunch} />
+                  <MealToken label="晚" icon={Moon} status={st.dinner} />
                 </div>
-                <div className="space-y-1">
-                  {mine.length === 0 && <div className="text-xs text-slate-300 py-1">還沒有紀錄</div>}
+                <div className="mt-2.5 space-y-1.5">
+                  {mine.length === 0 && <div className="text-xs text-slate-400 py-1.5 text-center">還沒有紀錄</div>}
                   {mine.slice(0, 4).map((t) => (
-                    <button key={t.id} type="button" onClick={() => onEdit && onEdit(t)} className={`w-full flex items-center justify-between gap-1 text-xs rounded-lg px-2 py-1 ${p.soft}`}>
-                      <span className="truncate text-slate-600">{isNoSpend(t) ? <span className="flex items-center gap-1"><Minus className="w-3 h-3" />{t.note}</span> : t.note || t.category}</span>
-                      <span className="tabular-nums text-slate-500 shrink-0">{fmt(Number(t.amount) || 0)}</span>
+                    <button key={t.id} type="button" onClick={() => onEdit && onEdit(t)} className="press w-full flex items-center justify-between gap-1.5 text-[13px] rounded-xl px-2.5 py-1.5 bg-white/55" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 0.5px var(--hair)' }}>
+                      <span className="truncate font-semibold text-slate-700">{isNoSpend(t) ? <span className="flex items-center gap-1 text-slate-500"><Minus className="w-3 h-3" />{t.note}</span> : t.note || t.category}</span>
+                      <span className="font-num font-bold tabular-nums text-slate-600 shrink-0">{fmt(Number(t.amount) || 0)}</span>
                     </button>
                   ))}
-                  {mine.length > 4 && <button type="button" onClick={() => onOpenDay(dayStr)} className="text-[11px] text-slate-400 pl-2">還有 {mine.length - 4} 筆</button>}
+                  {mine.length > 4 && <button type="button" onClick={() => onOpenDay(dayStr)} className="text-xs font-semibold text-slate-500 w-full text-center pt-0.5">還有 {mine.length - 4} 筆</button>}
                 </div>
               </div>
             );
           })}
         </div>
-      </section>
+      </Section>
 
       {/* ── 這週 */}
-      <section>
-        <div className="flex items-baseline justify-between px-1 mb-2">
-          <h3 className="text-base font-bold text-slate-800">這週</h3>
-          <span className="text-xs text-slate-400">近 7 天彈性支出 <b className="text-slate-600 tabular-nums">{fmt(weekTotal)}</b></span>
-        </div>
-        <div className={`${GLASS_CARD} px-3 pt-4 pb-3`}>
-          <div className="grid grid-cols-7 gap-1.5 items-end h-28">
-            {week.map((d) => (
-              <button key={d.ds} type="button" onClick={() => onOpenDay(d.ds)} className="flex flex-col items-center justify-end h-full gap-1">
-                <span className="text-[10px] text-slate-400 tabular-nums">{d.flex ? (d.flex >= 1000 ? `${(d.flex / 1000).toFixed(1)}k` : d.flex) : ''}</span>
-                <span className={`w-full rounded-md ${d.isToday ? 'bg-emerald-400' : 'bg-emerald-200'}`} style={{ height: `${Math.max(4, (d.flex / weekMax) * 64)}px` }} />
+      <Section title="這週" extra={<span className="text-[13px] text-slate-500 flex items-baseline gap-1.5">近 7 天彈性<Money value={weekTotal} className="text-[16px] text-slate-900" /></span>}>
+        <div className="glass-card px-3.5 pt-4 pb-3.5">
+          <div className="grid grid-cols-7 gap-2 items-end h-[122px]">
+            {week.map((d, i) => (
+              <button key={d.ds} type="button" onClick={() => onOpenDay(d.ds)} className="press flex flex-col items-center justify-end h-full gap-1.5" aria-label={`${d.day} 日 ${fmt(d.flex)}`}>
+                <span className={`font-num text-[11px] font-bold tabular-nums ${d.isToday ? 'text-emerald-700' : 'text-slate-500'}`}>{d.flex ? (d.flex >= 1000 ? `${(d.flex / 1000).toFixed(1)}k` : d.flex) : ''}</span>
+                <span className={`vbar !rounded-[11px] tone-emerald grow-y ${d.isToday ? 'lit' : 'soft'}`} style={{ height: `${Math.max(6, (d.flex / weekMax) * 84)}px`, '--i': i }} />
               </button>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1.5 mt-1.5">
+          <div className="grid grid-cols-7 gap-2 mt-2">
             {week.map((d) => (
-              <div key={d.ds} className="flex flex-col items-center gap-1">
-                <span className={`text-[11px] font-bold ${d.isToday ? 'text-slate-800' : 'text-slate-400'}`}>{d.wd}</span>
-                <span className="flex gap-0.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${d.who.myself ? 'bg-blue-400' : 'bg-slate-200'}`} />
-                  <span className={`w-1.5 h-1.5 rounded-full ${d.who.partner ? 'bg-rose-400' : 'bg-slate-200'}`} />
+              <div key={d.ds} className="flex flex-col items-center gap-1.5">
+                <span className={`w-7 h-7 grid place-items-center rounded-full text-xs font-bold ${d.isToday ? 'btn-ink' : 'text-slate-500'}`}>{d.wd}</span>
+                <span className="flex gap-1">
+                  <span className={`w-1.5 h-1.5 rounded-full ${d.who.myself ? 'bg-blue-500' : 'bg-slate-300/70'}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${d.who.partner ? 'bg-rose-500' : 'bg-slate-300/70'}`} />
                 </span>
               </div>
             ))}
           </div>
-          <div className="flex justify-center gap-4 mt-2 text-[10px] text-slate-400">
-            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400" />士程有記帳</span>
-            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-400" />佳欣有記帳</span>
+          <div className="flex justify-center gap-4 mt-3 text-[11px] font-semibold text-slate-500">
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" />士程有記帳</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" />佳欣有記帳</span>
           </div>
         </div>
-      </section>
+      </Section>
 
-      {/* ── 今年 */}
-      <section>
-        <div className="flex items-baseline justify-between px-1 mb-2">
-          <h3 className="text-base font-bold text-slate-800">{year} 年</h3>
-          <button type="button" onClick={onOpenBudget} className="text-xs text-slate-400 flex items-center gap-0.5">預算設定<ChevronRight className="w-3 h-3" /></button>
+      {/* ── 今年：三桶各是一個裝著液體的玻璃瓶 */}
+      <Section title={`${year} 年`} extra={<LinkButton onClick={onOpenBudget}>預算設定<ChevronRight className="w-3.5 h-3.5" strokeWidth={2.4} /></LinkButton>}>
+        <div className="glass-card p-5">
+          <div className="flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <div className="eyebrow">今年已花</div>
+              <Money value={ytdTotal} animate id={`home-ytd-${year}`} className="text-[34px] leading-tight money-ink" />
+            </div>
+            <div className="text-right shrink-0 pb-1">
+              <div className="font-num text-[22px] leading-none font-bold text-slate-900">{plan.yearTotal > 0 ? Math.round((ytdTotal / plan.yearTotal) * 100) : 0}<span className="text-sm ml-px">%</span></div>
+              <div className="text-xs text-slate-500 mt-1.5">年度預算 <span className="font-num font-semibold">{fmt(plan.yearTotal)}</span></div>
+            </div>
+          </div>
+          <div className="relative mt-3.5">
+            <StackTube parts={bucketRows.map((b) => ({ key: b.key, value: b.used, tone: b.tone }))} total={Math.max(plan.yearTotal, ytdTotal)} height={12} />
+            {yearPct !== null && <span className="absolute w-[2px] rounded-full bg-slate-700/70 pointer-events-none" style={{ left: `calc(${Math.min(1, yearPct) * 100}% - 1px)`, top: -3, bottom: -3 }} aria-hidden="true" />}
+          </div>
+          {yearPct !== null && <div className="text-[11px] text-slate-400 mt-2 text-right">刻度＝今年已過 {Math.round(yearPct * 100)}% 的時間</div>}
+
+          <div className="grid grid-cols-3 gap-3 mt-4">
+            {bucketRows.map((b) => {
+              const p = b.budget > 0 ? b.used / b.budget : 0;
+              const over = b.used > b.budget;
+              return (
+                <div key={b.key} className="min-w-0 flex flex-col items-center">
+                  <Vessel shape="jar" tone={over ? 'red' : b.tone} pct={p} className="w-full h-[96px]">
+                    <span className="font-num text-[20px] leading-none font-bold tracking-tight text-slate-900">{Math.round(p * 100)}<span className="text-[11px] ml-px">%</span></span>
+                  </Vessel>
+                  <div className="mt-2.5 text-[13px] font-bold text-slate-800 flex items-center gap-1.5"><Dot tone={b.tone} className="!w-2 !h-2" />{b.label}</div>
+                  <div className={`font-num text-[11px] font-semibold tabular-nums mt-0.5 ${over ? 'text-red-600' : 'text-slate-500'}`}>{short(b.used)} / {short(b.budget)}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div className={`${GLASS_CARD} p-4`}>
-          <div className="flex items-baseline justify-between">
-            <span className="font-num text-2xl text-slate-800">{fmt(ytdTotal)}</span>
-            <span className="text-xs text-slate-400">/ {fmt(plan.yearTotal)} {plan.yearTotal > 0 ? Math.round((ytdTotal / plan.yearTotal) * 100) : 0}%</span>
-          </div>
-          <div className="mt-2 h-2.5 rounded-full bg-slate-100 overflow-hidden flex">
-            {bucketRows.map((b) => (
-              <span key={b.key} className={`${b.bar} h-full`} style={{ width: `${plan.yearTotal ? Math.min(100, (b.used / plan.yearTotal) * 100) : 0}%` }} />
-            ))}
-          </div>
-          <div className="mt-3 space-y-2">
-            {bucketRows.map((b) => (
-              <div key={b.key} className="flex items-center gap-2 text-xs">
-                <span className={`w-2 h-2 rounded-sm ${b.bar}`} />
-                <span className="w-8 font-bold text-slate-600">{b.label}</span>
-                <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className={`h-full ${b.bar} ${b.used > b.budget ? 'opacity-100' : 'opacity-80'}`} style={{ width: `${b.budget ? Math.min(100, (b.used / b.budget) * 100) : 0}%` }} /></div>
-                <span className={`tabular-nums w-[9.5rem] text-right ${b.used > b.budget ? 'text-rose-700 font-bold' : 'text-slate-500'}`}>{fmt(b.used)} / {fmt(b.budget)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      </Section>
     </div>
   );
 };

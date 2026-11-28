@@ -63,17 +63,18 @@ const getCategoryIcon = (category, group) => {
   return CATEGORY_ICONS[c] || GROUP_ICONS[g] || CircleDashed;
 };
 
-// 三桶色調：年度＝枯色（amber）、固定＝藤鼠（indigo）、彈性＝青磁（emerald）
+// 三桶色調：年度＝琥珀（amber）、固定＝靛紫（indigo）、彈性＝薄荷綠（emerald）
 const getBucketTone = (type, group) => {
   if (type === 'annual') return 'annual';
   if (FIXED_MONTHLY_GROUPS.has(norm(group))) return 'fixed';
   return 'flex';
 };
 
+// 圖示球的樣式（index.css 的 .orb-*）
 const BUCKET_TONE_CLASSES = {
-  flex: 'bg-emerald-100 text-emerald-700',
-  fixed: 'bg-indigo-100 text-indigo-700',
-  annual: 'bg-amber-100 text-amber-700',
+  flex: 'orb-emerald',
+  fixed: 'orb-indigo',
+  annual: 'orb-amber',
 };
 
 export { getCategoryIcon, getBucketTone, BUCKET_TONE_CLASSES };

@@ -88,9 +88,29 @@ const evalArithmetic = (expr) => {
 };
 
 
-// Haptic feedback — iOS 16.4+ PWA standalone 支援 Web Vibration API
+// 觸覺回饋。Android 用 Vibration API；iPhone 沒有這個 API，改用 iOS 17.4+ 的
+// 「switch 核取方塊」——切換它時系統會給一下輕觸回饋（必須在使用者點按的當下呼叫才有效）。
+let hapticLabel = null;
+const iosTick = () => {
+  if (typeof document === 'undefined') return;
+  if (!hapticLabel) {
+    hapticLabel = document.createElement('label');
+    hapticLabel.setAttribute('aria-hidden', 'true');
+    hapticLabel.style.cssText = 'position:fixed;left:-99px;top:-99px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.setAttribute('switch', '');
+    input.tabIndex = -1;
+    hapticLabel.appendChild(input);
+    document.body.appendChild(hapticLabel);
+  }
+  hapticLabel.click();
+};
 const haptic = (pattern = 10) => {
-  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(pattern);
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(pattern);
+    else iosTick();
+  } catch { /* 沒有觸覺回饋也不影響操作 */ }
 };
 
 // Number input that shows live thousand separators while typing; commits the raw
